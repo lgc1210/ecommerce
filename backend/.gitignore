@@ -1,0 +1,14 @@
+node_modules
+# Keep environment variables out of version control
+.env
+.env.development
+.env.production 
+
+/generated/prisma
+
+/src/generated/prisma
+
+# File ảnh do người dùng upload (lưu local) — không commit vào git
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/products/.gitkeep

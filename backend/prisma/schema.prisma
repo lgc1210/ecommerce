@@ -1,0 +1,425 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Provider {
+  local
+  google
+  facebook
+}
+
+enum AddressType {
+  shipping
+  billing
+}
+
+enum DiscountType {
+  fixed
+  percentage
+}
+
+enum OrderStatus {
+  pending
+  processing
+  shipped
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  cod
+  vnpay
+  momo
+  stripe
+  paypal
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
+enum OtpType {
+  registration
+  password_reset
+  change_phone
+}
+
+enum OtpStatus {
+  pending
+  verified
+  expired
+  failed_max_attempts
+}
+
+enum ContactStatus {
+  new
+  in_progress
+  resolved
+  closed
+}
+
+// ==========================================
+// 1. IDENTITY & ACCESS MANAGEMENT (IAM)
+// ==========================================
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique @db.VarChar(100)
+  description String?          @db.Text
+  createdAt   DateTime?        @default(now()) @map("created_at")
+  updatedAt   DateTime?        @updatedAt @map("updated_at")
+
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  resource    String           @db.VarChar(100)
+  name        String           @db.VarChar(100)
+  description String?          @db.Text
+  createdAt   DateTime?        @default(now()) @map("created_at")
+
+  roles       RolePermission[]
+
+  @@unique([resource, name])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  roleId       Int        @map("role_id")
+  permissionId Int        @map("permission_id")
+
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+/// Lưu thông tin user + hỗ trợ login local & OAuth
+model User {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(100)
+  email        String         @unique @db.VarChar(255)
+  phone        String?        @unique @db.VarChar(20)
+  passwordHash String?        @map("password_hash") @db.VarChar(255)
+  roleId       Int            @map("role_id")
+  provider     Provider       @default(local)
+  providerId   String?        @map("provider_id") @db.VarChar(255)
+  isActive     Boolean        @default(true) @map("is_active")
+  isVerified   Boolean        @default(false) @map("is_verified")
+  createdAt    DateTime?      @default(now()) @map("created_at")
+  updatedAt    DateTime?      @updatedAt @map("updated_at")
+
+  role         Role           @relation(fields: [roleId], references: [id])
+  refreshTokens RefreshToken[]
+  addresses    UserAddress[]
+  cart         Cart?
+  orders       Order[]
+  reviews      Review[]
+  otps         Otp[]
+  contacts       Contact[]
+
+  @@index([provider, providerId])
+  @@map("users")
+}
+
+/// Lưu refresh token để quản lý session, logout, revoke
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+
+  @@index([userId])
+
+  @@index([expiresAt])
+}
+
+model UserAddress {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  addressType   AddressType @default(shipping) @map("address_type")
+  recipientName String      @map("recipient_name") @db.VarChar(100)
+  phoneNumber   String      @map("phone_number") @db.VarChar(20)
+  addressLine   String      @map("address_line") @db.VarChar(255)
+  ward          String      @map("ward") @db.VarChar(100)
+  province      String      @map("province") @db.VarChar(100)
+  isDefault     Boolean     @default(false) @map("is_default")
+  createdAt     DateTime?   @default(now()) @map("created_at")
+
+  user          User        @relation(fields: [userId], references: [id])
+  orders        Order[]
+
+  @@map("user_addresses")
+}
+
+// ==========================================
+// 2. PRODUCT CATALOG
+// ==========================================
+
+model Category {
+  id            Int        @id @default(autoincrement())
+  parentId      Int?       @map("parent_id")
+  name          String     @db.VarChar(100)
+  slug          String     @unique @db.VarChar(100)
+  description   String?    @db.Text
+  createdAt     DateTime?   @default(now()) @map("created_at")
+
+  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryHierarchy")
+  products      Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int          @id @default(autoincrement())
+  categoryId  Int?         @map("category_id")
+  name        String       @db.VarChar(100)
+  slug        String       @unique @db.VarChar(100)
+  description String?      @db.Text
+  isActive    Boolean      @default(true) @map("is_active")
+  thumbnailUrl   String?      @map("thumbnail_url") @db.VarChar(500)
+  createdAt   DateTime?    @default(now()) @map("created_at")
+  updatedAt   DateTime?    @updatedAt @map("updated_at")
+
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  skus        ProductSku[]
+  reviews     Review[]
+
+  @@map("products")
+
+  @@index([categoryId, isActive])
+}
+
+/// Mỗi dòng là 1 biến thể duy nhất (vd: Đỏ - M, Trắng - L) để lưu giá và tồn kho riêng
+model ProductSku {
+  id               Int         @id @default(autoincrement())
+  productId        Int?        @map("product_id")
+  sku              String      @unique @db.VarChar(50)
+  price            Decimal     @db.Decimal(10, 2)
+  stockQuantity    Int         @default(0) @map("stock_quantity")
+  variationDetails Json        @map("variation_details")
+  createdAt        DateTime?   @default(now()) @map("created_at")
+  updatedAt        DateTime?   @updatedAt @map("updated_at")
+
+  product          Product?    @relation(fields: [productId], references: [id])
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+  images           ProductImage[]
+
+  @@map("product_sku")
+}
+
+model ProductImage {
+  id        Int       @id @default(autoincrement())
+  productSkuId Int @map("product_sku_id")
+  imageUrl  String    @map("image_url") @db.VarChar(500)
+  altText   String?   @map("alt_text") @db.VarChar(255)
+  isPrimary Boolean   @default(false) @map("is_primary")
+  sortOrder Int       @default(0) @map("sort_order")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  productSku ProductSku @relation(fields: [productSkuId], references: [id])
+
+  @@index([productSkuId])
+  @@map("product_images")
+}
+
+// ==========================================
+// 3. SHOPPING CART
+// ==========================================
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique @map("user_id") // Khách hàng chỉ có duy nhất 1 giỏ hàng hoạt động
+  createdAt DateTime?  @default(now()) @map("created_at")
+  updatedAt DateTime?  @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id           Int        @id @default(autoincrement())
+  cartId       Int        @map("cart_id")
+  productSkuId Int        @map("product_sku_id")
+  quantity     Int        @default(1)
+
+  cart         Cart       @relation(fields: [cartId], references: [id])
+  productSku   ProductSku @relation(fields: [productSkuId], references: [id])
+
+  @@unique([cartId, productSkuId]) // Ngăn chặn trùng lặp biến thể trong cùng giỏ hàng
+  @@map("cart_items")
+}
+
+// ==========================================
+// 4. ORDERS, PAYMENTS & DISCOUNTS
+// ==========================================
+
+model Coupon {
+  id               Int          @id @default(autoincrement())
+  code             String       @unique @db.VarChar(50)
+  discountType     DiscountType @map("discount_type")
+  discountValue    Decimal      @map("discount_value") @db.Decimal(10, 2)
+  minOrderValue    Decimal      @default(0.00) @map("min_order_value") @db.Decimal(10, 2)
+  maxDiscountValue Decimal?     @map("max_discount_value") @db.Decimal(10, 2) // Giới hạn cho mã giảm theo %
+  startsAt         DateTime     @map("starts_at")
+  expiresAt        DateTime     @map("expires_at")
+  usageLimit       Int?         @map("usage_limit")
+  usedCount        Int          @default(0) @map("used_count")
+  isActive         Boolean      @default(true) @map("is_active")
+
+  orders           Order[]
+
+  @@map("coupons")
+}
+
+model Order {
+  id                Int          @id @default(autoincrement())
+  userId            Int?         @map("user_id")
+  shippingAddressId Int?         @map("shipping_address_id")
+  couponId          Int?         @map("coupon_id")
+
+  orderNumber       String       @unique @map("order_number") @db.VarChar(50) // Mã đơn hàng hiển thị cho khách (vd: ORD-2024-X)
+  subtotalAmount    Decimal      @map("subtotal_amount") @db.Decimal(10, 2)   // Giá tổng trước khi giảm
+  discountAmount    Decimal      @default(0.00) @map("discount_amount") @db.Decimal(10, 2) // Số tiền được giảm từ coupon
+  shippingFee       Decimal      @default(0.00) @map("shipping_fee") @db.Decimal(10, 2)
+  totalAmount       Decimal      @map("total_amount") @db.Decimal(10, 2)      // Số tiền cuối khách cần trả
+
+  orderStatus       OrderStatus  @default(pending) @map("order_status")
+  createdAt         DateTime?    @default(now()) @map("created_at")
+  updatedAt         DateTime?    @updatedAt @map("updated_at")
+
+  user              User?        @relation(fields: [userId], references: [id])
+  shippingAddress   UserAddress? @relation(fields: [shippingAddressId], references: [id])
+  coupon            Coupon?      @relation(fields: [couponId], references: [id])
+  items             OrderItem[]
+  payment           Payment?
+
+  @@map("orders")
+
+  @@index([orderStatus])
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id                Int         @id @default(autoincrement())
+  orderId           Int         @map("order_id")
+  productSkuId      Int?        @map("product_sku_id")
+
+  quantity          Int
+  priceAtPurchase   Decimal     @map("price_at_purchase") @db.Decimal(10, 2) // Chụp lại giá tại thời điểm mua để đối soát tài chính
+  variationSnapshot Json?       @map("variation_snapshot") // Chụp lại thông tin màu sắc/kích cỡ phòng trường hợp sản phẩm đổi thông tin
+
+  order             Order       @relation(fields: [orderId], references: [id])
+  productSku        ProductSku? @relation(fields: [productSkuId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  orderId       Int           @unique @map("order_id") // Một đơn hàng gắn liền một phiên thanh toán công khai
+  paymentMethod PaymentMethod @map("payment_method")
+  paymentStatus PaymentStatus @default(pending) @map("payment_status")
+  transactionId String?       @map("transaction_id") @db.VarChar(255) // Mã giao dịch trả về từ ngân hàng / Ví điện tử
+  amount        Decimal       @db.Decimal(10, 2)
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime?     @default(now()) @map("created_at")
+
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+
+  @@index([paymentStatus])
+}
+
+// ==========================================
+// 5. CUSTOMER ENGAGEMENT
+// ==========================================
+
+/// Đánh giá sản phẩm từ người mua
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  productId Int      @map("product_id")
+  rating    Int      @db.TinyInt // Thang điểm từ 1-5
+  comment   String?  @db.Text
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  user      User?    @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+  
+  @@index([userId, productId])
+  @@unique([userId, productId])
+}
+
+/// Lưu mã OTP cho xác thực email, số điện thoại, reset mật khẩu
+model Otp {
+  id        Int       @id @default(autoincrement())
+  userId    Int?      @map("user_id") // Optional: NULL for guest phone/email registration verification
+  otpCode   String    @map("otp_code") @db.VarChar(10)
+  target    String    @db.VarChar(255) // Email address or phone number the OTP was sent to
+  type      OtpType
+  status    OtpStatus @default(pending)
+  attempts  Int       @default(0) // Tracks wrong guesses to prevent brute-force attacks
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  user      User?     @relation(fields: [userId], references: [id])
+
+  @@index([target, otpCode]) // Fast lookups during validation requests
+  @@index([expiresAt])       // For automated cleanup cron-jobs
+  @@map("otps")
+}
+
+model Contact {
+  id        Int       @id @default(autoincrement())
+  userId    Int?      @map("user_id")
+
+  name      String    @db.VarChar(100)
+  email     String    @db.VarChar(255)
+
+  subject   String?   @db.VarChar(255)
+  message   String    @db.Text
+
+  status    ContactStatus @default(new)
+
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([email])
+  @@map("contacts")
+}
+
