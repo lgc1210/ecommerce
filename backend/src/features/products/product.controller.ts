@@ -7,7 +7,7 @@ import { handleServiceError } from "../../shared/service-error-handler.js";
 // ==========================================
 export const listProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
-		const result = await productService.listProducts(req.query as Record<string, string>, { publicOnly: true });
+		const result = await productService.listProducts(req.query as Record<string, string>);
 		res.status(200).json(result);
 	} catch (error) {
 		handleServiceError(error, res, next);
@@ -28,7 +28,7 @@ export const getProductBySlug = async (req: Request, res: Response, next: NextFu
 // ==========================================
 export const listProductsAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
-		const result = await productService.listProducts(req.query as Record<string, string>, { publicOnly: false });
+		const result = await productService.listProducts(req.query as Record<string, string>);
 		res.status(200).json(result);
 	} catch (error) {
 		handleServiceError(error, res, next);

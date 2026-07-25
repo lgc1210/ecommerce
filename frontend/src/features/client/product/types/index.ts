@@ -85,6 +85,8 @@ export interface PublicProductDetail {
 	skus: PublicProductSku[];
 	reviews: PublicProductReview[];
 	averageRating: number | null;
+	/** Sản phẩm liên quan (ưu tiên cùng danh mục, fallback mới nhất) — đã được backend tính sẵn. */
+	related: PublicProductListItem[];
 }
 
 export interface ListProductsParams {
@@ -128,5 +130,8 @@ export interface ProductCardItem {
 	rating?: number;
 	reviewCount: number;
 	inStock: boolean;
+	/** false = sản phẩm đã ngừng kinh doanh (isActive=false ở backend) — card hiển thị badge riêng và không cho bấm vào.
+	 *  Optional để tương thích với `MockProduct` (trang Home) vốn không có field này — khi thiếu, ProductCard coi như active. */
+	isActive?: boolean;
 	image: string;
 }

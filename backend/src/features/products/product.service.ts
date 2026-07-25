@@ -17,6 +17,9 @@ const productListInclude = {
 	// Ảnh đại diện lấy từ cột `thumbnailUrl` (denormalized, tự đồng bộ khi ảnh SKU thay đổi) -> không cần join images ở đây
 };
 
+// Sản phẩm liên quan (trả kèm trong getProductBySlug): số lượng cố định, không nhận limit từ client
+const RELATED_PRODUCTS_LIMIT = 8;
+
 const productDetailInclude = {
 	category: { select: { id: true, name: true, slug: true } },
 	skus: {
@@ -35,12 +38,16 @@ class ProductService {
 	// ==========================================
 	// Public
 	// ==========================================
-	async listProducts(params: ListProductsParams, options: { publicOnly: boolean }) {
+	async listProducts(params: ListProductsParams) {
 		const where: Record<string, unknown> = {};
 
-		if (options.publicOnly) {
-			where.isActive = true;
-		} else if (params.isActive !== undefined) {
+		// `isActive` chỉ lọc khi client truyền tường minh qua query param — áp dụng như nhau cho cả route
+		// public lẫn admin. Mặc định (không truyền) trả về TẤT CẢ sản phẩm (active lẫn inactive), để khớp
+		// với _count.products ở categories (đếm tất cả sản phẩm, không phân biệt isActive) — tránh lệch số
+		// lượng hiển thị giữa bộ đếm danh mục và danh sách sản phẩm thực tế trả về.
+		// `options.publicOnly` không còn dùng để ép isActive nữa; sản phẩm inactive vẫn được trả ra ở route
+		// public, phía frontend tự quyết định UI/UX phù hợp (vd: badge "Ngừng kinh doanh") thay vì ẩn hẳn.
+		if (params.isActive !== undefined) {
 			where.isActive = params.isActive === "true";
 		}
 
@@ -89,7 +96,9 @@ class ProductService {
 			throw new Error("NotFound: Sản phẩm không tồn tại.");
 		}
 
-		return { ...product, averageRating: computeAverageRating(product.reviews) };
+		const related = await this.findRelatedProducts(product.id, product.categoryId);
+
+		return { ...product, averageRating: computeAverageRating(product.reviews), related };
 	}
 
 	// ==========================================
@@ -380,6 +389,23 @@ class ProductService {
 	// ==========================================
 	// Helpers
 	// ==========================================
+	/**
+	 * Tìm sản phẩm liên quan tới `productId`, dùng để nhúng vào response của getProductBySlug.
+	 * Chỉ lấy sản phẩm cùng danh mục (categoryId), đang active, sắp xếp theo mới nhất. Nếu sản phẩm
+	 * không thuộc danh mục nào, hoặc danh mục đó không còn sản phẩm active nào khác, trả về mảng rỗng
+	 * (không lấp đầy bằng sản phẩm khác danh mục).
+	 */
+	private async findRelatedProducts(productId: number, categoryId: number | null) {
+		if (!categoryId) return [];
+
+		return prisma.product.findMany({
+			where: { isActive: true, categoryId, id: { not: productId } },
+			include: productListInclude,
+			orderBy: { createdAt: "desc" },
+			take: RELATED_PRODUCTS_LIMIT,
+		});
+	}
+
 	private resolveSortOrder(sort?: string) {
 		switch (sort) {
 			case "name_asc":

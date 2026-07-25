@@ -12,37 +12,66 @@ const ProductCard = ({ product }: ProductCardProps) => {
 	const discountPercent = product.oldPrice
 		? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
 		: null;
+	// undefined (vd: MockProduct ở trang Home) coi như đang kinh doanh bình thường.
+	const isDiscontinued = product.isActive === false;
 
-	return (
-		<div className='group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-shadow hover:shadow-lg hover:shadow-ink/5'>
-			<Link
-				to={paths.client.productDetail(product.slug)}
-				className='relative block aspect-square overflow-hidden bg-cream-soft'>
-				<img
-					src={product.image}
-					alt={product.name}
-					className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
-				/>
-				{discountPercent && (
-					<span className='absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white'>
-						-{discountPercent}%
-					</span>
-				)}
-				{!product.inStock && (
+	const media = (
+		<>
+			<img
+				src={product.image}
+				alt={product.name}
+				className={`h-full w-full object-cover transition-transform duration-300 ${
+					isDiscontinued ? "grayscale" : "group-hover:scale-105"
+				}`}
+			/>
+			{discountPercent && !isDiscontinued && (
+				<span className='absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white'>
+					-{discountPercent}%
+				</span>
+			)}
+			{isDiscontinued ? (
+				<span className='absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-xs font-semibold text-white'>
+					Ngừng kinh doanh
+				</span>
+			) : (
+				!product.inStock && (
 					<span className='absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-xs font-semibold text-white'>
 						Hết hàng
 					</span>
-				)}
+				)
+			)}
 
-				<button
-					type='button'
-					aria-label='Thêm vào giỏ hàng'
-					onClick={(e) => e.preventDefault()}
-					disabled={!product.inStock}
-					className='absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-ink text-white opacity-0 shadow-md transition-all group-hover:translate-y-0 group-hover:opacity-100 hover:bg-primary disabled:pointer-events-none'>
-					<CartIcon className='h-4 w-4' />
-				</button>
-			</Link>
+			<button
+				type='button'
+				aria-label='Thêm vào giỏ hàng'
+				onClick={(e) => e.preventDefault()}
+				disabled={!product.inStock || isDiscontinued}
+				className='absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-ink text-white opacity-0 shadow-md transition-all group-hover:translate-y-0 group-hover:opacity-100 hover:bg-primary disabled:pointer-events-none'>
+				<CartIcon className='h-4 w-4' />
+			</button>
+		</>
+	);
+
+	return (
+		<div
+			className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-shadow ${
+				isDiscontinued ? "opacity-60" : "hover:shadow-lg hover:shadow-ink/5"
+			}`}>
+			{/* Sản phẩm ngừng kinh doanh: không cho bấm vào (trang chi tiết công khai vẫn trả 404 cho sản
+			    phẩm inactive), chỉ hiển thị để người dùng biết sản phẩm này từng tồn tại, vd: trong lịch sử đơn hàng. */}
+			{isDiscontinued ? (
+				<div
+					aria-disabled='true'
+					className='relative block aspect-square cursor-not-allowed overflow-hidden bg-cream-soft'>
+					{media}
+				</div>
+			) : (
+				<Link
+					to={paths.client.productDetail(product.slug)}
+					className='relative block aspect-square overflow-hidden bg-cream-soft'>
+					{media}
+				</Link>
+			)}
 
 			<div className='flex flex-1 flex-col gap-1.5 p-4'>
 				{/* Danh sách công khai (GET /products) không trả điểm đánh giá trung bình, chỉ có số lượng review
@@ -61,11 +90,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
 					<span className='text-xs text-muted'>{product.reviewCount} đánh giá</span>
 				)}
 
-				<Link
-					to={paths.client.productDetail(product.slug)}
-					className='line-clamp-1 text-sm font-semibold text-ink hover:text-primary-dark'>
-					{product.name}
-				</Link>
+				{isDiscontinued ? (
+					<span className='line-clamp-1 cursor-not-allowed text-sm font-semibold text-ink/60'>{product.name}</span>
+				) : (
+					<Link
+						to={paths.client.productDetail(product.slug)}
+						className='line-clamp-1 text-sm font-semibold text-ink hover:text-primary-dark'>
+						{product.name}
+					</Link>
+				)}
 
 				<div className='mt-auto flex items-center gap-2 pt-1'>
 					<span className='text-base font-bold text-primary-dark'>{formatCurrency(product.price)}</span>

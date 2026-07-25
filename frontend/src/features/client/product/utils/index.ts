@@ -41,6 +41,7 @@ export function toProductCardItem(product: PublicProductListItem): ProductCardIt
 		price: min,
 		reviewCount: product._count.reviews,
 		inStock: isProductInStock(product.skus),
+		isActive: product.isActive,
 		image: getProductThumbnail(product),
 	};
 }

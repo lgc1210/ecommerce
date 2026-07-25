@@ -3,6 +3,8 @@ import BreadCrumb from "../../components/breadcrumb";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
 import { HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../components/icons";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const stats = [
 	{ value: "10K+", label: "Khách hàng hài lòng" },
@@ -30,6 +32,35 @@ const values = [
 ];
 
 const AboutPage = () => {
+	const [bannerUrl, setBannerUrl] = useState(
+		"https://placehold.co/700x560/f3ede4/1c1815?font=montserrat&text=Ecommerce+Story",
+	);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchBanner = async () => {
+			try {
+				const response = await axios.get("http://localhost:1337/api/about-banner?populate=*");
+				console.log("response: ", response);
+				const data = response.data;
+				console.log("url: ", data?.data?.Banner?.url);
+
+				if (data?.data?.Banner?.url) {
+					const url = `http://localhost:1337${data.data.Banner.url}`;
+					setBannerUrl(url);
+				}
+			} catch (error) {
+				console.error("Error fetching banner:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchBanner();
+	}, []);
+
+	if (loading) return <div>Đang tải ảnh từ CMS...</div>;
+
 	return (
 		<div>
 			<BreadCrumb title='Giới thiệu' description='Câu chuyện của Ecommerce và những giá trị chúng tôi theo đuổi.' />
@@ -37,12 +68,8 @@ const AboutPage = () => {
 			{/* Story */}
 			<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
 				<div className='grid items-center gap-10 lg:grid-cols-2'>
-					<div className='overflow-hidden rounded-3xl bg-cream-soft'>
-						<img
-							src='https://placehold.co/700x560/f3ede4/1c1815?font=montserrat&text=Ecommerce+Story'
-							alt='Câu chuyện Ecommerce'
-							className='h-full w-full object-cover'
-						/>
+					<div className='overflow-hidden rounded-3xl bg-cream-soft min-h-96 h-full'>
+						<img src={bannerUrl} alt='Câu chuyện Ecommerce' className='w-full h-full object-cover' />
 					</div>
 					<div>
 						<span className='text-xs font-bold uppercase tracking-wider text-primary-dark'>Về chúng tôi</span>

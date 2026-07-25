@@ -63,6 +63,13 @@ class CartService {
 	async updateItemQuantity(userId: number, itemId: number, quantity: number) {
 		const item = await this.getOwnedItemOrThrow(userId, itemId);
 
+		// Sản phẩm đã ngừng kinh doanh (isActive=false) thì không cho đổi số lượng nữa — dù tăng hay
+		// giảm, item vẫn sẽ chặn checkout (xem OrderService.checkout), nên chỉ còn cách hợp lệ là xóa
+		// hẳn khỏi giỏ (removeItem vẫn hoạt động bình thường với item này).
+		if (item.productSku.product && !item.productSku.product.isActive) {
+			throw new Error("BadRequest: Sản phẩm đã ngừng kinh doanh, vui lòng xóa khỏi giỏ hàng.");
+		}
+
 		if (quantity > item.productSku.stockQuantity) {
 			throw new Error(`BadRequest: Chỉ còn ${item.productSku.stockQuantity} sản phẩm trong kho.`);
 		}
@@ -217,7 +224,7 @@ class CartService {
 	private async getOwnedItemOrThrow(userId: number, itemId: number) {
 		const item = await prisma.cartItem.findUnique({
 			where: { id: itemId },
-			include: { cart: true, productSku: true },
+			include: { cart: true, productSku: { include: { product: { select: { isActive: true } } } } },
 		});
 
 		if (!item || item.cart.userId !== userId) {

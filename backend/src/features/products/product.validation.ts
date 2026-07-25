@@ -33,7 +33,8 @@ export const ListProductsQuerySchema = z.object({
 			.regex(/^\d+(\.\d+)?$/)
 			.optional(),
 		sort: z.enum(["newest", "name_asc", "name_desc"]).optional(),
-		// Chỉ admin route mới thực sự áp dụng cờ này (public route luôn ép isActive=true)
+		// Áp dụng như nhau cho cả route public lẫn admin: lọc theo isActive nếu có truyền, mặc định
+		// (không truyền) trả về TẤT CẢ sản phẩm (active lẫn inactive) — xem thêm ProductService.listProducts.
 		isActive: z.enum(["true", "false"]).optional(),
 	}),
 });

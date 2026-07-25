@@ -16,7 +16,7 @@ const quickLinks = [
 	{ to: paths.client.about, label: "Giới thiệu" },
 	{ to: paths.client.shop, label: "Cửa hàng" },
 	{ to: paths.client.contact, label: "Liên hệ" },
-	{ to: paths.client.order, label: "Giỏ hàng" },
+	{ to: paths.client.cart, label: "Giỏ hàng" },
 ];
 
 const accountLinks = [
@@ -28,7 +28,7 @@ const contactItems = [
 	{
 		id: "address",
 		icon: <MapPinIcon className='mt-0.5 h-4 w-4 shrink-0 text-primary' />,
-		content: <p>Toà nhà Ecommerce, Quận 1, TP. Hồ Chí Minh</p>,
+		content: <p>Toà nhà Ecommerce, Quận 8, TP. Hồ Chí Minh</p>,
 		className: "items-start",
 	},
 	{
@@ -80,14 +80,14 @@ const Footer = () => {
 						<h3 className='text-sm font-semibold uppercase tracking-wider text-cream/40'>Liên kết</h3>
 						<ul className='mt-4 space-y-2.5 text-sm'>
 							{quickLinks.map((link) => (
-								<li key={link.to}>
+								<li key={link.to + new Date().getTime()}>
 									<Link to={link.to} className='text-cream/70 hover:text-primary'>
 										{link.label}
 									</Link>
 								</li>
 							))}
 							{accountLinks.map((link) => (
-								<li key={link.to}>
+								<li key={link.to + new Date().getTime()}>
 									<Link to={link.to} className='text-cream/70 hover:text-primary'>
 										{link.label}
 									</Link>
@@ -100,7 +100,7 @@ const Footer = () => {
 						<h3 className='text-sm font-semibold uppercase tracking-wider text-cream/40'>Liên hệ</h3>
 						<ul className='mt-4 space-y-3 text-sm text-cream/70'>
 							{contactItems.map((item) => (
-								<li key={item.id} className={`flex gap-2.5 ${item.className}`}>
+								<li key={item.id + new Date().getTime()} className={`flex gap-2.5 ${item.className}`}>
 									{item.icon}
 									{item.content}
 								</li>
@@ -112,7 +112,7 @@ const Footer = () => {
 						<h3 className='text-sm font-semibold uppercase tracking-wider text-cream/40'>Sản phẩm mới</h3>
 						<ul className='mt-4 space-y-3'>
 							{newProducts.map((product) => (
-								<li key={product.slug}>
+								<li key={product.slug + new Date().getTime()}>
 									<Link to={paths.client.productDetail(product.slug)} className='flex items-center gap-3 group'>
 										<img
 											src={product.image}

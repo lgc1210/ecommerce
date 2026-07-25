@@ -7,7 +7,7 @@ import paths from "../../configs/constants/paths";
 import { formatCurrency } from "../../utils/currency";
 import { CartIcon, MinusIcon, PlusIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../components/icons";
 import VariationSelector from "../../features/client/product/components/variation-selector";
-import { useProductBySlugQuery, useProductsQuery } from "../../features/client/product/hooks";
+import { useProductBySlugQuery } from "../../features/client/product/hooks";
 import {
 	collectVariationAttributes,
 	findMatchingSku,
@@ -49,14 +49,6 @@ const ProductDetailPage = () => {
 		setQuantity(1);
 	}
 
-	// Sản phẩm liên quan: cùng danh mục, chỉ fetch khi sản phẩm hiện tại có category.
-	// Hook này phải được gọi vô điều kiện (trước mọi early return) để tuân thủ Rules of Hooks —
-	// dùng optional chaining vì product có thể chưa tải xong (undefined) ở lần render đầu.
-	const { data: relatedResult } = useProductsQuery(
-		{ categoryId: product?.categoryId ?? undefined, limit: 5 },
-		{ enabled: Boolean(product?.categoryId) },
-	);
-
 	if (isLoading) {
 		return (
 			<div className='mx-auto max-w-7xl px-4 py-24 text-center text-muted sm:px-6 lg:px-8'>Đang tải sản phẩm...</div>
@@ -84,6 +76,7 @@ const ProductDetailPage = () => {
 	// Chỉ có tối đa 20 review gần nhất được backend trả về (xem productDetailInclude ở product.service.ts),
 	// nên đây là số lượng review đang hiển thị, không hẳn là tổng số review thực tế của sản phẩm.
 	const reviewCount = product.reviews.length;
+	const related = product.related;
 
 	const handleSelect = (attribute: string, value: string) => {
 		setSelected((prev) => ({ ...prev, [attribute]: value }));
@@ -107,8 +100,6 @@ const ProductDetailPage = () => {
 		// khách chưa đăng nhập thêm vào giỏ cục bộ không qua API nên toast ở đây.
 		if (!isAuthenticated) toast.success("Đã thêm vào giỏ hàng.");
 	};
-
-	const related = (relatedResult?.data ?? []).filter((p) => p.slug !== product.slug).slice(0, 4);
 
 	return (
 		<div>
