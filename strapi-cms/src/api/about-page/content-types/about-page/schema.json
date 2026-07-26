@@ -1,0 +1,40 @@
+{
+  "kind": "singleType",
+  "collectionName": "about_pages",
+  "info": {
+    "singularName": "about-page",
+    "pluralName": "about-pages",
+    "displayName": "About Page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "breadcrumb": {
+      "type": "component",
+      "component": "sections.breadcrumb",
+      "repeatable": false
+    },
+    "story_section": {
+      "type": "component",
+      "component": "sections.story-section",
+      "repeatable": false
+    },
+    "stats_section": {
+      "type": "component",
+      "component": "sections.stats-section",
+      "repeatable": true
+    },
+    "value_section": {
+      "type": "component",
+      "component": "sections.value-section",
+      "repeatable": false
+    },
+    "cta_section": {
+      "type": "component",
+      "component": "sections.cta-section",
+      "repeatable": false
+    }
+  }
+}

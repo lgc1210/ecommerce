@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_sections_value_items",
+  "info": {
+    "displayName": "ValueItem"
+  },
+  "options": {},
+  "attributes": {
+    "icon_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

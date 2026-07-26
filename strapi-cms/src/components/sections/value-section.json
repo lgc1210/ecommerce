@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_sections_value_sections",
+  "info": {
+    "displayName": "ValueSection"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "items": {
+      "type": "component",
+      "component": "sections.value-item",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}

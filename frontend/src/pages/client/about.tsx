@@ -1,92 +1,72 @@
+import type { SVGProps } from "react";
 import { Link } from "react-router-dom";
+import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import BreadCrumb from "../../components/breadcrumb";
 import Button from "../../components/button";
+import Loading from "../../shared/components/loading";
 import paths from "../../configs/constants/paths";
 import { HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../components/icons";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useAboutPageQuery } from "../../features/client/about/hooks";
+import { getStrapiMediaUrl } from "../../utils/strapi";
 
-const stats = [
-	{ value: "10K+", label: "Khách hàng hài lòng" },
-	{ value: "500+", label: "Sản phẩm đa dạng" },
-	{ value: "24/7", label: "Hỗ trợ trực tuyến" },
-	{ value: "8", label: "Năm kinh nghiệm" },
-];
+const DEFAULT_BANNER_URL = "https://placehold.co/700x560/f3ede4/1c1815?font=montserrat&text=Ecommerce+Story";
 
-const values = [
-	{
-		icon: ShieldCheckIcon,
-		title: "Chất lượng đảm bảo",
-		description: "Mọi sản phẩm đều được kiểm định kỹ lưỡng trước khi đến tay khách hàng.",
-	},
-	{
-		icon: TruckIcon,
-		title: "Giao hàng nhanh chóng",
-		description: "Hệ thống kho vận rộng khắp giúp đơn hàng đến tay bạn trong thời gian ngắn nhất.",
-	},
-	{
-		icon: HeadsetIcon,
-		title: "Chăm sóc tận tâm",
-		description: "Đội ngũ tư vấn viên luôn sẵn sàng đồng hành cùng bạn trước và sau khi mua hàng.",
-	},
-];
+// icon_name cấu hình trên Strapi (vd "shield", "truck", "headset") -> component icon tương ứng ở frontend.
+// Icon nào chưa map thì fallback về ShieldCheckIcon thay vì crash trang.
+const VALUE_ICON_MAP: Record<string, (props: SVGProps<SVGSVGElement>) => React.JSX.Element> = {
+	shield: ShieldCheckIcon,
+	truck: TruckIcon,
+	headset: HeadsetIcon,
+};
 
 const AboutPage = () => {
-	const [bannerUrl, setBannerUrl] = useState(
-		"https://placehold.co/700x560/f3ede4/1c1815?font=montserrat&text=Ecommerce+Story",
-	);
-	const [loading, setLoading] = useState(true);
+	// Toàn bộ nội dung trang (breadcrumb, story, số liệu, giá trị cốt lõi, CTA)
+	// đều lấy động từ Strapi qua single type "about-page".
+	const { data, isLoading, isError } = useAboutPageQuery();
+	const page = data?.data;
 
-	useEffect(() => {
-		const fetchBanner = async () => {
-			try {
-				const response = await axios.get("http://localhost:1337/api/about-banner?populate=*");
-				console.log("response: ", response);
-				const data = response.data;
-				console.log("url: ", data?.data?.Banner?.url);
+	if (isLoading) {
+		return <Loading label='Đang tải nội dung...' />;
+	}
 
-				if (data?.data?.Banner?.url) {
-					const url = `http://localhost:1337${data.data.Banner.url}`;
-					setBannerUrl(url);
-				}
-			} catch (error) {
-				console.error("Error fetching banner:", error);
-			} finally {
-				setLoading(false);
-			}
-		};
+	if (isError || !page) {
+		return (
+			<div className='flex min-h-[60vh] items-center justify-center text-center text-muted'>
+				Không thể tải nội dung trang Giới thiệu. Vui lòng thử lại sau.
+			</div>
+		);
+	}
 
-		fetchBanner();
-	}, []);
-
-	if (loading) return <div>Đang tải ảnh từ CMS...</div>;
+	const { breadcrumb, stats_section, cta_section, story_section, value_section } = page;
+	const bannerUrl = getStrapiMediaUrl(story_section.banner?.url) ?? DEFAULT_BANNER_URL;
 
 	return (
 		<div>
-			<BreadCrumb title='Giới thiệu' description='Câu chuyện của Ecommerce và những giá trị chúng tôi theo đuổi.' />
+			<BreadCrumb title={breadcrumb.title} description={breadcrumb.description} />
 
 			{/* Story */}
 			<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
 				<div className='grid items-center gap-10 lg:grid-cols-2'>
 					<div className='overflow-hidden rounded-3xl bg-cream-soft min-h-96 h-full'>
-						<img src={bannerUrl} alt='Câu chuyện Ecommerce' className='w-full h-full object-cover' />
+						<img
+							src={bannerUrl}
+							alt={story_section.banner?.alternativeText ?? story_section.title}
+							className='w-full h-full object-cover'
+						/>
 					</div>
 					<div>
-						<span className='text-xs font-bold uppercase tracking-wider text-primary-dark'>Về chúng tôi</span>
-						<h2 className='mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>
-							Mang công nghệ đến gần hơn với cuộc sống của bạn
-						</h2>
-						<p className='mt-5 leading-relaxed text-muted'>
-							Ecommerce ra đời với mong muốn mang đến những thiết bị công nghệ và phụ kiện chất lượng cao, thiết kế tinh
-							gọn nhưng vẫn giữ mức giá hợp lý cho người dùng Việt Nam. Chúng tôi tuyển chọn kỹ càng từng sản phẩm, đảm
-							bảo trải nghiệm mua sắm trọn vẹn từ lúc đặt hàng đến khi sử dụng.
-						</p>
-						<p className='mt-4 leading-relaxed text-muted'>
-							Từ những ngày đầu chỉ với vài dòng sản phẩm âm thanh, đến nay Ecommerce đã mở rộng danh mục sang thiết bị
-							đeo thông minh, phụ kiện chơi game và thực tế ảo — luôn đồng hành cùng xu hướng công nghệ mới nhất.
-						</p>
+						<span className='text-xs font-bold uppercase tracking-wider text-primary-dark'>{story_section.badge}</span>
+						<h2 className='mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>{story_section.title}</h2>
+						<div className='mt-5 space-y-4 leading-relaxed text-muted'>
+							<BlocksRenderer
+								content={story_section.content}
+								blocks={{
+									paragraph: ({ children }) => <p>{children}</p>,
+								}}
+							/>
+						</div>
 						<Link to={paths.client.shop}>
-							<Button className='mt-6'>Khám phá sản phẩm</Button>
+							<Button className='mt-6'>{story_section.btn_text}</Button>
 						</Link>
 					</div>
 				</div>
@@ -95,8 +75,8 @@ const AboutPage = () => {
 			{/* Stats */}
 			<section className='border-y border-border bg-ink'>
 				<div className='mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-14 text-center sm:px-6 lg:grid-cols-4 lg:px-8'>
-					{stats.map((stat) => (
-						<div key={stat.label}>
+					{stats_section.map((stat) => (
+						<div key={stat.id}>
 							<p className='text-3xl font-extrabold text-primary sm:text-4xl'>{stat.value}</p>
 							<p className='mt-2 text-sm text-cream/60'>{stat.label}</p>
 						</div>
@@ -107,35 +87,32 @@ const AboutPage = () => {
 			{/* Values */}
 			<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
 				<div className='text-center'>
-					<h2 className='text-2xl font-extrabold tracking-tight text-ink sm:text-3xl'>Vì sao chọn Ecommerce</h2>
-					<p className='mx-auto mt-2 max-w-md text-sm text-muted'>
-						Ba giá trị cốt lõi chúng tôi theo đuổi trong từng đơn hàng.
-					</p>
+					<h2 className='text-2xl font-extrabold tracking-tight text-ink sm:text-3xl'>{value_section.title}</h2>
+					<p className='mx-auto mt-2 max-w-md text-sm text-muted'>{value_section.description}</p>
 				</div>
 				<div className='mt-10 grid gap-6 sm:grid-cols-3'>
-					{values.map(({ icon: Icon, title, description }) => (
-						<div key={title} className='rounded-2xl border border-border bg-surface p-7 text-center'>
-							<span className='mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-primary-dark'>
-								<Icon className='h-7 w-7' />
-							</span>
-							<h3 className='mt-5 font-bold text-ink'>{title}</h3>
-							<p className='mt-2 text-sm leading-relaxed text-muted'>{description}</p>
-						</div>
-					))}
+					{value_section.items.map((item) => {
+						const Icon = VALUE_ICON_MAP[item.icon_name] ?? ShieldCheckIcon;
+						return (
+							<div key={item.id} className='rounded-2xl border border-border bg-surface p-7 text-center'>
+								<span className='mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-primary-dark'>
+									<Icon className='h-7 w-7' />
+								</span>
+								<h3 className='mt-5 font-bold text-ink'>{item.title}</h3>
+								<p className='mt-2 text-sm leading-relaxed text-muted'>{item.description}</p>
+							</div>
+						);
+					})}
 				</div>
 			</section>
 
 			{/* CTA */}
 			<section className='border-t border-border bg-primary'>
 				<div className='mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-14 text-center sm:px-6 lg:px-8'>
-					<h2 className='text-2xl font-extrabold tracking-tight text-white sm:text-3xl'>
-						Sẵn sàng nâng cấp thiết bị của bạn?
-					</h2>
-					<p className='max-w-md text-sm text-white/80'>
-						Khám phá bộ sưu tập mới nhất và nhận ưu đãi hấp dẫn ngay hôm nay.
-					</p>
+					<h2 className='text-2xl font-extrabold tracking-tight text-white sm:text-3xl'>{cta_section.title}</h2>
+					<p className='max-w-md text-sm text-white/80'>{cta_section.description}</p>
 					<Link to={paths.client.shop}>
-						<Button variant='dark'>Mua sắm ngay</Button>
+						<Button variant='dark'>{cta_section.btn_text}</Button>
 					</Link>
 				</div>
 			</section>

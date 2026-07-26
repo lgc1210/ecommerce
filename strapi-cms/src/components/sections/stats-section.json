@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_sections_stats_sections",
+  "info": {
+    "displayName": "StatsSection"
+  },
+  "options": {},
+  "attributes": {
+    "value": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}
