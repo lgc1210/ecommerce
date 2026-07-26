@@ -2,6 +2,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BellIcon, CloseIcon, ShieldCheckIcon } from "./components/icons";
 import Button from "./components/button";
+import BackToTop from "./shared/components/back-to-top";
 
 const CustomIcon = ({ type }: { type: string }) => {
 	const iconClasses = "w-6 h-6 flex-shrink-0";
@@ -57,6 +58,7 @@ const App = () => {
 				// Progress bar utilizing your accent primary token
 				progressClassName='bg-primary!'
 			/>
+			<BackToTop />
 		</>
 	);
 };
