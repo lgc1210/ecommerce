@@ -5,6 +5,7 @@ import type {
 	ListCategoriesResult,
 	ListProductsParams,
 	ListProductsResult,
+	PublicCategoryTreeNode,
 	PublicProductDetail,
 } from "../types";
 
@@ -42,6 +43,21 @@ export const useCategoriesQuery = (params: ListCategoriesParams = { limit: 100 }
 		queryFn: async () => {
 			const res = await productService.getCategories(params);
 			return res.data;
+		},
+		staleTime: 5 * 60 * 1000,
+	});
+};
+
+/**
+ * Cây danh mục phân cấp (tree=true) dùng cho bộ lọc ở trang Shop — thay cho danh sách phẳng
+ * (useCategoriesQuery) để hiển thị danh mục cha kèm dropdown danh mục con lồng bên trong.
+ */
+export const useCategoryTreeQuery = () => {
+	return useQuery<PublicCategoryTreeNode[]>({
+		queryKey: [...PUBLIC_CATEGORIES_QUERY_KEY, "tree"],
+		queryFn: async () => {
+			const res = await productService.getCategoryTree();
+			return res.data.data;
 		},
 		staleTime: 5 * 60 * 1000,
 	});

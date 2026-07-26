@@ -12,6 +12,16 @@ export interface PublicCategory extends PublicCategoryRef {
 	_count: { products: number };
 }
 
+/**
+ * Node cây danh mục — khớp GET /categories?tree=true (xem buildCategoryTree ở backend).
+ * Dùng để render bộ lọc danh mục phân cấp (cha - con) ở trang Shop, thay cho danh sách phẳng.
+ */
+export interface PublicCategoryTreeNode extends PublicCategoryRef {
+	description: string | null;
+	_count: { subcategories: number; products: number };
+	subcategories: PublicCategoryTreeNode[];
+}
+
 /** Thuộc tính biến thể tự do, vd: { color: "Đen", size: "M" } — khớp Json field ở backend. */
 export type VariationDetails = Record<string, string>;
 

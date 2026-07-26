@@ -1,4 +1,4 @@
-import express, { type Application } from "express";
+import express, { type Application, type Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -38,7 +38,7 @@ app.use(cookieParser());
 app.use(
 	"/uploads",
 	express.static(UPLOAD_ROOT, {
-		setHeaders: (res) => {
+		setHeaders: (res: Response) => {
 			res.set("Cross-Origin-Resource-Policy", "same-site");
 		},
 	}),

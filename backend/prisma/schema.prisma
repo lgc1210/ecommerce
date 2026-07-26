@@ -219,7 +219,7 @@ model ProductSku {
   id               Int         @id @default(autoincrement())
   productId        Int?        @map("product_id")
   sku              String      @unique @db.VarChar(50)
-  price            Decimal     @db.Decimal(10, 2)
+  price            Decimal     @db.Decimal(14, 2)
   stockQuantity    Int         @default(0) @map("stock_quantity")
   variationDetails Json        @map("variation_details")
   createdAt        DateTime?   @default(now()) @map("created_at")
@@ -285,9 +285,9 @@ model Coupon {
   id               Int          @id @default(autoincrement())
   code             String       @unique @db.VarChar(50)
   discountType     DiscountType @map("discount_type")
-  discountValue    Decimal      @map("discount_value") @db.Decimal(10, 2)
-  minOrderValue    Decimal      @default(0.00) @map("min_order_value") @db.Decimal(10, 2)
-  maxDiscountValue Decimal?     @map("max_discount_value") @db.Decimal(10, 2) // Giới hạn cho mã giảm theo %
+  discountValue    Decimal      @map("discount_value") @db.Decimal(14, 2)
+  minOrderValue    Decimal      @default(0.00) @map("min_order_value") @db.Decimal(14, 2)
+  maxDiscountValue Decimal?     @map("max_discount_value") @db.Decimal(14, 2) // Giới hạn cho mã giảm theo %
   startsAt         DateTime     @map("starts_at")
   expiresAt        DateTime     @map("expires_at")
   usageLimit       Int?         @map("usage_limit")
@@ -306,10 +306,10 @@ model Order {
   couponId          Int?         @map("coupon_id")
 
   orderNumber       String       @unique @map("order_number") @db.VarChar(50) // Mã đơn hàng hiển thị cho khách (vd: ORD-2024-X)
-  subtotalAmount    Decimal      @map("subtotal_amount") @db.Decimal(10, 2)   // Giá tổng trước khi giảm
-  discountAmount    Decimal      @default(0.00) @map("discount_amount") @db.Decimal(10, 2) // Số tiền được giảm từ coupon
-  shippingFee       Decimal      @default(0.00) @map("shipping_fee") @db.Decimal(10, 2)
-  totalAmount       Decimal      @map("total_amount") @db.Decimal(10, 2)      // Số tiền cuối khách cần trả
+  subtotalAmount    Decimal      @map("subtotal_amount") @db.Decimal(14, 2)   // Giá tổng trước khi giảm
+  discountAmount    Decimal      @default(0.00) @map("discount_amount") @db.Decimal(14, 2) // Số tiền được giảm từ coupon
+  shippingFee       Decimal      @default(0.00) @map("shipping_fee") @db.Decimal(14, 2)
+  totalAmount       Decimal      @map("total_amount") @db.Decimal(14, 2)      // Số tiền cuối khách cần trả
 
   orderStatus       OrderStatus  @default(pending) @map("order_status")
   createdAt         DateTime?    @default(now()) @map("created_at")
@@ -333,7 +333,7 @@ model OrderItem {
   productSkuId      Int?        @map("product_sku_id")
 
   quantity          Int
-  priceAtPurchase   Decimal     @map("price_at_purchase") @db.Decimal(10, 2) // Chụp lại giá tại thời điểm mua để đối soát tài chính
+  priceAtPurchase   Decimal     @map("price_at_purchase") @db.Decimal(14, 2) // Chụp lại giá tại thời điểm mua để đối soát tài chính
   variationSnapshot Json?       @map("variation_snapshot") // Chụp lại thông tin màu sắc/kích cỡ phòng trường hợp sản phẩm đổi thông tin
 
   order             Order       @relation(fields: [orderId], references: [id])
@@ -348,7 +348,7 @@ model Payment {
   paymentMethod PaymentMethod @map("payment_method")
   paymentStatus PaymentStatus @default(pending) @map("payment_status")
   transactionId String?       @map("transaction_id") @db.VarChar(255) // Mã giao dịch trả về từ ngân hàng / Ví điện tử
-  amount        Decimal       @db.Decimal(10, 2)
+  amount        Decimal       @db.Decimal(14, 2)
   paidAt        DateTime?     @map("paid_at")
   createdAt     DateTime?     @default(now()) @map("created_at")
 

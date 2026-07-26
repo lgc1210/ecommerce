@@ -11,8 +11,8 @@ const sampleContacts = [
 	{
 		name: "Trần Thị Bình",
 		email: "tranthibinh@example.com",
-		subject: "Yêu cầu đổi size",
-		message: "Sản phẩm tôi nhận được bị nhỏ hơn so với size đã đặt, tôi muốn đổi sang size lớn hơn.",
+		subject: "Yêu cầu đổi hàng do lỗi kỹ thuật",
+		message: "Sản phẩm tôi nhận được bị lỗi màn hình sau 2 ngày sử dụng, tôi muốn đổi sang máy mới còn bảo hành.",
 		status: "in_progress" as const,
 	},
 	{

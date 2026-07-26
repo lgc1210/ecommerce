@@ -26,6 +26,9 @@ const productService = {
 				search: params.search || undefined,
 			},
 		}),
+	/** Cây danh mục đầy đủ (tree=true) — dùng để render bộ lọc phân cấp ở trang Shop (xem
+	 *  category.service.ts:listCategories ở backend, bỏ qua phân trang khi tree=true). */
+	getCategoryTree: () => apiClient.get("/categories", { params: { tree: "true" } }),
 };
 
 export default productService;

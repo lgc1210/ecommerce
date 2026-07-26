@@ -9,6 +9,7 @@ import { couponSeed } from "./features/coupons/coupon.seed.js";
 import { reviewSeed } from "./features/reviews/review.seed.js";
 import { contactSeed } from "./features/contacts/contact.seed.js";
 import { orderSeed } from "./features/orders/order.seed.js";
+import { categorySeed } from "./features/categories/category.seed.js";
 
 async function bootstrap(): Promise<void> {
 	try {
@@ -22,6 +23,7 @@ async function bootstrap(): Promise<void> {
 		await rolePermissionSeed();
 		await userSeed();
 		await userAddressSeed();
+		await categorySeed();
 		await productSeed();
 		await orderSeed();
 		await couponSeed();

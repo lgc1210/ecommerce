@@ -1,11 +1,11 @@
 import prisma from "../../config/prisma.js";
 
 const sampleComments = [
-	"Sản phẩm đúng như mô tả, chất lượng tốt, đóng gói cẩn thận.",
-	"Giao hàng nhanh, sẽ ủng hộ shop tiếp.",
-	"Chất liệu ổn trong tầm giá, form hơi rộng so với bảng size.",
-	"Rất hài lòng, sẽ mua lại lần sau.",
-	"Tạm ổn, không quá xuất sắc nhưng dùng được.",
+	"Sản phẩm đúng như mô tả, chất lượng tốt, đóng gói cẩn thận, có xốp chống sốc kỹ.",
+	"Giao hàng nhanh, máy chạy mượt, sẽ ủng hộ shop tiếp.",
+	"Hiệu năng ổn trong tầm giá, pin hơi hao nhanh hơn quảng cáo một chút.",
+	"Rất hài lòng, đóng gói cẩn thận, đủ phụ kiện, sẽ mua lại lần sau.",
+	"Tạm ổn, không quá xuất sắc nhưng dùng tốt, đáng tiền.",
 ];
 
 /**

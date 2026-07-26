@@ -5,10 +5,11 @@ import { parseNumberParam, parseEnumParam } from "../../utils/searchParams";
 import { ChevronDownIcon, FilterIcon, SearchIcon } from "../../components/icons";
 import useListQueryParams from "../../hooks/useListQueryParams";
 import { useState } from "react";
-import { useCategoriesQuery, useProductsQuery } from "../../features/client/product/hooks";
+import { useCategoryTreeQuery, useProductsQuery } from "../../features/client/product/hooks";
 import { toProductCardItem } from "../../features/client/product/utils";
 import type { ListProductsParams } from "../../features/client/product/types";
 import ProductCard from "../../features/client/product/components/product-card";
+import CategoryFilterTree from "../../features/client/product/components/category-filter-tree";
 
 const PAGE_SIZE = 12;
 const MAX_PRICE = 5000000;
@@ -33,8 +34,8 @@ const ShopPage = () => {
 	const maxPrice = parseNumberParam(searchParams, "maxPrice") ?? MAX_PRICE;
 	const sort = parseEnumParam<NonNullable<ListProductsParams["sort"]>>(searchParams, "sort") ?? "newest";
 
-	const { data: categoriesResult } = useCategoriesQuery({ limit: 100 });
-	const categories = categoriesResult?.data ?? [];
+	const { data: categoryTree } = useCategoryTreeQuery();
+	const categories = categoryTree ?? [];
 
 	const { data, isLoading, isFetching } = useProductsQuery({
 		page,
@@ -74,22 +75,13 @@ const ShopPage = () => {
 
 			<div>
 				<h3 className='font-bold text-ink'>Danh mục</h3>
-				<ul className='mt-4 space-y-3'>
-					{categories.map((category) => (
-						<li key={category.id}>
-							<label className='flex cursor-pointer items-center gap-2.5 text-sm text-ink/80'>
-								<input
-									type='checkbox'
-									checked={categoryId === category.id}
-									onChange={() => toggleCategory(category.id)}
-									className='h-4 w-4 rounded border-border text-primary focus:ring-primary-light'
-								/>
-								{category.name}
-								<span className='ml-auto text-xs text-muted'>{category._count.products}</span>
-							</label>
-						</li>
-					))}
-				</ul>
+				<div className='mt-4'>
+					<CategoryFilterTree
+						categories={categories}
+						selectedCategoryId={categoryId}
+						onToggleCategory={toggleCategory}
+					/>
+				</div>
 			</div>
 
 			<div>
