@@ -7,6 +7,7 @@ interface CreateCategoryInput {
 	slug?: string;
 	description?: string;
 	parentId?: number | null;
+	isFeatured?: boolean;
 }
 
 interface UpdateCategoryInput {
@@ -14,6 +15,7 @@ interface UpdateCategoryInput {
 	slug?: string;
 	description?: string;
 	parentId?: number | null;
+	isFeatured?: boolean;
 }
 
 interface ListCategoriesParams {
@@ -89,6 +91,18 @@ class CategoryService {
 		return category;
 	}
 
+	/** Lấy danh sách danh mục nổi bật (is_featured = true), dùng cho trang chủ / client */
+	async getFeaturedCategories(limit?: number) {
+		const categories = await prisma.category.findMany({
+			where: { isFeatured: true },
+			include: categoryListInclude,
+			orderBy: { name: "asc" },
+			...(limit !== undefined ? { take: limit } : {}),
+		});
+
+		return { data: categories };
+	}
+
 	// ==========================================
 	// Admin
 	// ==========================================
@@ -121,6 +135,7 @@ class CategoryService {
 				slug,
 				description: data.description ?? null,
 				parentId: data.parentId ?? null,
+				isFeatured: data.isFeatured ?? false,
 			},
 		});
 	}
@@ -135,6 +150,7 @@ class CategoryService {
 
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.description !== undefined) updateData.description = data.description;
+		if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
 
 		if (data.slug !== undefined && data.slug !== existing.slug) {
 			const slugOwner = await prisma.category.findUnique({ where: { slug: data.slug } });
@@ -152,7 +168,9 @@ class CategoryService {
 				await this.assertParentExists(data.parentId);
 				const isDescendant = await this.isDescendantOf(data.parentId, id);
 				if (isDescendant) {
-					throw new Error("BadRequest: Không thể chọn danh mục con của chính nó làm danh mục cha (tạo vòng lặp phân cấp).");
+					throw new Error(
+						"BadRequest: Không thể chọn danh mục con của chính nó làm danh mục cha (tạo vòng lặp phân cấp).",
+					);
 				}
 			}
 			updateData.parentId = data.parentId;
@@ -172,11 +190,15 @@ class CategoryService {
 		}
 
 		if (category._count.subcategories > 0) {
-			throw new Error("Conflict: Không thể xóa danh mục vì vẫn còn danh mục con. Hãy xóa hoặc chuyển các danh mục con trước.");
+			throw new Error(
+				"Conflict: Không thể xóa danh mục vì vẫn còn danh mục con. Hãy xóa hoặc chuyển các danh mục con trước.",
+			);
 		}
 
 		if (category._count.products > 0) {
-			throw new Error("Conflict: Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Hãy chuyển sản phẩm sang danh mục khác trước.");
+			throw new Error(
+				"Conflict: Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Hãy chuyển sản phẩm sang danh mục khác trước.",
+			);
 		}
 
 		await prisma.category.delete({ where: { id } });

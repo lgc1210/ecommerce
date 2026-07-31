@@ -8,7 +8,7 @@ const BackToTop = () => {
 	useEffect(() => {
 		const handleScroll = () => {
 			const scrollTop = window.pageYOffset;
-			if (scrollTop > 700) {
+			if (scrollTop > 500) {
 				setShowButton(true);
 			} else {
 				setShowButton(false);

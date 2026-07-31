@@ -1,4 +1,4 @@
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, Zoom } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BellIcon, CloseIcon, ShieldCheckIcon } from "./components/icons";
 import Button from "./components/button";
@@ -49,6 +49,7 @@ const App = () => {
 				position='top-right'
 				autoClose={3000}
 				closeOnClick
+				transition={Zoom}
 				draggable
 				icon={CustomIcon}
 				closeButton={CustomCloseButton}

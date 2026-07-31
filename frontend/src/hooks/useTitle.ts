@@ -1,9 +1,6 @@
 import { useEffect } from "react";
 import { useMatches } from "react-router-dom";
-
-type RouteHandle = {
-	title?: string;
-};
+import type { RouteHandle } from "../types";
 
 const useTitle = () => {
 	const matches = useMatches();

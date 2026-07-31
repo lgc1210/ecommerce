@@ -13,15 +13,12 @@ import { CONTACT_STATUS_LABEL } from "../../../features/admin/contact/utils";
 import StatusBadge from "../../../features/admin/contact/components/status-badge";
 import ContactDetailModal from "../../../features/admin/contact/components/contact-detail-modal";
 import Button from "../../../components/button";
+import { formatDate } from "../../../utils";
 
-const formatDate = (value: string) =>
-	new Date(value).toLocaleString("vi-VN", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
+// Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
+// nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
+// "ảo" vượt quá dữ liệu thật (bấm vào sẽ trả về rỗng dù còn sản phẩm).
+const PAGE_SIZE = 10;
 
 /**
  * Trang quản trị Contact. Route "/admin/contact" đã được bảo vệ bởi
@@ -35,7 +32,9 @@ const formatDate = (value: string) =>
  */
 const AdminContactPage = () => {
 	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams();
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const status = parseEnumParam<ContactStatus>(searchParams, "status");
 
@@ -129,11 +128,11 @@ const AdminContactPage = () => {
 									</td>
 									<td className='px-5 py-3.5'>
 										{contact.user ? (
-											<span className='inline-flex items-center rounded-full bg-primary-light px-2.5 py-1 text-xs font-semibold text-primary-dark'>
+											<span className='inline-flex items-center rounded-full bg-primary-light px-2.5 py-1 text-xs truncate font-semibold text-primary-dark'>
 												Tài khoản #{contact.user.id}
 											</span>
 										) : (
-											<span className='inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-xs text-ink/60'>
+											<span className='inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-xs truncate text-ink/60'>
 												Khách vãng lai
 											</span>
 										)}
@@ -152,7 +151,7 @@ const AdminContactPage = () => {
 
 			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
 
-			<Pagination total={pagination?.total ?? 0} isLoading={isFetching} />
+			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
 			{selectedContact && (
 				<ContactDetailModal

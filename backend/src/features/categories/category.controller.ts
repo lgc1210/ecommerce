@@ -14,6 +14,16 @@ export const listCategories = async (req: Request, res: Response, next: NextFunc
 	}
 };
 
+export const getFeaturedCategories = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	try {
+		const limit = req.query.limit ? Number(req.query.limit) : undefined;
+		const result = await categoryService.getFeaturedCategories(limit);
+		res.status(200).json(result);
+	} catch (error) {
+		next(error);
+	}
+};
+
 export const getCategoryBySlug = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const category = await categoryService.getCategoryBySlug(req.params.slug as string);

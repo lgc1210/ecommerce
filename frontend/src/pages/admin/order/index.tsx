@@ -15,6 +15,11 @@ import PaymentStatusBadge from "../../../features/admin/order/components/payment
 import OrderDetailModal from "../../../features/admin/order/components/order-detail-modal";
 import OrderStatusBadge from "../../../features/admin/order/components/order-status-badge";
 
+// Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
+// nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
+// "ảo" vượt quá dữ liệu thật (bấm vào sẽ trả về rỗng dù còn sản phẩm).
+const PAGE_SIZE = 10;
+
 /**
  * Trang quản trị Order. Route "/admin/order" đã được bảo vệ bởi
  * requirePermissionLoader(permissions.order.update) (xem configs/routes/index.ts),
@@ -29,7 +34,9 @@ import OrderStatusBadge from "../../../features/admin/order/components/order-sta
  */
 const AdminOrderPage = () => {
 	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams();
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const status = parseEnumParam<OrderStatus>(searchParams, "status");
 	// dateFrom/dateTo giữ nguyên dạng chuỗi thô (không cần parser riêng) — chỉ convert sang ISO
@@ -160,7 +167,7 @@ const AdminOrderPage = () => {
 
 			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
 
-			<Pagination total={pagination?.total ?? 0} isLoading={isFetching} />
+			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
 			{selectedOrderId !== null && (
 				<OrderDetailModal orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />

@@ -25,6 +25,11 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 	const hasStockChanged =
 		Number(stockInput) !== sku.stockQuantity && stockInput.trim() !== "" && Number(stockInput) >= 0;
 
+	const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = Number(e.target.value);
+		setStockInput(value < 0 ? "0" : String(value));
+	};
+
 	return (
 		<div className='rounded-2xl border border-border bg-surface p-5'>
 			<div className='flex flex-wrap items-start justify-between gap-3'>
@@ -62,7 +67,7 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 						step='any'
 						wrapperClassName='w-32'
 						value={stockInput}
-						onChange={(e) => setStockInput(e.target.value)}
+						onChange={handleStockChange}
 					/>
 					<Button
 						size='sm'

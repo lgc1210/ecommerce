@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from "react";
 import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
 import FormSelect from "../../../../components/form-select";
+import FormCheckbox from "../../../../components/form-checkbox";
 import Button from "../../../../components/button";
 import type { Category, CreateCategoryPayload, UpdateCategoryPayload } from "../types";
 import type { FlatCategoryOption } from "../utils";
@@ -33,6 +34,7 @@ const CategoryFormModal = ({
 	const [slug, setSlug] = useState(category?.slug ?? "");
 	const [description, setDescription] = useState(category?.description ?? "");
 	const [parentId, setParentId] = useState<number | "">(category?.parentId ?? initialParentId ?? "");
+	const [isFeatured, setIsFeatured] = useState(category?.isFeatured ?? false);
 
 	const isValid = name.trim().length >= 2;
 
@@ -47,6 +49,7 @@ const CategoryFormModal = ({
 			// description rỗng vẫn cần gửi "" khi sửa để xóa mô tả cũ đi; khi tạo mới thì bỏ hẳn field nếu rỗng.
 			...(isEditing || description.trim() ? { description: description.trim() } : {}),
 			parentId: parentId === "" ? null : Number(parentId),
+			isFeatured,
 		};
 
 		onSubmit(isEditing ? { id: category!.id, ...basePayload } : basePayload);
@@ -86,6 +89,11 @@ const CategoryFormModal = ({
 					onChange={(e) => setParentId(e.target.value === "" ? "" : Number(e.target.value))}
 					placeholder='— Không có (danh mục gốc) —'
 					options={parentOptions.map((option) => ({ value: option.id, label: option.label }))}
+				/>
+				<FormCheckbox
+					label='Đánh dấu là danh mục nổi bật (hiển thị ở trang chủ)'
+					checked={isFeatured}
+					onChange={(e) => setIsFeatured(e.target.checked)}
 				/>
 
 				<div className='flex justify-end gap-2 pt-2'>

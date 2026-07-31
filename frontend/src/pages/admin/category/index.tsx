@@ -74,6 +74,11 @@ const AdminCategoryPage = () => {
 		deleteCategory.mutate(deletingCategory.id, { onSuccess: () => setDeletingCategory(null) });
 	};
 
+	// Bật/tắt nhanh cờ nổi bật ngay trên bảng cây, tái dùng chung mutation với form sửa.
+	const handleToggleFeatured = (node: CategoryTreeNode) => {
+		updateCategory.mutate({ id: node.id, isFeatured: !node.isFeatured });
+	};
+
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
@@ -148,6 +153,7 @@ const AdminCategoryPage = () => {
 										setFormState({ mode: "edit", category, ownSubtreeIds: collectSubtreeIds(category) })
 									}
 									onDelete={setDeletingCategory}
+									onToggleFeatured={handleToggleFeatured}
 								/>
 							))
 						)}

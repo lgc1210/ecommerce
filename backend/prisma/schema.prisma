@@ -185,6 +185,7 @@ model Category {
   name          String     @db.VarChar(100)
   slug          String     @unique @db.VarChar(100)
   description   String?    @db.Text
+  isFeatured    Boolean    @default(false) @map("is_featured")
   createdAt     DateTime?   @default(now()) @map("created_at")
 
   parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])

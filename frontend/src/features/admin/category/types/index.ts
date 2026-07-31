@@ -5,6 +5,7 @@ export interface Category {
 	name: string;
 	slug: string;
 	description: string | null;
+	isFeatured: boolean;
 	createdAt?: string;
 	updatedAt?: string;
 	_count: { subcategories: number; products: number };
@@ -20,6 +21,7 @@ export interface CreateCategoryPayload {
 	slug?: string;
 	description?: string;
 	parentId?: number | null;
+	isFeatured?: boolean;
 }
 
 export interface UpdateCategoryPayload {
@@ -28,4 +30,5 @@ export interface UpdateCategoryPayload {
 	slug?: string;
 	description?: string;
 	parentId?: number | null;
+	isFeatured?: boolean;
 }

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { ProductCardItem } from "../types";
 import paths from "../../../../configs/constants/paths";
-import { CartIcon, StarIcon } from "../../../../components/icons";
+import { StarIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 
 interface ProductCardProps {
@@ -40,15 +40,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
 					</span>
 				)
 			)}
-
-			<button
-				type='button'
-				aria-label='Thêm vào giỏ hàng'
-				onClick={(e) => e.preventDefault()}
-				disabled={!product.inStock || isDiscontinued}
-				className='absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-ink text-white opacity-0 shadow-md transition-all group-hover:translate-y-0 group-hover:opacity-100 hover:bg-primary disabled:pointer-events-none'>
-				<CartIcon className='h-4 w-4' />
-			</button>
 		</>
 	);
 

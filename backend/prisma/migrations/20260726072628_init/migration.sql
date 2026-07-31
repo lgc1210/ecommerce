@@ -90,6 +90,7 @@ CREATE TABLE `categories` (
     `name` VARCHAR(100) NOT NULL,
     `slug` VARCHAR(100) NOT NULL,
     `description` TEXT NULL,
+    `is_featured` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `categories_slug_key`(`slug`),

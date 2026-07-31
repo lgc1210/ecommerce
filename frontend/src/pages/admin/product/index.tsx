@@ -23,6 +23,11 @@ import { getPriceRange, getTotalStock } from "../../../features/admin/product/ut
 import StatusBadge from "../../../features/admin/product/components/status-badge";
 import ProductFormModal from "../../../features/admin/product/components/product-form-modal";
 
+// Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
+// nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
+// "ảo" vượt quá dữ liệu thật (bấm vào sẽ trả về rỗng dù còn sản phẩm).
+const PAGE_SIZE = 10;
+
 /**
  * Trang danh sách sản phẩm. Route "/admin/product" yêu cầu "catalog:read"
  * (khớp GET /products/admin ở backend). Bấm vào 1 dòng -> sang trang chi tiết
@@ -33,7 +38,7 @@ const AdminProductPage = () => {
 	const navigate = useNavigate();
 
 	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams();
+		useListQueryParams({ defaultLimit: PAGE_SIZE });
 
 	const categoryId = parseNumberParam(searchParams, "categoryId");
 	const isActive = parseBooleanParam(searchParams, "isActive");
@@ -199,7 +204,7 @@ const AdminProductPage = () => {
 
 			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
 
-			<Pagination total={pagination?.total ?? 0} isLoading={isFetching} />
+			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
 			{isCreating && (
 				<ProductFormModal

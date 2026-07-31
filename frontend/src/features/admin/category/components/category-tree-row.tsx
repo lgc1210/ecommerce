@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { ChevronRightIcon, PencilIcon, PlusIcon, TrashIcon } from "../../../../components/icons";
+import { ChevronRightIcon, PencilIcon, PlusIcon, StarIcon, TrashIcon } from "../../../../components/icons";
 import type { CategoryTreeNode } from "../types";
 
 interface CategoryTreeRowProps {
@@ -10,11 +10,21 @@ interface CategoryTreeRowProps {
 	onAddChild: (parentId: number) => void;
 	onEdit: (node: CategoryTreeNode) => void;
 	onDelete: (node: CategoryTreeNode) => void;
+	/** Bật/tắt nhanh cờ nổi bật ngay trên bảng, không cần mở form sửa. */
+	onToggleFeatured: (node: CategoryTreeNode) => void;
 }
 
 /** 1 dòng trong bảng cây danh mục, tự đệ quy render các danh mục con khi mở rộng. */
-const CategoryTreeRow = ({ node, depth, canWrite, onAddChild, onEdit, onDelete }: CategoryTreeRowProps) => {
-	const [expanded, setExpanded] = useState(true);
+const CategoryTreeRow = ({
+	node,
+	depth,
+	canWrite,
+	onAddChild,
+	onEdit,
+	onDelete,
+	onToggleFeatured,
+}: CategoryTreeRowProps) => {
+	const [expanded, setExpanded] = useState(false);
 	const hasChildren = node.subcategories.length > 0;
 	// Khớp đúng điều kiện chặn xóa ở backend (category.service.ts:deleteCategory) — vô hiệu hóa
 	// trước ở FE để tránh người dùng bấm xóa rồi mới nhận lỗi 409.
@@ -38,7 +48,17 @@ const CategoryTreeRow = ({ node, depth, canWrite, onAddChild, onEdit, onDelete }
 							<span className='h-5 w-5 shrink-0' />
 						)}
 						<div className='min-w-0'>
-							<p className='truncate font-semibold text-ink'>{node.name}</p>
+							<div className='flex items-center gap-1.5 truncate'>
+								<p className='truncate font-semibold text-ink'>{node.name}</p>
+								{node.isFeatured && (
+									<span
+										className='flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700'
+										title='Danh mục nổi bật'>
+										<StarIcon className='h-3 w-3' />
+										Nổi bật
+									</span>
+								)}
+							</div>
 							<p className='truncate text-xs text-muted'>/{node.slug}</p>
 						</div>
 					</div>
@@ -48,6 +68,15 @@ const CategoryTreeRow = ({ node, depth, canWrite, onAddChild, onEdit, onDelete }
 				<td className='px-5 py-3'>
 					{canWrite && (
 						<div className='flex items-center justify-end gap-1.5'>
+							<button
+								type='button'
+								onClick={() => onToggleFeatured(node)}
+								className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-amber-50 hover:text-amber-600 ${
+									node.isFeatured ? "text-amber-500" : "text-muted"
+								}`}
+								title={node.isFeatured ? "Bỏ đánh dấu nổi bật" : "Đánh dấu nổi bật"}>
+								<StarIcon className='h-4 w-4' />
+							</button>
 							<button
 								type='button'
 								onClick={() => onAddChild(node.id)}
@@ -84,6 +113,7 @@ const CategoryTreeRow = ({ node, depth, canWrite, onAddChild, onEdit, onDelete }
 						onAddChild={onAddChild}
 						onEdit={onEdit}
 						onDelete={onDelete}
+						onToggleFeatured={onToggleFeatured}
 					/>
 				))}
 		</Fragment>

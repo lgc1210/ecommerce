@@ -177,26 +177,28 @@ const ProductDetailPage = () => {
 							</div>
 						)}
 
-						<div className='mt-8 flex flex-wrap items-center gap-4'>
+						<div className='mt-8 flex flex-wrap items-center gap-2'>
 							<div className='flex items-center rounded-full border border-border'>
-								<button
+								<Button
 									type='button'
+									variant='ghost'
+									disabled={quantity <= 1}
 									onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-									className='flex h-11 w-11 items-center justify-center text-ink hover:text-primary-dark'
-									aria-label='Giảm số lượng'>
-									<MinusIcon className='h-4 w-4' />
-								</button>
+									className='bg-transparent! hover:text-primary-dark! px-3!'
+									aria-label='Giảm số lượng'
+									icon={<MinusIcon className='h-4 w-4' />}
+								/>
 								<span className='w-8 text-center text-sm font-semibold text-ink'>{quantity}</span>
-								<button
+								<Button
 									type='button'
+									variant='ghost'
 									onClick={() => setQuantity((q) => Math.min(selectedSku?.stockQuantity ?? q, q + 1))}
 									disabled={!selectedSku || quantity >= selectedSku.stockQuantity}
-									className='flex h-11 w-11 items-center justify-center text-ink hover:text-primary-dark disabled:pointer-events-none disabled:opacity-40'
-									aria-label='Tăng số lượng'>
-									<PlusIcon className='h-4 w-4' />
-								</button>
+									className='bg-transparent! hover:text-primary-dark! px-3!'
+									aria-label='Tăng số lượng'
+									icon={<PlusIcon className='h-4 w-4' />}
+								/>
 							</div>
-
 							<Button
 								disabled={!inStock}
 								onClick={handleAddToCart}

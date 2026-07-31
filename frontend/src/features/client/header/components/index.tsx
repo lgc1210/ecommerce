@@ -2,9 +2,10 @@ import { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import paths from "../../../../configs/constants/paths";
 import Overlay from "../../../../components/overlay";
-import { CartIcon, CloseIcon, MenuIcon, SearchIcon, SettingsIcon } from "../../../../components/icons";
+import { CartIcon, CloseIcon, MenuIcon, SettingsIcon } from "../../../../components/icons";
 import UserMenu from "../../../../components/user-menu";
 import { useCart } from "../../cart/hooks";
+import Button from "../../../../components/button";
 
 const navItems = [
 	{ to: paths.client.home, label: "Trang chủ", end: true },
@@ -15,7 +16,6 @@ const navItems = [
 
 const Header = () => {
 	const [mobileOpen, setMobileOpen] = useState(false);
-	const [searchOpen, setSearchOpen] = useState(false);
 	const navigate = useNavigate();
 	const { totalQuantity } = useCart();
 
@@ -26,13 +26,14 @@ const Header = () => {
 		<header className='sticky top-0 z-30 border-b border-border bg-surface/95'>
 			<div className='mx-auto flex h-18 max-w-7xl items-center lg:justify-between gap-4 px-4 sm:px-6 lg:px-8'>
 				{/* Mobile menu toggle */}
-				<button
+				<Button
 					type='button'
+					variant='outline'
 					onClick={() => setMobileOpen(true)}
 					aria-label='Mở menu'
-					className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-ink lg:hidden'>
-					<MenuIcon className='h-5 w-5' />
-				</button>
+					className='size-10! p-0! rounded-full lg:hidden'
+					icon={<MenuIcon className='h-5 w-5' />}
+				/>
 
 				{/* Logo */}
 				<Link to={paths.client.home} className='flex shrink-0 items-center gap-2'>
@@ -52,30 +53,6 @@ const Header = () => {
 				</nav>
 
 				<div className='ml-auto flex items-center gap-1.5'>
-					{/* Search */}
-					<div className='relative hidden sm:block'>
-						<div
-							className={`flex items-center overflow-hidden rounded-full border border-border bg-cream-soft transition-all ${
-								searchOpen ? "w-56 px-3" : "w-10 justify-center"
-							}`}>
-							<button
-								type='button'
-								onClick={() => setSearchOpen((v) => !v)}
-								aria-label='Tìm kiếm'
-								className='flex h-10 w-10 shrink-0 items-center justify-center text-ink'>
-								<SearchIcon className='h-4.5 w-4.5' />
-							</button>
-							{searchOpen && (
-								<input
-									autoFocus
-									type='text'
-									placeholder='Tìm sản phẩm...'
-									className='h-10 w-full bg-transparent text-sm text-ink outline-none ring-0 border-0 placeholder:text-muted'
-								/>
-							)}
-						</div>
-					</div>
-
 					<UserMenu
 						actions={[
 							{

@@ -104,7 +104,10 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 						type='number'
 						step='any'
 						value={stockQuantity}
-						onChange={(e) => setStockQuantity(e.target.value)}
+						onChange={(e) => {
+							const value = Number(e.target.value);
+							setStockQuantity(value < 0 ? "0" : String(value));
+						}}
 						error={errors.stockQuantity}
 					/>
 				</div>

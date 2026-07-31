@@ -39,9 +39,9 @@ const AdminLayout = () => {
 
 				<main className='flex-1 p-4 sm:p-6'>
 					<Outlet />
-					<ScrollRestoration />
 				</main>
 			</div>
+			<ScrollRestoration />
 		</div>
 	);
 };

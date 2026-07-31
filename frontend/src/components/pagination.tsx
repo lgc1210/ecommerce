@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import FormSelect from "./form-select";
 import { ChevronRightIcon } from "./icons";
+import Button from "./button";
 
 interface PaginationProps {
 	/** Tổng số bản ghi (không phải số trang) — component tự tính totalPages từ total/limit. */
@@ -107,42 +108,43 @@ const Pagination = ({
 			</div>
 
 			<nav className='flex items-center gap-1.5' aria-label='Pagination'>
-				<button
+				<Button
 					type='button'
+					variant='outline'
 					disabled={page === 1 || isLoading}
 					onClick={() => goToPage(page - 1)}
 					aria-label='Trang trước'
-					className='flex h-10 w-10 items-center justify-center rounded-full border border-border text-ink transition-colors hover:border-primary hover:text-primary-dark disabled:cursor-not-allowed disabled:opacity-40'>
-					<ChevronRightIcon className='h-4 w-4 rotate-180' />
-				</button>
-
+					title='Trang trước'
+					icon={<ChevronRightIcon className='h-4 w-4 rotate-180' />}
+					className='px-3.5!'
+				/>
 				{getPageList(page, totalPages).map((p, index) =>
 					p === "ellipsis" ? (
 						<span key={`ellipsis-${index}`} className='px-1 text-muted'>
 							…
 						</span>
 					) : (
-						<button
+						<Button
 							key={p}
 							type='button'
+							variant={p === page ? "primary" : "ghost"}
 							disabled={isLoading}
 							onClick={() => goToPage(p)}
-							className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed ${
-								p === page ? "bg-primary text-white shadow-sm shadow-primary/25" : "text-ink hover:bg-cream-soft"
-							}`}>
+							className='px-4.5!'>
 							{p}
-						</button>
+						</Button>
 					),
 				)}
-
-				<button
+				<Button
 					type='button'
+					variant='outline'
 					disabled={page === totalPages || isLoading}
 					onClick={() => goToPage(page + 1)}
 					aria-label='Trang sau'
-					className='flex h-10 w-10 items-center justify-center rounded-full border border-border text-ink transition-colors hover:border-primary hover:text-primary-dark disabled:cursor-not-allowed disabled:opacity-40'>
-					<ChevronRightIcon className='h-4 w-4' />
-				</button>
+					title='Trang sau'
+					icon={<ChevronRightIcon className='h-4 w-4' />}
+					className='px-3.5!'
+				/>
 			</nav>
 		</div>
 	);

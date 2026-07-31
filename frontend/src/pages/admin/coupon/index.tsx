@@ -24,20 +24,17 @@ import type {
 import { DISCOUNT_TYPE_LABEL } from "../../../features/admin/coupon/utils";
 import StatusBadge from "../../../features/admin/coupon/components/status-badge";
 import CouponFormModal from "../../../features/admin/coupon/components/coupon-form-modal";
-
-const formatDate = (value: string) =>
-	new Date(value).toLocaleString("vi-VN", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
+import { formatDate } from "../../../utils";
 
 const formatDiscount = (coupon: AdminCoupon) =>
 	coupon.discountType === "percentage"
 		? `${Number(coupon.discountValue)}%`
 		: formatCurrency(Number(coupon.discountValue));
+
+// Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
+// nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
+// "ảo" vượt quá dữ liệu thật (bấm vào sẽ trả về rỗng dù còn sản phẩm).
+const PAGE_SIZE = 10;
 
 /**
  * Trang quản trị Coupon. Route "/admin/coupon" đã được bảo vệ bởi
@@ -48,7 +45,9 @@ const formatDiscount = (coupon: AdminCoupon) =>
  */
 const AdminCouponPage = () => {
 	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams();
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const isActive = parseBooleanParam(searchParams, "isActive");
 	const discountType = parseEnumParam<DiscountType>(searchParams, "discountType");
@@ -196,7 +195,7 @@ const AdminCouponPage = () => {
 
 			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
 
-			<Pagination total={pagination?.total ?? 0} isLoading={isFetching} />
+			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
 			{formState && (
 				<CouponFormModal

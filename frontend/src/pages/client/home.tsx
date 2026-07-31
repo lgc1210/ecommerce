@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import Header from "../../features/client/header/components";
 import Footer from "../../features/client/footer/components";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
@@ -7,7 +6,6 @@ import { mockCategories, mockProducts } from "../../configs/constants/mock-data"
 import { formatCurrency } from "../../utils/currency";
 import { ChevronRightIcon, HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../components/icons";
 import ProductCard from "../../features/client/product/components/product-card";
-import useTitle from "../../hooks/useTitle";
 
 const trustBadges = [
 	{
@@ -32,12 +30,8 @@ const popularProducts = [...mockProducts].reverse().slice(0, 6);
 const featuredBanners = mockProducts.slice(2, 4);
 
 const HomePage = () => {
-	useTitle();
-
 	return (
 		<div className='flex min-h-screen flex-col bg-cream'>
-			<Header />
-
 			<main className='flex-1'>
 				{/* Hero */}
 				<section className='border-b border-border bg-cream-soft'>

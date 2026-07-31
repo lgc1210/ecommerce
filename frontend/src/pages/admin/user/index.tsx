@@ -22,6 +22,11 @@ import AdminTitle from "../../../components/admin-title";
 import StatusBadge from "../../../features/admin/user/components/status-badge";
 import CreateUserModal from "../../../features/admin/user/components/create-user-modal";
 
+// Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
+// nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
+// "ảo" vượt quá dữ liệu thật (bấm vào sẽ trả về rỗng dù còn sản phẩm).
+const PAGE_SIZE = 10;
+
 /**
  * Trang quản trị User. Route "/admin/user" đã được bảo vệ bởi
  * requirePermissionLoader(permissions.user.read) (xem configs/routes/index.ts),
@@ -38,7 +43,9 @@ import CreateUserModal from "../../../features/admin/user/components/create-user
  */
 const AdminUserPage = () => {
 	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams();
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const roleId = parseNumberParam(searchParams, "roleId");
 	const isActive = parseBooleanParam(searchParams, "isActive");
@@ -206,7 +213,7 @@ const AdminUserPage = () => {
 
 			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
 
-			<Pagination total={pagination?.total ?? 0} isLoading={isFetching} />
+			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
 			{pendingStatusUser && (
 				<Popup

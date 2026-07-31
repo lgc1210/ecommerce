@@ -1,4 +1,4 @@
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 100;
 
 /** Parse & chuẩn hóa tham số phân trang từ query string, có giới hạn an toàn */

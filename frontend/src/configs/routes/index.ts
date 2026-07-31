@@ -47,19 +47,27 @@ import paths from "../constants/paths";
 
 const router = createBrowserRouter([
 	// Home page
-	{
-		index: true,
-		Component: HomePage,
-		handle: {
-			title: "Trang chủ",
-			crumb: () => "Trang chủ",
-		},
-	},
+	// {
+	// 	index: true,
+	// 	Component: HomePage,
+	// 	handle: {
+	// 		title: "Trang chủ",
+	// 		crumb: () => "Trang chủ",
+	// 	},
+	// },
 
 	// Client layout
 	{
 		Component: ClientLayout,
 		children: [
+			{
+				index: true,
+				Component: HomePage,
+				handle: {
+					title: "Trang chủ",
+					crumb: () => "Trang chủ",
+				},
+			},
 			{
 				path: "about",
 				Component: AboutPage,
@@ -68,7 +76,7 @@ const router = createBrowserRouter([
 			{
 				path: "shop",
 				Component: ShopPage,
-				handle: { title: "Cửa hàng", crumb: () => "Cửa hàng" },
+				handle: { title: "Cửa hàng", crumb: () => "Cửa hàng", preventScrollReset: true },
 			},
 			{
 				// Route cha thuần logic (không path, không render gì thêm ngoài Outlet) — chỉ để
