@@ -54,8 +54,9 @@ export interface MyOrderShippingAddress {
 	recipientName: string;
 	phoneNumber: string;
 	addressLine: string;
-	ward: string;
-	province: string;
+	wardName: string;
+	districtName: string;
+	provinceName: string;
 }
 
 export type DiscountType = (typeof DISCOUNT_TYPE)[keyof typeof DISCOUNT_TYPE];

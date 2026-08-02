@@ -1,15 +1,19 @@
-export type AddressType = "shipping" | "billing";
+export type AddressTag = "home" | "office";
 
 /** Địa chỉ giao hàng/thanh toán của chính user hiện tại (GET/POST/PATCH /users/me/addresses). */
 export interface UserAddress {
 	id: number;
 	userId: number;
-	addressType: AddressType;
+	tag: AddressTag;
 	recipientName: string;
 	phoneNumber: string;
 	addressLine: string;
-	ward: string;
-	province: string;
+	wardName: string;
+	districtName: string;
+	provinceName: string;
+	provinceId: number;
+	districtId: number;
+	wardCode: string;
 	isDefault: boolean;
 	createdAt?: string;
 }
@@ -20,12 +24,16 @@ export interface UpdateOwnProfilePayload {
 }
 
 export interface CreateAddressPayload {
-	addressType?: AddressType;
+	tag?: AddressTag;
 	recipientName: string;
 	phoneNumber: string;
 	addressLine: string;
-	ward: string;
-	province: string;
+	wardName: string;
+	districtName: string;
+	provinceName: string;
+	provinceId: number;
+	districtId: number;
+	wardCode: string;
 	isDefault?: boolean;
 }
 

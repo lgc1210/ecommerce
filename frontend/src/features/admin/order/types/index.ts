@@ -53,8 +53,9 @@ export interface AdminOrderShippingAddress {
 	recipientName: string;
 	phoneNumber: string;
 	addressLine: string;
-	ward: string;
-	province: string;
+	wardName: string;
+	districtName: string;
+	provinceName: string;
 }
 
 export interface AdminOrderCoupon {

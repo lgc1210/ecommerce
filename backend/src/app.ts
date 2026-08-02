@@ -1,8 +1,10 @@
 import express, { type Application, type Response } from "express";
+
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+
 import authRouter from "./features/auth/auth.routes.js";
 import rbacRouter from "./features/rbac/rbac.routes.js";
 import userRouter from "./features/users/user.routes.js";
@@ -16,6 +18,10 @@ import contactRouter from "./features/contacts/contact.routes.js";
 import orderRouter from "./features/orders/order.routes.js";
 import paymentRouter from "./features/payments/payment.routes.js";
 import uploadRouter from "./features/uploads/upload.routes.js";
+import dashboardRouter from "./features/dashboard/dashboard.routes.js";
+
+import ghnRouter from "./external/ghn/ghn.routes.js";
+
 import { env } from "./config/dotenv.js";
 import { UPLOAD_ROOT } from "./features/uploads/upload.middleware.js";
 
@@ -57,6 +63,9 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/contacts", contactRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/payments", paymentRouter);
+app.use("/api/dashboard", dashboardRouter);
 app.use("/api/uploads", uploadRouter); //
+
+app.use("/api/external/ghn", ghnRouter);
 
 export default app;

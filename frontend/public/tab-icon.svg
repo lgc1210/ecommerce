@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <style>
+      .bg-primary { fill: #d9641f; } 
+      .text-e { fill: #ffffff; font-family: system-ui, -apple-system, sans-serif; font-weight: 800; font-size: 20px; }
+    </style>
+  </defs>
+  <rect width="32" height="32" rx="8" ry="8" class="bg-primary" />
+  <text x="16" y="23" text-anchor="middle" class="text-e">E</text>
+</svg>

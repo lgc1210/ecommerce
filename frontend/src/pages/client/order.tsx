@@ -5,8 +5,8 @@ import BreadCrumb from "../../components/breadcrumb";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
 import { mockProducts } from "../../configs/constants/mock-data";
-import { formatCurrency } from "../../utils";
 import { MinusIcon, PlusIcon, TrashIcon } from "../../components/icons";
+import { formatCurrency } from "../../utils/currency";
 
 type CartLine = {
 	slug: string;
@@ -41,21 +41,12 @@ const OrderPage = () => {
 		[cart],
 	);
 
-	const subtotal = lines.reduce(
-		(sum, line) => sum + line.product.price * line.quantity,
-		0,
-	);
+	const subtotal = lines.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
 	const shipping = lines.length > 0 ? SHIPPING_FEE : 0;
 	const total = Math.max(0, subtotal + shipping - appliedDiscount);
 
 	const updateQuantity = (slug: string, quantity: number) => {
-		setCart((prev) =>
-			prev.map((line) =>
-				line.slug === slug
-					? { ...line, quantity: Math.max(1, quantity) }
-					: line,
-			),
-		);
+		setCart((prev) => prev.map((line) => (line.slug === slug ? { ...line, quantity: Math.max(1, quantity) } : line)));
 	};
 
 	const removeLine = (slug: string) => {
@@ -73,17 +64,12 @@ const OrderPage = () => {
 
 	return (
 		<div>
-			<BreadCrumb
-				title='Giỏ hàng'
-				description='Xem lại sản phẩm trước khi tiến hành thanh toán.'
-			/>
+			<BreadCrumb title='Giỏ hàng' description='Xem lại sản phẩm trước khi tiến hành thanh toán.' />
 
 			<div className='mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8'>
 				{lines.length === 0 ? (
 					<div className='py-16 text-center'>
-						<p className='text-lg font-semibold text-ink'>
-							Giỏ hàng của bạn đang trống.
-						</p>
+						<p className='text-lg font-semibold text-ink'>Giỏ hàng của bạn đang trống.</p>
 						<Link to={paths.client.shop}>
 							<Button className='mt-6'>Tiếp tục mua sắm</Button>
 						</Link>
@@ -96,20 +82,14 @@ const OrderPage = () => {
 								<div
 									key={product.slug}
 									className='flex items-center gap-4 rounded-2xl border border-border bg-surface p-4'>
-									<img
-										src={product.image}
-										alt={product.name}
-										className='h-20 w-20 shrink-0 rounded-xl object-cover'
-									/>
+									<img src={product.image} alt={product.name} className='h-20 w-20 shrink-0 rounded-xl object-cover' />
 									<div className='min-w-0 flex-1'>
 										<Link
 											to={paths.client.productDetail(product.slug)}
 											className='line-clamp-1 font-semibold text-ink hover:text-primary-dark'>
 											{product.name}
 										</Link>
-										<p className='mt-1 text-sm font-bold text-primary-dark'>
-											{formatCurrency(product.price)}
-										</p>
+										<p className='mt-1 text-sm font-bold text-primary-dark'>{formatCurrency(product.price)}</p>
 									</div>
 
 									<div className='flex items-center rounded-full border border-border'>
@@ -120,9 +100,7 @@ const OrderPage = () => {
 											aria-label='Giảm số lượng'>
 											<MinusIcon className='h-3.5 w-3.5' />
 										</button>
-										<span className='w-7 text-center text-sm font-semibold text-ink'>
-											{quantity}
-										</span>
+										<span className='w-7 text-center text-sm font-semibold text-ink'>{quantity}</span>
 										<button
 											type='button'
 											onClick={() => updateQuantity(product.slug, quantity + 1)}

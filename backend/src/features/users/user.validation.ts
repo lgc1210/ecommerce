@@ -19,12 +19,16 @@ export const UpdateOwnProfileSchema = z.object({
 // Self-service: addresses
 // ==========================================
 const addressBodyShape = {
-	addressType: z.enum(["shipping", "billing"]).optional(),
+	tag: z.enum(["home", "office"]).optional(),
 	recipientName: z.string().min(2, { message: "Tên người nhận phải có ít nhất 2 ký tự." }).max(100),
 	phoneNumber: z.string().regex(vietnamesePhoneRegex, { message: "Số điện thoại không hợp lệ." }),
-	addressLine: z.string().min(5, { message: "Địa chỉ cụ thể phải có ít nhất 5 ký tự." }).max(255),
-	ward: z.string().min(1, { message: "Vui lòng nhập Phường/Xã." }).max(100),
-	province: z.string().min(1, { message: "Vui lòng nhập Tỉnh/Thành phố." }).max(100),
+	addressLine: z.string().min(5, { message: "Địa chỉ cụ thể phải có ít nhất 5 ký tự." }).max(150),
+	wardName: z.string().min(1, { message: "Vui lòng nhập Phường/Xã." }).max(100),
+	districtName: z.string().min(1, { message: "Vui lòng nhập Quận/Huyện." }).max(100),
+	provinceName: z.string().min(1, { message: "Vui lòng nhập Tỉnh/Thành phố." }).max(100),
+	provinceId: z.number().int().positive({ message: "provinceId phải là số nguyên dương." }),
+	districtId: z.number().int().positive({ message: "districtId phải là số nguyên dương." }),
+	wardCode: z.string().min(1, { message: "Vui lòng nhập mã Phường/Xã." }).max(20),
 	isDefault: z.boolean().optional(),
 };
 
@@ -36,12 +40,16 @@ export const UpdateAddressSchema = z.object({
 	params: z.object({ addressId: numericIdString }),
 	body: z
 		.object({
-			addressType: addressBodyShape.addressType,
+			tag: addressBodyShape.tag,
 			recipientName: addressBodyShape.recipientName.optional(),
 			phoneNumber: addressBodyShape.phoneNumber.optional(),
 			addressLine: addressBodyShape.addressLine.optional(),
-			ward: addressBodyShape.ward.optional(),
-			province: addressBodyShape.province.optional(),
+			wardName: addressBodyShape.wardName.optional(),
+			districtName: addressBodyShape.districtName.optional(),
+			provinceName: addressBodyShape.provinceName.optional(),
+			provinceId: addressBodyShape.provinceId.optional(),
+			districtId: addressBodyShape.districtId.optional(),
+			wardCode: addressBodyShape.wardCode.optional(),
 			isDefault: addressBodyShape.isDefault,
 		})
 		.refine((data) => Object.keys(data).length > 0, { message: "Cần ít nhất 1 trường để cập nhật." }),

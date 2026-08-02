@@ -67,7 +67,8 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 								<span className='text-ink/70'>· {order.shippingAddress.phoneNumber}</span>
 							</div>
 							<p className='pl-6 text-ink/80'>
-								{order.shippingAddress.addressLine}, {order.shippingAddress.ward}, {order.shippingAddress.province}
+								{order.shippingAddress.addressLine}, {order.shippingAddress.wardName},{" "}
+								{order.shippingAddress.districtName}, {order.shippingAddress.provinceName}
 							</p>
 						</div>
 					)}

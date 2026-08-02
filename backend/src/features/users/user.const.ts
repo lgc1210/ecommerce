@@ -1,1 +1,1 @@
-export const ADDRESS_TYPE = Object.freeze({ shipping: "shipping", billing: "billing" } as const);
+export const ADDRESS_TAG = Object.freeze({ home: "home", office: "office" } as const);

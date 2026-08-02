@@ -46,16 +46,6 @@ import permissions from "../constants/permissions";
 import paths from "../constants/paths";
 
 const router = createBrowserRouter([
-	// Home page
-	// {
-	// 	index: true,
-	// 	Component: HomePage,
-	// 	handle: {
-	// 		title: "Trang chủ",
-	// 		crumb: () => "Trang chủ",
-	// 	},
-	// },
-
 	// Client layout
 	{
 		Component: ClientLayout,
@@ -111,7 +101,7 @@ const router = createBrowserRouter([
 				// cần xác định người đặt hàng, dù màn hình thanh toán ở bước này mới
 				// chỉ là giao diện mock, chưa gọi API thật.
 				path: "payment",
-				// loader: requireAuthLoader,
+				loader: requireAuthLoader,
 				Component: PaymentPage,
 				handle: { title: "Thanh toán", crumb: () => "Thanh toán" },
 			},

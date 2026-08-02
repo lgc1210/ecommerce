@@ -1,15 +1,19 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
 
-type AddressType = "shipping" | "billing";
+type AddressTag = "home" | "office";
 
 interface AdminUpdateAddressInput {
-	addressType?: AddressType;
+	tag?: AddressTag;
 	recipientName?: string;
 	phoneNumber?: string;
 	addressLine?: string;
-	ward?: string;
-	province?: string;
+	wardName?: string;
+	districtName?: string;
+	provinceName?: string;
+	provinceId?: number;
+	districtId?: number;
+	wardCode?: string;
 	isDefault?: boolean;
 }
 
@@ -18,7 +22,7 @@ interface ListAddressesParams {
 	limit?: string;
 	search?: string;
 	userId?: string;
-	addressType?: string;
+	tag?: string;
 	province?: string;
 }
 
@@ -39,8 +43,8 @@ class UserAddressService {
 		const where: Record<string, unknown> = {};
 
 		if (params.userId) where.userId = Number(params.userId);
-		if (params.addressType) where.addressType = params.addressType;
-		if (params.province) where.province = { contains: params.province };
+		if (params.tag) where.tag = params.tag;
+		if (params.province) where.provinceName = { contains: params.province };
 		if (params.search) {
 			where.OR = [{ recipientName: { contains: params.search } }, { phoneNumber: { contains: params.search } }, { addressLine: { contains: params.search } }];
 		}

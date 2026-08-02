@@ -21,11 +21,15 @@ const envSchema = z.object({
 		.transform((val) => parseInt(val, 10)),
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 	CLIENT_URL: z.url({ message: "CLIENT_URL must be a valid connection string format." }),
+
+	// Database
 	DATABASE_URL: z.url({ message: "DATABASE_URL must be a valid connection string format." }),
+
 	// Google OAuth Client ID (Web application), dùng để xác thực idToken gửi lên từ
 	// frontend qua google-auth-library. Phải trùng với client ID cấu hình ở frontend
 	// (VITE_GOOGLE_CLIENT_ID), vì idToken được cấp cho đúng 1 client ID (audience).
 	GOOGLE_CLIENT_ID: z.string().min(1, { message: "GOOGLE_CLIENT_ID is required for Google login." }),
+
 	// Facebook App ID + App Secret, dùng để tạo App Access Token (APP_ID|APP_SECRET) gọi
 	// Graph API "debug_token" xác minh accessToken do frontend gửi lên thực sự thuộc về
 	// đúng app này (tương tự việc kiểm tra audience của idToken ở luồng Google).
@@ -33,6 +37,13 @@ const envSchema = z.object({
 	FACEBOOK_APP_SECRET: z.string().min(1, { message: "FACEBOOK_APP_SECRET is required for Facebook login." }),
 	JWT_SECRET: z.string().min(8, { message: "JWT_SECRET must be at least 8 characters long." }),
 	JWT_REFRESH_SECRET: z.string().min(8),
+
+	// Giao Hàng Nhanh
+	GHN_API_TOKEN: z.string().min(1, { message: "GHN_API_TOKEN is required for Giao Hàng Nhanh." }),
+	GHN_API_URL: z.string().min(1, { message: "GHN_API_URL is required for Giao Hàng Nhanh." }),
+	GHN_SHOP_ID: z.string().min(1, { message: "GHN_SHOP_ID is required for Giao Hàng Nhanh." }),
+
+	// SMTP
 	SMTP_HOST: z.string(),
 	SMTP_PORT: z.string().transform((val) => parseInt(val, 10)),
 	SMTP_SECURE: z.string().transform((val) => val === "true"), // Expects "true" string in .env

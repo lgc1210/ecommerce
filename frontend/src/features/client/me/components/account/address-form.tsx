@@ -1,17 +1,23 @@
-import { useState, type SubmitEvent } from "react";
-import type { AddressType, CreateAddressPayload, UserAddress } from "../../types";
+import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
+import type { AddressTag, CreateAddressPayload, UserAddress } from "../../types";
 import ModalShell from "../../../../../components/modal-shell";
 import FormControl from "../../../../../components/form-control";
+import FormSelect, { type FormSelectOption } from "../../../../../components/form-select";
 import FormCheckbox from "../../../../../components/form-checkbox";
 import Button from "../../../../../components/button";
+import { useDistrictsQuery, useProvincesQuery, useWardsQuery } from "../../../../external/location/hooks";
 
 const emptyAddressForm: CreateAddressPayload = {
-	addressType: "shipping",
+	tag: "home",
 	recipientName: "",
 	phoneNumber: "",
 	addressLine: "",
-	ward: "",
-	province: "",
+	wardName: "",
+	districtName: "",
+	provinceName: "",
+	provinceId: 0,
+	districtId: 0,
+	wardCode: "",
 	isDefault: false,
 };
 
@@ -26,23 +32,49 @@ const AddressFormModal = ({ initialValue, onClose, onSubmit, isSubmitting }: Add
 	const [form, setForm] = useState<CreateAddressPayload>(
 		initialValue
 			? {
-					addressType: initialValue.addressType,
+					tag: initialValue.tag,
 					recipientName: initialValue.recipientName,
 					phoneNumber: initialValue.phoneNumber,
 					addressLine: initialValue.addressLine,
-					ward: initialValue.ward,
-					province: initialValue.province,
+					wardName: initialValue.wardName,
+					districtName: initialValue.districtName,
+					provinceName: initialValue.provinceName,
+					provinceId: initialValue.provinceId,
+					districtId: initialValue.districtId,
+					wardCode: initialValue.wardCode,
 					isDefault: initialValue.isDefault,
 				}
 			: emptyAddressForm,
+	);
+
+	// Tra cứu Tỉnh/Thành - Quận/Huyện - Phường/Xã (GHN, qua backend `external/ghn`).
+	// Quận/Huyện và Phường/Xã phụ thuộc lựa chọn cấp cha nên chỉ fetch khi đã có provinceId/districtId
+	// tương ứng — khi sửa 1 địa chỉ có sẵn, provinceId/districtId lấy từ form ban đầu nên 2 danh sách
+	// con cũng tự fetch ngay để hiển thị đúng lựa chọn hiện tại.
+	const { data: provinces = [], isLoading: isLoadingProvinces } = useProvincesQuery();
+	const { data: districts = [], isLoading: isLoadingDistricts } = useDistrictsQuery(form.provinceId || undefined);
+	const { data: wards = [], isLoading: isLoadingWards } = useWardsQuery(form.districtId || undefined);
+
+	const provinceOptions: FormSelectOption[] = useMemo(
+		() => provinces.map((province) => ({ value: province.ProvinceID, label: province.ProvinceName })),
+		[provinces],
+	);
+	const districtOptions: FormSelectOption[] = useMemo(
+		() => districts.map((district) => ({ value: district.DistrictID, label: district.DistrictName })),
+		[districts],
+	);
+	const wardOptions: FormSelectOption[] = useMemo(
+		() => wards.map((ward) => ({ value: ward.WardCode, label: ward.WardName })),
+		[wards],
 	);
 
 	const isValid =
 		form.recipientName.trim() &&
 		form.phoneNumber.trim() &&
 		form.addressLine.trim() &&
-		form.ward.trim() &&
-		form.province.trim();
+		form.provinceId > 0 &&
+		form.districtId > 0 &&
+		form.wardCode.trim();
 
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -54,21 +86,51 @@ const AddressFormModal = ({ initialValue, onClose, onSubmit, isSubmitting }: Add
 		setForm((prev) => ({ ...prev, [key]: value }));
 	};
 
+	// Chọn Tỉnh/Thành phố -> reset Quận/Huyện + Phường/Xã đang chọn (đổi cấp cha thì các cấp con không còn hợp lệ).
+	// Danh sách Quận/Huyện tương ứng sẽ tự fetch lại (useDistrictsQuery phụ thuộc form.provinceId).
+	const handleProvinceChange = (e: ChangeEvent<HTMLSelectElement>) => {
+		const provinceId = Number(e.target.value);
+		const provinceName = provinceOptions.find((option) => option.value === provinceId)?.label ?? "";
+		setForm((prev) => ({
+			...prev,
+			provinceId,
+			provinceName,
+			districtId: 0,
+			districtName: "",
+			wardCode: "",
+			wardName: "",
+		}));
+	};
+
+	// Chọn Quận/Huyện -> reset Phường/Xã đang chọn. Danh sách Phường/Xã tự fetch lại tương tự.
+	const handleDistrictChange = (e: ChangeEvent<HTMLSelectElement>) => {
+		const districtId = Number(e.target.value);
+		const districtName = districtOptions.find((option) => option.value === districtId)?.label ?? "";
+		setForm((prev) => ({ ...prev, districtId, districtName, wardCode: "", wardName: "" }));
+	};
+
+	const handleWardChange = (e: ChangeEvent<HTMLSelectElement>) => {
+		const wardCode = e.target.value;
+		const wardName = wardOptions.find((option) => option.value === wardCode)?.label ?? "";
+		updateField("wardCode", wardCode);
+		updateField("wardName", wardName);
+	};
+
 	return (
 		<ModalShell title={initialValue ? "Sửa địa chỉ" : "Thêm địa chỉ mới"} onClose={onClose}>
 			<form onSubmit={handleSubmit} className='space-y-4'>
 				<div className='flex gap-2'>
-					{(["shipping", "billing"] as AddressType[]).map((type) => (
+					{(["home", "office"] as AddressTag[]).map((tag) => (
 						<button
-							key={type}
+							key={tag}
 							type='button'
-							onClick={() => updateField("addressType", type)}
+							onClick={() => updateField("tag", tag)}
 							className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors cursor-pointer ${
-								form.addressType === type
+								form.tag === tag
 									? "border-primary bg-primary-light text-primary-dark"
 									: "border-border text-ink hover:bg-cream-soft"
 							}`}>
-							{type === "shipping" ? "Giao hàng" : "Thanh toán"}
+							{tag === "home" ? "Nhà riêng" : "Văn phòng"}
 						</button>
 					))}
 				</div>
@@ -93,20 +155,37 @@ const AddressFormModal = ({ initialValue, onClose, onSubmit, isSubmitting }: Add
 					onChange={(e) => updateField("addressLine", e.target.value)}
 					placeholder='Số nhà, tên đường...'
 				/>
-				<div className='grid grid-cols-2 gap-3'>
-					<FormControl
-						label='Phường/Xã'
-						required
-						value={form.ward}
-						onChange={(e) => updateField("ward", e.target.value)}
-					/>
-					<FormControl
-						label='Tỉnh/Thành phố'
-						required
-						value={form.province}
-						onChange={(e) => updateField("province", e.target.value)}
-					/>
-				</div>
+
+				<FormSelect
+					label='Tỉnh/Thành phố'
+					required
+					fullWidth
+					value={form.provinceId || ""}
+					onChange={handleProvinceChange}
+					options={provinceOptions}
+					placeholder={isLoadingProvinces ? "Đang tải..." : "Chọn Tỉnh/Thành phố"}
+					disabled={isLoadingProvinces}
+				/>
+				<FormSelect
+					label='Quận/Huyện'
+					required
+					fullWidth
+					value={form.districtId || ""}
+					onChange={handleDistrictChange}
+					options={districtOptions}
+					placeholder={isLoadingDistricts ? "Đang tải..." : "Chọn Quận/Huyện"}
+					disabled={!form.provinceId || isLoadingDistricts}
+				/>
+				<FormSelect
+					label='Phường/Xã'
+					required
+					fullWidth
+					value={form.wardCode}
+					onChange={handleWardChange}
+					options={wardOptions}
+					placeholder={isLoadingWards ? "Đang tải..." : "Chọn Phường/Xã"}
+					disabled={!form.districtId || isLoadingWards}
+				/>
 
 				{!initialValue?.isDefault && (
 					<FormCheckbox

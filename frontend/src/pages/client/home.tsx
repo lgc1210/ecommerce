@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import Footer from "../../features/client/footer/components";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
 import { mockCategories, mockProducts } from "../../configs/constants/mock-data";
@@ -189,8 +188,6 @@ const HomePage = () => {
 					</div>
 				</section>
 			</main>
-
-			<Footer />
 		</div>
 	);
 };

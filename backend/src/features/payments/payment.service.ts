@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma.js";
+import type { PaymentStatus } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
-import { isValidPaymentStatusTransition, type PaymentStatus } from "./payment.utils.js";
+import { isValidPaymentStatusTransition } from "./payment.utils.js";
 
 interface ListPaymentsAdminParams {
 	page?: string;
@@ -64,7 +65,11 @@ class PaymentService {
 		if (params.method) where.paymentMethod = params.method;
 		if (params.search) {
 			where.order = {
-				OR: [{ orderNumber: { contains: params.search } }, { user: { email: { contains: params.search } } }, { user: { name: { contains: params.search } } }],
+				OR: [
+					{ orderNumber: { contains: params.search } },
+					{ user: { email: { contains: params.search } } },
+					{ user: { name: { contains: params.search } } },
+				],
 			};
 		}
 		if (params.dateFrom || params.dateTo) {
@@ -76,7 +81,13 @@ class PaymentService {
 
 		const { page, limit, skip } = parsePagination(params);
 		const [payments, total] = await Promise.all([
-			prisma.payment.findMany({ where, include: paymentDetailInclude, orderBy: { createdAt: "desc" }, skip, take: limit }),
+			prisma.payment.findMany({
+				where,
+				include: paymentDetailInclude,
+				orderBy: { createdAt: "desc" },
+				skip,
+				take: limit,
+			}),
 			prisma.payment.count({ where }),
 		]);
 
@@ -127,15 +138,25 @@ class PaymentService {
 			if (nextStatus === "completed") {
 				// Thanh toán thành công -> tự động đẩy đơn từ "pending" sang "processing" để xưởng bắt đầu xử lý.
 				// Dùng updateMany có điều kiện thay vì update để không ghi đè trạng thái nếu đơn đã được xử lý thủ công trước đó.
-				await tx.order.updateMany({ where: { id: payment.order.id, orderStatus: "pending" }, data: { orderStatus: "processing" } });
+				await tx.order.updateMany({
+					where: { id: payment.order.id, orderStatus: "pending" },
+					data: { orderStatus: "processing" },
+				});
 			}
 
-			if (nextStatus === "refunded" && payment.order.orderStatus !== "cancelled" && payment.order.orderStatus !== "delivered") {
+			if (
+				nextStatus === "refunded" &&
+				payment.order.orderStatus !== "cancelled" &&
+				payment.order.orderStatus !== "delivered"
+			) {
 				// Hoàn tiền -> hoàn tồn kho + hoàn lượt dùng coupon + hủy đơn, tương tự luồng hủy đơn thông thường
 				const items = await tx.orderItem.findMany({ where: { orderId: payment.order.id } });
 				for (const item of items) {
 					if (item.productSkuId) {
-						await tx.productSku.update({ where: { id: item.productSkuId }, data: { stockQuantity: { increment: item.quantity } } });
+						await tx.productSku.update({
+							where: { id: item.productSkuId },
+							data: { stockQuantity: { increment: item.quantity } },
+						});
 					}
 				}
 				if (payment.order.couponId) {

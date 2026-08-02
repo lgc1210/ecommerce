@@ -71,14 +71,18 @@ CREATE TABLE `refresh_tokens` (
 CREATE TABLE `user_addresses` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
-    `address_type` ENUM('shipping', 'billing') NOT NULL DEFAULT 'shipping',
     `recipient_name` VARCHAR(100) NOT NULL,
     `phone_number` VARCHAR(20) NOT NULL,
-    `address_line` VARCHAR(255) NOT NULL,
-    `ward` VARCHAR(100) NOT NULL,
-    `province` VARCHAR(100) NOT NULL,
+    `address_line` VARCHAR(150) NOT NULL,
+    `ward_name` VARCHAR(100) NOT NULL,
+    `district_name` VARCHAR(100) NOT NULL,
+    `province_name` VARCHAR(100) NOT NULL,
+    `province_id` INTEGER NOT NULL,
+    `district_id` INTEGER NOT NULL,
+    `ward_code` VARCHAR(20) NOT NULL,
+    `tag` ENUM('home', 'office') NOT NULL DEFAULT 'home',
     `is_default` BOOLEAN NOT NULL DEFAULT false,
-    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

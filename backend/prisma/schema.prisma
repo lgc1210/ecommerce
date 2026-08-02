@@ -17,9 +17,9 @@ enum Provider {
   facebook
 }
 
-enum AddressType {
-  shipping
-  billing
+enum AddressTag {
+  home
+  office
 }
 
 enum DiscountType {
@@ -160,14 +160,23 @@ model RefreshToken {
 model UserAddress {
   id            Int         @id @default(autoincrement())
   userId        Int         @map("user_id")
-  addressType   AddressType @default(shipping) @map("address_type")
+
   recipientName String      @map("recipient_name") @db.VarChar(100)
   phoneNumber   String      @map("phone_number") @db.VarChar(20)
-  addressLine   String      @map("address_line") @db.VarChar(255)
-  ward          String      @map("ward") @db.VarChar(100)
-  province      String      @map("province") @db.VarChar(100)
+
+  addressLine   String      @map("address_line") @db.VarChar(150)
+  wardName      String      @map("ward_name") @db.VarChar(100)
+  districtName  String      @map("district_name") @db.VarChar(100)
+  provinceName  String      @map("province_name") @db.VarChar(100)
+
+  provinceId    Int         @map("province_id")
+  districtId    Int         @map("district_id")
+  wardCode      String      @map("ward_code") @db.VarChar(20)
+
+  tag           AddressTag  @default(home)
   isDefault     Boolean     @default(false) @map("is_default")
-  createdAt     DateTime?   @default(now()) @map("created_at")
+
+  createdAt     DateTime    @default(now()) @map("created_at")
 
   user          User        @relation(fields: [userId], references: [id])
   orders        Order[]
@@ -186,7 +195,7 @@ model Category {
   slug          String     @unique @db.VarChar(100)
   description   String?    @db.Text
   isFeatured    Boolean    @default(false) @map("is_featured")
-  createdAt     DateTime?   @default(now()) @map("created_at")
+  createdAt     DateTime?  @default(now()) @map("created_at")
 
   parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   subcategories Category[] @relation("CategoryHierarchy")
