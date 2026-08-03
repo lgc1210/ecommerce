@@ -330,6 +330,11 @@ model Order {
   totalAmount       Decimal      @map("total_amount") @db.Decimal(14, 2)      // Số tiền cuối khách cần trả
 
   orderStatus       OrderStatus  @default(pending) @map("order_status")
+  // Đồng bộ với GHN (Giao Hàng Nhanh): mã vận đơn GHN trả về khi tạo đơn thành công (dùng để
+  // hủy/tra cứu/nhận callback sau này) + trạng thái vận chuyển mới nhất do GHN báo về qua webhook
+  // (vd: ready_to_pick, delivering, delivered, cancel...) — KHÔNG phải orderStatus của hệ thống.
+  ghnOrderCode      String?      @unique @map("ghn_order_code") @db.VarChar(50)
+  ghnStatus         String?      @map("ghn_status") @db.VarChar(50)
   createdAt         DateTime?    @default(now()) @map("created_at")
   updatedAt         DateTime?    @updatedAt @map("updated_at")
 

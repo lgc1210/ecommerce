@@ -15,7 +15,11 @@ export const checkout = async (req: AuthenticatedRequest, res: Response, next: N
 	}
 };
 
-export const previewShippingFee = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const previewShippingFee = async (
+	req: AuthenticatedRequest,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const result = await orderService.previewShippingFee(req.user!.id, req.body.shippingAddressId);
 		res.status(200).json({ data: result });
@@ -86,4 +90,21 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}
+};
+
+// ==========================================
+// Webhook: GHN gọi ngược về khi trạng thái vận chuyển thay đổi
+// ==========================================
+/**
+ * LUÔN trả 200 (kể cả khi có lỗi xử lý nội bộ) — theo tài liệu GHN, response khác 200 sẽ khiến
+ * GHN bắn lại callback này tối đa 10 lần, mỗi lần cách nhau 5 giây; lỗi xử lý phía mình (đơn
+ * không tìm thấy, DB lỗi...) không phải lỗi của GHN nên không nên để GHN retry vô ích.
+ */
+export const receiveGhnWebhook = async (req: Request, res: Response): Promise<void> => {
+	try {
+		await orderService.syncFromGhnWebhook(req.body.OrderCode, req.body.Status);
+	} catch (error) {
+		console.error("[GHN webhook] Xử lý callback thất bại:", error);
+	}
+	res.status(200).json({ message: "OK" });
 };

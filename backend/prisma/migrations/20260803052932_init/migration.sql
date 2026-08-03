@@ -203,10 +203,13 @@ CREATE TABLE `orders` (
     `shipping_fee` DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
     `total_amount` DECIMAL(14, 2) NOT NULL,
     `order_status` ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') NOT NULL DEFAULT 'pending',
+    `ghn_order_code` VARCHAR(50) NULL,
+    `ghn_status` VARCHAR(50) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
 
     UNIQUE INDEX `orders_order_number_key`(`order_number`),
+    UNIQUE INDEX `orders_ghn_order_code_key`(`ghn_order_code`),
     INDEX `orders_order_status_idx`(`order_status`),
     INDEX `orders_user_id_created_at_idx`(`user_id`, `created_at`),
     PRIMARY KEY (`id`)

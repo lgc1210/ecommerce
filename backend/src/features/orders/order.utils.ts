@@ -1,3 +1,9 @@
+import {
+	GHN_CANCELLED_STATUSES,
+	GHN_DELIVERED_STATUSES,
+	GHN_PROCESSING_STATUSES,
+	GHN_SHIPPED_STATUSES,
+} from "../../external/ghn/ghn.constant.js";
 import { ORDER_STATUS } from "./order.constant.js";
 
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
@@ -31,6 +37,19 @@ export function generateOrderNumber(now: Date = new Date()): string {
 	const datePart = now.toISOString().slice(0, 10).replace(/-/g, "");
 	const randomPart = Math.floor(1000 + Math.random() * 9000);
 	return `ORD-${datePart}-${randomPart}`;
+}
+
+/**
+ * Map trạng thái GHN (webhook) sang OrderStatus nội bộ. Trả về null nếu trạng thái đó chưa đủ rõ
+ * ràng để tự ý chuyển trạng thái đơn (vd: "waiting_to_return") — những trường hợp này chỉ nên lưu
+ * lại ghn_status thô để tham khảo.
+ */
+export function mapGhnStatusToOrderStatus(ghnStatus: string): OrderStatus | null {
+	if (GHN_DELIVERED_STATUSES.has(ghnStatus)) return ORDER_STATUS.delivered;
+	if (GHN_CANCELLED_STATUSES.has(ghnStatus)) return ORDER_STATUS.cancelled;
+	if (GHN_SHIPPED_STATUSES.has(ghnStatus)) return ORDER_STATUS.shipped;
+	if (GHN_PROCESSING_STATUSES.has(ghnStatus)) return ORDER_STATUS.processing;
+	return null;
 }
 
 interface WeighableCartItem {

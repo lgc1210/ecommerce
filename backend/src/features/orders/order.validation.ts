@@ -77,3 +77,18 @@ export const UpdateOrderStatusSchema = z.object({
 		status: orderStatusEnum,
 	}),
 });
+
+// ==========================================
+// Webhook: GHN gọi ngược về khi trạng thái vận chuyển thay đổi
+// ==========================================
+/**
+ * Payload GHN gửi qua callback URL (cấu hình ở trang quản lý shop GHN, không phải qua API) mỗi
+ * khi trạng thái đơn thay đổi. Chỉ validate 2 field thực sự dùng tới (OrderCode, Status) — payload
+ * thật của GHN có rất nhiều field khác (Fee, Weight, ...) nhưng không cần thiết cho việc đồng bộ.
+ */
+export const GhnWebhookSchema = z.object({
+	body: z.object({
+		OrderCode: z.string().min(1, { message: "OrderCode không được để trống." }),
+		Status: z.string().min(1, { message: "Status không được để trống." }),
+	}),
+});
