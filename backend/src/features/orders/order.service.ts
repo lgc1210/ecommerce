@@ -2,10 +2,11 @@ import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
 import { normalizeCouponCode, checkCouponUsability, computeDiscountAmount } from "../coupons/coupon.utils.js";
 import { PAYMENT_STATUS } from "../payments/payment.constant.js";
+import { calculateShippingFee } from "../../external/ghn/ghn.service.js";
 import { ORDER_STATUS, type PAYMENT_METHOD } from "./order.constant.js";
 import {
 	generateOrderNumber,
-	computeShippingFee,
+	computeCartPackage,
 	isValidOrderStatusTransition,
 	isCancellation,
 	type OrderStatus,
@@ -39,7 +40,10 @@ const orderItemInclude = {
 	items: {
 		include: {
 			productSku: {
-				include: { product: { select: { id: true, name: true, slug: true } } },
+				include: {
+					product: { select: { id: true, name: true, slug: true } },
+					images: { orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }] },
+				},
 			},
 		},
 	},
@@ -63,48 +67,13 @@ class OrderService {
 	// ==========================================
 	// Self-service: checkout
 	// ==========================================
-	/** Tạo đơn hàng từ giỏ hàng hiện tại của user, trừ tồn kho, áp coupon (nếu có), rồi xóa giỏ hàng. Toàn bộ trong 1 transaction. */
+	/**
+	 * Tạo đơn hàng từ giỏ hàng hiện tại của user, trừ tồn kho, áp coupon (nếu có). Toàn bộ trong 1
+	 * transaction. LƯU Ý: KHÔNG xóa giỏ hàng sau khi đặt — khách có thể đặt lại/mua thêm từ đúng
+	 * giỏ hàng cũ, việc xóa/giữ giỏ hàng là do khách tự quyết định (qua API xóa giỏ hàng riêng).
+	 */
 	async checkout(userId: number, data: CreateOrderInput) {
-		const address = await prisma.userAddress.findUnique({ where: { id: data.shippingAddressId } });
-		if (!address || address.userId !== userId) {
-			throw new Error("NotFound: Địa chỉ giao hàng không tồn tại hoặc không thuộc về bạn.");
-		}
-
-		const cart = await prisma.cart.findUnique({
-			where: { userId },
-			include: {
-				items: {
-					include: {
-						productSku: {
-							include: {
-								product: {
-									select: {
-										isActive: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		});
-
-		if (!cart || cart.items.length === 0) {
-			throw new Error("BadRequest: Giỏ hàng đang trống, không thể đặt hàng.");
-		}
-
-		for (const item of cart.items) {
-			if (!item.productSku || (item.productSku.product && !item.productSku.product.isActive)) {
-				throw new Error("BadRequest: Một số sản phẩm trong giỏ hàng đã ngừng kinh doanh, vui lòng cập nhật giỏ hàng.");
-			}
-			if (item.quantity > item.productSku.stockQuantity) {
-				throw new Error(
-					`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`,
-				);
-			}
-		}
-
-		const subtotalAmount = cart.items.reduce((sum, item) => sum + Number(item.productSku.price) * item.quantity, 0);
+		const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, data.shippingAddressId);
 
 		let couponId: number | null = null;
 		let couponUsageLimit: number | null = null;
@@ -131,7 +100,7 @@ class OrderService {
 			discountAmount = computeDiscountAmount(coupon, subtotalAmount);
 		}
 
-		const shippingFee = computeShippingFee(subtotalAmount);
+		const shippingFee = await this.computeShippingFeeForCart(address, cart.items, subtotalAmount);
 		const totalAmount = Math.max(0, subtotalAmount - discountAmount + shippingFee);
 
 		const order = await prisma.$transaction(async (tx) => {
@@ -193,12 +162,20 @@ class OrderService {
 				include: orderDetailInclude,
 			});
 
-			await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-
 			return createdOrder;
 		});
 
 		return order;
+	}
+
+	/**
+	 * Tính trước phí vận chuyển GHN theo giỏ hàng hiện tại + địa chỉ giao hàng, dùng cho trang
+	 * checkout hiển thị phí ship cho khách TRƯỚC khi họ bấm đặt hàng (không tạo đơn, không trừ tồn kho).
+	 */
+	async previewShippingFee(userId: number, shippingAddressId: number) {
+		const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, shippingAddressId);
+		const shippingFee = await this.computeShippingFeeForCart(address, cart.items, subtotalAmount);
+		return { subtotalAmount, shippingFee };
 	}
 
 	// ==========================================
@@ -288,6 +265,74 @@ class OrderService {
 	// ==========================================
 	// Helpers
 	// ==========================================
+	/**
+	 * Kiểm tra địa chỉ giao hàng thuộc về đúng user, load giỏ hàng hiện tại và validate từng dòng
+	 * (còn kinh doanh, đủ tồn kho). Dùng chung cho cả checkout() lẫn previewShippingFee() để tránh
+	 * lặp lại logic và đảm bảo phí ship xem trước luôn khớp với phí ship lúc đặt hàng thật.
+	 */
+	private async loadValidatedCartForCheckout(userId: number, shippingAddressId: number) {
+		const address = await prisma.userAddress.findUnique({ where: { id: shippingAddressId } });
+		if (!address || address.userId !== userId) {
+			throw new Error("NotFound: Địa chỉ giao hàng không tồn tại hoặc không thuộc về bạn.");
+		}
+
+		const cart = await prisma.cart.findUnique({
+			where: { userId },
+			include: {
+				items: {
+					include: {
+						productSku: {
+							include: {
+								product: {
+									select: {
+										isActive: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+
+		if (!cart || cart.items.length === 0) {
+			throw new Error("BadRequest: Giỏ hàng đang trống, không thể đặt hàng.");
+		}
+
+		for (const item of cart.items) {
+			if (!item.productSku || (item.productSku.product && !item.productSku.product.isActive)) {
+				throw new Error("BadRequest: Một số sản phẩm trong giỏ hàng đã ngừng kinh doanh, vui lòng cập nhật giỏ hàng.");
+			}
+			if (item.quantity > item.productSku.stockQuantity) {
+				throw new Error(
+					`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`,
+				);
+			}
+		}
+
+		const subtotalAmount = cart.items.reduce((sum, item) => sum + Number(item.productSku.price) * item.quantity, 0);
+
+		return { address, cart, subtotalAmount };
+	}
+
+	/** Gọi GHN để tính phí vận chuyển thực tế theo địa chỉ đích + khối lượng/kích thước thật của giỏ hàng. */
+	private async computeShippingFeeForCart(
+		address: { districtId: number; wardCode: string },
+		cartItems: {
+			quantity: number;
+			productSku: { weightGram: number; lengthCm: number; widthCm: number; heightCm: number };
+		}[],
+		subtotalAmount: number,
+	) {
+		const cartPackage = computeCartPackage(cartItems);
+		return calculateShippingFee({
+			toDistrictId: address.districtId,
+			toWardCode: address.wardCode,
+			...cartPackage,
+			insuranceValue: subtotalAmount,
+		});
+	}
+
 	private async transitionOrderStatus(
 		order: { id: number; orderStatus: string; couponId: number | null },
 		nextStatus: OrderStatus,

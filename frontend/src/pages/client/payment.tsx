@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../components/breadcrumb";
 import Button from "../../components/button";
@@ -7,6 +7,9 @@ import paths from "../../configs/constants/paths";
 import { CartIcon } from "../../components/icons";
 import { PAYMENT_METHOD } from "../../features/client/payment/constants";
 import { useCart } from "../../features/client/cart/hooks";
+import { usePreviewShippingFeeQuery, useCreateOrderMutation } from "../../features/client/order/hooks";
+import type { PaymentMethod } from "../../features/client/order/types";
+import type { ValidateCouponResult } from "../../features/client/coupon/types";
 import CheckoutAddressSection from "../../features/client/payment/components/checkout-address-section";
 import CheckoutProductSection from "../../features/client/payment/components/checkout-product-section";
 import CheckoutDeliveryMethodSection from "../../features/client/payment/components/checkout-delivery-method-section";
@@ -15,16 +18,24 @@ import CheckoutDiscountSection from "../../features/client/payment/components/ch
 import CheckoutSummarySection from "../../features/client/payment/components/checkout-summary-section";
 
 const PaymentPage = () => {
-	const [paymentMethod, setPaymentMethod] = useState<string>(PAYMENT_METHOD.cod);
+	const navigate = useNavigate();
+	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHOD.cod);
 	const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+	const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResult | null>(null);
 
-	// Giỏ hàng thật (cùng nguồn dữ liệu với trang /cart) — không còn dùng mock nữa.
+	// Giỏ hàng thật (cùng nguồn dữ liệu với trang /cart).
 	const { items, subtotal, isLoading: isCartLoading } = useCart();
 
-	const shippingFee = 30000;
-	const discount = 100000;
+	// Phí ship THẬT (GHN), tính lại mỗi khi đổi địa chỉ nhận hàng — xem POST /orders/shipping-fee.
+	const shippingFeeQuery = usePreviewShippingFeeQuery(selectedAddressId);
+	const shippingFee = shippingFeeQuery.data?.shippingFee ?? null;
 
-	const total = subtotal + shippingFee - discount;
+	const createOrder = useCreateOrderMutation();
+
+	// Mã giảm giá được tính trước theo subtotal hiện tại tại thời điểm áp dụng; nếu giỏ hàng đổi
+	// sau đó (số tiền giảm không còn khớp), backend vẫn tự tính lại chính xác lúc đặt hàng thật.
+	const discount = appliedCoupon?.discountAmount ?? 0;
+	const total = subtotal + (shippingFee ?? 0) - discount;
 
 	const handlePlaceOrder = () => {
 		if (!selectedAddressId) {
@@ -37,9 +48,25 @@ const PaymentPage = () => {
 			return;
 		}
 
-		// TODO: mã giảm giá và tạo đơn hàng (POST /orders với shippingAddressId, paymentMethod,
-		// couponCode — đơn hàng được backend dựng trực tiếp từ giỏ hàng của user, không cần gửi
-		// kèm danh sách sản phẩm) hiện vẫn là mock, sẽ được nối API ở bước tiếp theo.
+		if (shippingFeeQuery.isLoading || shippingFeeQuery.isError || shippingFee === null) {
+			toast.error("Chưa tính được phí vận chuyển cho địa chỉ này, vui lòng thử lại hoặc đổi địa chỉ khác.");
+			return;
+		}
+
+		createOrder.mutate(
+			{
+				shippingAddressId: selectedAddressId,
+				paymentMethod,
+				couponCode: appliedCoupon?.code,
+			},
+			{
+				onSuccess: (res) => {
+					const orderNumber = res.data.data.orderNumber;
+					toast.success(`Đặt hàng thành công! Mã đơn hàng: ${orderNumber}.`);
+					navigate(paths.client.account, { state: { tab: "orders" } });
+				},
+			},
+		);
 	};
 
 	if (isCartLoading) {
@@ -76,21 +103,36 @@ const PaymentPage = () => {
 							selectedAddressId={selectedAddressId}
 							onSelectAddress={(address) => setSelectedAddressId(address.id)}
 						/>
+
 						<CheckoutProductSection items={items} />
-						<CheckoutDeliveryMethodSection />
-						<CheckoutPaymentMethodSection value={paymentMethod} onChange={setPaymentMethod} />
+
+						<CheckoutDeliveryMethodSection
+							shippingFee={shippingFee}
+							isLoading={selectedAddressId !== null && shippingFeeQuery.isLoading}
+							isError={shippingFeeQuery.isError}
+						/>
+
+						<CheckoutPaymentMethodSection value={paymentMethod} onChange={(value) => setPaymentMethod(value as PaymentMethod)} />
 					</div>
 
 					{/* RIGHT */}
 					<div className='lg:col-span-4'>
 						<div className='sticky top-24 space-y-6'>
-							<CheckoutDiscountSection />
+							<CheckoutDiscountSection
+								orderSubtotal={subtotal}
+								appliedCoupon={appliedCoupon}
+								onApply={setAppliedCoupon}
+								onRemove={() => setAppliedCoupon(null)}
+							/>
+
 							<CheckoutSummarySection
 								subtotal={subtotal}
-								shippingFee={shippingFee}
+								shippingFee={shippingFee ?? 0}
 								discount={discount}
 								total={total}
 								onPlaceOrder={handlePlaceOrder}
+								isPlacingOrder={createOrder.isPending}
+								disabled={!selectedAddressId}
 							/>
 						</div>
 					</div>

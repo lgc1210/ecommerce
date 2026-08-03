@@ -83,7 +83,7 @@ const ShopPage = () => {
 	};
 
 	const FilterPanel = (
-		<div className='space-y-8 sticky top-30 z-20'>
+		<div className='space-y-8'>
 			<div>
 				<h3 className='font-bold text-ink'>Tìm kiếm</h3>
 				<div className='mt-4'>

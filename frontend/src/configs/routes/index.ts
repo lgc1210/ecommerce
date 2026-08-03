@@ -97,9 +97,9 @@ const router = createBrowserRouter([
 				handle: { title: "Giỏ hàng", crumb: () => "Giỏ hàng" },
 			},
 			{
-				// Thanh toán vẫn yêu cầu đăng nhập (giống hành vi route "order" cũ) vì
-				// cần xác định người đặt hàng, dù màn hình thanh toán ở bước này mới
-				// chỉ là giao diện mock, chưa gọi API thật.
+				// Thanh toán yêu cầu đăng nhập (cần xác định người đặt hàng): chọn địa chỉ, xem phí
+				// vận chuyển GHN thật (POST /orders/shipping-fee), áp mã giảm giá (POST /coupons/validate)
+				// và đặt hàng thật (POST /orders) khi bấm nút "Đặt hàng".
 				path: "payment",
 				loader: requireAuthLoader,
 				Component: PaymentPage,

@@ -3,6 +3,12 @@ export interface SkuInput {
 	price: number;
 	stockQuantity?: number;
 	variationDetails: Record<string, unknown>;
+	/** Khối lượng (gram) của CHÍNH biến thể này. Bỏ trống -> dùng giá trị mặc định (xem product.utils.ts). */
+	weightGram?: number;
+	/** Kích thước đóng gói (cm) của CHÍNH biến thể này. Bỏ trống -> dùng giá trị mặc định. */
+	lengthCm?: number;
+	widthCm?: number;
+	heightCm?: number;
 }
 
 export interface CreateProductInput {
@@ -29,6 +35,10 @@ export interface UpdateSkuInput {
 	price?: number;
 	stockQuantity?: number;
 	variationDetails?: Record<string, unknown>;
+	weightGram?: number;
+	lengthCm?: number;
+	widthCm?: number;
+	heightCm?: number;
 }
 
 export interface ListProductsParams {

@@ -30,6 +30,12 @@ export interface ProductSku {
 	price: string;
 	stockQuantity: number;
 	variationDetails: VariationDetails;
+	/** Khối lượng riêng của biến thể (gram) — dùng để tính phí vận chuyển GHN theo từng đơn hàng. */
+	weightGram: number;
+	/** Kích thước đóng gói riêng của biến thể (cm). */
+	lengthCm: number;
+	widthCm: number;
+	heightCm: number;
 	images: ProductImage[];
 	createdAt?: string;
 	updatedAt?: string;
@@ -129,6 +135,10 @@ export interface SkuPayload {
 	price: number;
 	stockQuantity?: number;
 	variationDetails: VariationDetails;
+	weightGram?: number;
+	lengthCm?: number;
+	widthCm?: number;
+	heightCm?: number;
 }
 
 export interface CreateSkuPayload extends SkuPayload {

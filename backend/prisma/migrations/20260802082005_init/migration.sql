@@ -126,6 +126,10 @@ CREATE TABLE `product_sku` (
     `price` DECIMAL(14, 2) NOT NULL,
     `stock_quantity` INTEGER NOT NULL DEFAULT 0,
     `variation_details` JSON NOT NULL,
+    `weight_gram` INTEGER NOT NULL DEFAULT 500,
+    `length_cm` INTEGER NOT NULL DEFAULT 20,
+    `width_cm` INTEGER NOT NULL DEFAULT 20,
+    `height_cm` INTEGER NOT NULL DEFAULT 20,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
 

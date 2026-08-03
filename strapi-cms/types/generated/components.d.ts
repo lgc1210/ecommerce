@@ -42,6 +42,7 @@ export interface SectionsStorySection extends Struct.ComponentSchema {
   attributes: {
     badge: Schema.Attribute.String;
     banner: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    btn_second_text: Schema.Attribute.String;
     btn_text: Schema.Attribute.String;
     content: Schema.Attribute.Blocks;
     title: Schema.Attribute.String;

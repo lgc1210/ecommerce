@@ -1,6 +1,13 @@
 import prisma from "../../config/prisma.js";
 import type { Prisma } from "../../generated/prisma/index.js";
-import { computeAverageRating, buildSkuBaseCode } from "./product.utils.js";
+import {
+	computeAverageRating,
+	buildSkuBaseCode,
+	DEFAULT_SKU_WEIGHT_GRAM,
+	DEFAULT_SKU_LENGTH_CM,
+	DEFAULT_SKU_WIDTH_CM,
+	DEFAULT_SKU_HEIGHT_CM,
+} from "./product.utils.js";
 import { parsePagination, slugify } from "../../utils/index.js";
 import type {
 	CreateProductInput,
@@ -153,6 +160,10 @@ class ProductService {
 					price: s.price,
 					stockQuantity: s.stockQuantity ?? 0,
 					variationDetails: s.variationDetails as Prisma.InputJsonValue,
+					weightGram: s.weightGram ?? DEFAULT_SKU_WEIGHT_GRAM,
+					lengthCm: s.lengthCm ?? DEFAULT_SKU_LENGTH_CM,
+					widthCm: s.widthCm ?? DEFAULT_SKU_WIDTH_CM,
+					heightCm: s.heightCm ?? DEFAULT_SKU_HEIGHT_CM,
 				});
 			}
 			createData.skus = { create: resolvedSkus };
@@ -250,6 +261,10 @@ class ProductService {
 				price: data.price,
 				stockQuantity: data.stockQuantity ?? 0,
 				variationDetails: data.variationDetails as Prisma.InputJsonValue,
+				weightGram: data.weightGram ?? DEFAULT_SKU_WEIGHT_GRAM,
+				lengthCm: data.lengthCm ?? DEFAULT_SKU_LENGTH_CM,
+				widthCm: data.widthCm ?? DEFAULT_SKU_WIDTH_CM,
+				heightCm: data.heightCm ?? DEFAULT_SKU_HEIGHT_CM,
 			},
 		});
 	}
@@ -262,6 +277,10 @@ class ProductService {
 		if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
 		if (data.variationDetails !== undefined)
 			updateData.variationDetails = data.variationDetails as Prisma.InputJsonValue;
+		if (data.weightGram !== undefined) updateData.weightGram = data.weightGram;
+		if (data.lengthCm !== undefined) updateData.lengthCm = data.lengthCm;
+		if (data.widthCm !== undefined) updateData.widthCm = data.widthCm;
+		if (data.heightCm !== undefined) updateData.heightCm = data.heightCm;
 
 		if (data.sku !== undefined && data.sku !== existing.sku) {
 			await this.assertSkuCodesAvailable([data.sku]);

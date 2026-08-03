@@ -42,6 +42,9 @@ const envSchema = z.object({
 	GHN_API_TOKEN: z.string().min(1, { message: "GHN_API_TOKEN is required for Giao Hàng Nhanh." }),
 	GHN_API_URL: z.string().min(1, { message: "GHN_API_URL is required for Giao Hàng Nhanh." }),
 	GHN_SHOP_ID: z.string().min(1, { message: "GHN_SHOP_ID is required for Giao Hàng Nhanh." }),
+	GHN_SERVICE_TYPE_ID: z.string().min(1, { message: "GHN_SERVICE_TYPE_ID is required for Giao Hàng Nhanh." }),
+	GHN_FROM_DISTRICT_ID: z.string().min(1, { message: "GHN_FROM_DISTRICT_ID is required for Giao Hàng Nhanh." }),
+	GHN_FROM_WARD_CODE: z.string().min(1, { message: "GHN_FROM_WARD_CODE is required for Giao Hàng Nhanh." }),
 
 	// SMTP
 	SMTP_HOST: z.string(),

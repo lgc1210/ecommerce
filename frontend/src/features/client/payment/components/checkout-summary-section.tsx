@@ -7,6 +7,8 @@ interface CheckoutSummarySectionProps {
 	discount: number;
 	total: number;
 	onPlaceOrder: () => void;
+	isPlacingOrder?: boolean;
+	disabled?: boolean;
 }
 
 /** Tóm tắt đơn hàng (tạm tính / phí vận chuyển / giảm giá / tổng cộng) + nút đặt hàng. */
@@ -16,6 +18,8 @@ const CheckoutSummarySection = ({
 	discount,
 	total,
 	onPlaceOrder,
+	isPlacingOrder = false,
+	disabled = false,
 }: CheckoutSummarySectionProps) => {
 	return (
 		<section className='rounded-3xl border border-border bg-white p-6'>
@@ -46,8 +50,14 @@ const CheckoutSummarySection = ({
 				<span className='text-2xl font-extrabold text-primary'>{formatCurrency(total)}</span>
 			</div>
 
-			<Button type='button' fullWidth size='lg' className='mt-6' onClick={onPlaceOrder}>
-				Đặt hàng
+			<Button
+				type='button'
+				fullWidth
+				size='lg'
+				className='mt-6'
+				onClick={onPlaceOrder}
+				disabled={disabled || isPlacingOrder}>
+				{isPlacingOrder ? "Đang đặt hàng..." : "Đặt hàng"}
 			</Button>
 		</section>
 	);

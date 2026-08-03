@@ -6,6 +6,8 @@ import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL, formatOrderDate } from "../..
 import OrderStatusBadge from "../../../admin/order/components/order-status-badge";
 import PaymentStatusBadge from "../../../admin/order/components/payment-status-badge";
 import OrderTracking from "./order-tracking";
+import { Link } from "react-router-dom";
+import paths from "../../../../configs/constants/paths";
 
 /** "Đen / M" — trả về null nếu sản phẩm không có snapshot biến thể. */
 const formatVariationSnapshot = (snapshot: Record<string, string> | null): string | null => {
@@ -80,20 +82,32 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 							{order.items.map((item) => {
 								const variation = formatVariationSnapshot(item.variationSnapshot);
 								return (
-									<div key={item.id} className='flex items-center justify-between gap-4 py-3 text-sm'>
-										<div className='min-w-0'>
-											<p className='truncate font-medium text-ink'>
-												{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}
-											</p>
-											<p className='text-xs text-muted'>
-												SL: {item.quantity}
-												{variation ? ` · ${variation}` : ""}
-											</p>
+									<Link
+										to={`${paths.client.productDetail(`${item.productSku?.product?.slug}`)}`}
+										key={item.id}
+										className='flex items-center justify-between py-3 text-sm'>
+										<div className='flex items-center justify-start gap-4'>
+											<img
+												src={item?.productSku?.images[0]?.imageUrl ?? ""}
+												alt={item?.productSku?.images[0]?.altText ?? ""}
+												width={50}
+												height={50}
+												className='shrink-0 rounded border border-border'
+											/>
+											<div className='min-w-0'>
+												<p className='truncate font-medium text-ink'>
+													{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}
+												</p>
+												<p className='text-xs text-muted'>
+													SL: {item.quantity}
+													{variation ? ` · ${variation}` : ""}
+												</p>
+											</div>
 										</div>
 										<p className='shrink-0 font-semibold text-ink'>
 											{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}
 										</p>
-									</div>
+									</Link>
 								);
 							})}
 						</div>

@@ -5,5 +5,6 @@ export const ghnClient = axios.create({
 	headers: {
 		"Content-Type": "application/json",
 		Token: env.GHN_API_TOKEN,
+		ShopId: env.GHN_SHOP_ID,
 	},
 });

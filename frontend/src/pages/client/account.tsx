@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import BreadCrumb from "../../components/breadcrumb";
 import { Tabs, TabItem } from "../../components/tabs";
 import { BoxIcon, MailIcon, MapPinIcon, UserIcon } from "../../components/icons";
@@ -29,9 +30,14 @@ type Tab = (typeof TABS)[keyof typeof TABS];
  * yêu cầu permission đặc biệt — riêng tab "orders" cần thêm permission
  * "order:read", backend đã cấp sẵn cho role "customer" nên không cần thêm
  * loader riêng ở route này).
+ *
+ * Tab khởi tạo có thể được chỉ định qua `location.state.tab` (vd. sau khi đặt hàng thành công ở
+ * trang /payment, điều hướng thẳng sang đây kèm state để mở sẵn tab "Đơn hàng").
  */
 const AccountPage = () => {
-	const [tab, setTab] = useState<Tab>("profile");
+	const location = useLocation();
+	const initialTab = (location.state as { tab?: Tab } | null)?.tab ?? TABS.profile;
+	const [tab, setTab] = useState<Tab>(initialTab);
 
 	return (
 		<div>

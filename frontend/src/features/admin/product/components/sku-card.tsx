@@ -37,6 +37,9 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 					<p className='font-semibold text-ink'>{formatVariationDetails(sku.variationDetails)}</p>
 					<p className='mt-0.5 font-mono text-xs text-muted'>{sku.sku}</p>
 					<p className='mt-1 text-sm text-ink/80'>{formatCurrency(Number(sku.price))}</p>
+					<p className='mt-1 text-xs text-muted'>
+						{sku.weightGram}g · {sku.lengthCm}×{sku.widthCm}×{sku.heightCm}cm
+					</p>
 				</div>
 
 				{canWriteCatalog && (

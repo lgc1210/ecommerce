@@ -13,6 +13,12 @@ const SkuInputSchema = z.object({
 	variationDetails: z.record(z.string(), z.any()).refine((obj) => Object.keys(obj).length > 0, {
 		message: "Cần ít nhất 1 thuộc tính biến thể (vd: color, size).",
 	}),
+	// Khối lượng/kích thước riêng của biến thể — dùng để tính phí vận chuyển GHN thật cho từng đơn
+	// hàng (xem external/ghn/ghn.service.ts). Bỏ trống -> backend tự áp giá trị mặc định.
+	weightGram: z.number().int().positive({ message: "Khối lượng phải lớn hơn 0 (gram)." }).optional(),
+	lengthCm: z.number().int().positive({ message: "Chiều dài phải lớn hơn 0 (cm)." }).optional(),
+	widthCm: z.number().int().positive({ message: "Chiều rộng phải lớn hơn 0 (cm)." }).optional(),
+	heightCm: z.number().int().positive({ message: "Chiều cao phải lớn hơn 0 (cm)." }).optional(),
 });
 
 // ==========================================
@@ -105,6 +111,10 @@ export const UpdateSkuSchema = z.object({
 			price: SkuInputSchema.shape.price.optional(),
 			stockQuantity: SkuInputSchema.shape.stockQuantity,
 			variationDetails: SkuInputSchema.shape.variationDetails.optional(),
+			weightGram: SkuInputSchema.shape.weightGram,
+			lengthCm: SkuInputSchema.shape.lengthCm,
+			widthCm: SkuInputSchema.shape.widthCm,
+			heightCm: SkuInputSchema.shape.heightCm,
 		})
 		.refine((data) => Object.keys(data).length > 0, { message: "Cần ít nhất 1 trường để cập nhật." }),
 });

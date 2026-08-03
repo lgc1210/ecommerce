@@ -15,6 +15,15 @@ export const checkout = async (req: AuthenticatedRequest, res: Response, next: N
 	}
 };
 
+export const previewShippingFee = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+	try {
+		const result = await orderService.previewShippingFee(req.user!.id, req.body.shippingAddressId);
+		res.status(200).json({ data: result });
+	} catch (error) {
+		handleServiceError(error, res, next);
+	}
+};
+
 // ==========================================
 // Self-service: xem & hủy đơn của chính mình
 // ==========================================

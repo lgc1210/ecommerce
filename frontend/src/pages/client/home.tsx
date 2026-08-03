@@ -5,30 +5,45 @@ import { mockCategories, mockProducts } from "../../configs/constants/mock-data"
 import { formatCurrency } from "../../utils/currency";
 import { ChevronRightIcon, HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../components/icons";
 import ProductCard from "../../features/client/product/components/product-card";
-
-const trustBadges = [
-	{
-		icon: TruckIcon,
-		title: "Miễn phí vận chuyển",
-		description: "Áp dụng cho đơn hàng từ 500.000₫, giao nhanh trong 24-48 giờ.",
-	},
-	{
-		icon: ShieldCheckIcon,
-		title: "Thanh toán an toàn",
-		description: "Hỗ trợ đầy đủ các phương thức thanh toán phổ biến, bảo mật SSL.",
-	},
-	{
-		icon: HeadsetIcon,
-		title: "Hỗ trợ 24/7",
-		description: "Đội ngũ tư vấn sẵn sàng giải đáp mọi thắc mắc của bạn.",
-	},
-];
+import { useHomePageQuery } from "../../features/client/home/hooks";
+import Loading from "../../shared/components/loading";
+import { getStrapiMediaUrl } from "../../utils/strapi";
+import { BlocksRenderer } from "@strapi/blocks-react-renderer";
+import FormControl from "../../components/form-control";
 
 const latestProducts = mockProducts.slice(0, 6);
 const popularProducts = [...mockProducts].reverse().slice(0, 6);
 const featuredBanners = mockProducts.slice(2, 4);
 
+const DEFAULT_BANNER_URL = "https://placehold.co/700x700/faf6f0/d9641f?font=montserrat&text=Ecommerce";
+
+/** Map "icon_name" cấu hình ở Strapi (field value_item.icon_name) sang icon component tương ứng ở frontend. */
+const VALUE_ICON_MAP: Record<string, typeof TruckIcon> = {
+	Truck: TruckIcon,
+	Shield: ShieldCheckIcon,
+	Headset: HeadsetIcon,
+};
+
 const HomePage = () => {
+	// Toàn bộ nội dung trang (hero, danh sách giá trị cốt lõi) đều lấy động từ Strapi qua single type "home".
+	const { data, isLoading, isError } = useHomePageQuery();
+	const page = data?.data;
+
+	if (isLoading) {
+		return <Loading label='Đang tải nội dung...' />;
+	}
+
+	if (isError || !page) {
+		return (
+			<div className='flex min-h-[60vh] items-center justify-center text-center text-muted'>
+				Không thể tải nội dung trang Giới thiệu. Vui lòng thử lại sau.
+			</div>
+		);
+	}
+
+	const { hero_section, value_item } = page;
+	const bannerUrl = getStrapiMediaUrl(hero_section.banner?.url) ?? DEFAULT_BANNER_URL;
+
 	return (
 		<div className='flex min-h-screen flex-col bg-cream'>
 			<main className='flex-1'>
@@ -37,30 +52,30 @@ const HomePage = () => {
 					<div className='mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20'>
 						<div>
 							<span className='inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary-dark'>
-								Bộ sưu tập mới
+								{hero_section.badge}
 							</span>
 							<h1 className='mt-4 text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl'>
-								Phong cách phụ kiện &amp; thiết bị công nghệ mới
+								{hero_section.title}
 							</h1>
 							<p className='mt-5 max-w-md text-base leading-relaxed text-muted'>
-								Tuyển chọn tai nghe, loa, đồng hồ thông minh và thiết bị chơi game chất lượng cao — thiết kế tinh gọn,
-								hiệu năng vượt trội.
+								<BlocksRenderer
+									content={hero_section.content}
+									blocks={{
+										paragraph: ({ children }) => <p>{children}</p>,
+									}}
+								/>
 							</p>
 							<div className='mt-8 flex flex-wrap items-center gap-4'>
 								<Link to={paths.client.shop}>
-									<Button icon={<ChevronRightIcon className='h-4 w-4' />}>Mua ngay</Button>
+									<Button icon={<ChevronRightIcon className='h-4 w-4' />}>{hero_section.btn_text}</Button>
 								</Link>
 								<Link to={paths.client.about}>
-									<Button variant='outline'>Tìm hiểu thêm</Button>
+									<Button variant='outline'>{hero_section.btn_second_text}</Button>
 								</Link>
 							</div>
 						</div>
 						<div className='relative mx-auto aspect-square w-full max-w-md overflow-hidden rounded-3xl bg-surface'>
-							<img
-								src='https://placehold.co/700x700/faf6f0/d9641f?font=montserrat&text=Ecommerce'
-								alt='Sản phẩm nổi bật'
-								className='h-full w-full object-cover'
-							/>
+							<img src={bannerUrl} alt='Sản phẩm nổi bật' className='h-full w-full object-cover' />
 						</div>
 					</div>
 				</section>
@@ -68,17 +83,20 @@ const HomePage = () => {
 				{/* Trust badges */}
 				<section className='border-b border-border'>
 					<div className='mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 sm:grid-cols-3 lg:px-8'>
-						{trustBadges.map(({ icon: Icon, title, description }) => (
-							<div key={title} className='flex items-start gap-4'>
-								<span className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary-dark'>
-									<Icon className='h-6 w-6' />
-								</span>
-								<div>
-									<h3 className='font-bold text-ink'>{title}</h3>
-									<p className='mt-1 text-sm text-muted'>{description}</p>
+						{value_item.map((item) => {
+							const Icon = VALUE_ICON_MAP[item.icon_name];
+							return (
+								<div key={item.id + item.title} className='flex items-start gap-4'>
+									<span className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary-dark'>
+										<Icon className='h-6 w-6' />
+									</span>
+									<div>
+										<h3 className='font-bold text-ink'>{item.title}</h3>
+										<p className='mt-1 text-sm text-muted'>{item.description}</p>
+									</div>
 								</div>
-							</div>
-						))}
+							);
+						})}
 					</div>
 				</section>
 
@@ -173,17 +191,13 @@ const HomePage = () => {
 						<form
 							onSubmit={(e) => e.preventDefault()}
 							className='mx-auto mt-6 flex max-w-md flex-col gap-3 sm:flex-row'>
-							<input
-								type='email'
-								required
-								placeholder='Nhập email của bạn'
-								className='h-12 flex-1 rounded-full border-none bg-white px-5 text-sm text-ink outline-none placeholder:text-muted'
-							/>
-							<button
+							<FormControl type='email' required placeholder='Nhập email của bạn' className='flex-1 rounded-full!' />
+							<Button
 								type='submit'
+								variant='dark'
 								className='h-12 shrink-0 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-ink-soft'>
 								Đăng ký
-							</button>
+							</Button>
 						</form>
 					</div>
 				</section>

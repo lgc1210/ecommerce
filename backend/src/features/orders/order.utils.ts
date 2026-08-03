@@ -33,12 +33,39 @@ export function generateOrderNumber(now: Date = new Date()): string {
 	return `ORD-${datePart}-${randomPart}`;
 }
 
+interface WeighableCartItem {
+	quantity: number;
+	productSku: { weightGram: number; lengthCm: number; widthCm: number; heightCm: number };
+}
+
 /**
- * Tính phí vận chuyển mặc định theo giá trị đơn hàng (chưa có feature vận chuyển riêng):
- * Miễn phí ship từ 500.000đ trở lên, dưới mức đó thu phí cố định 30.000đ.
+ * Tính khối lượng (gram) + kích thước đóng gói (cm) ước lượng của giỏ hàng để gửi cho GHN tính
+ * phí vận chuyển, dựa trên khối lượng/kích thước THẬT của từng biến thể (ProductSku.weightGram/
+ * lengthCm/widthCm/heightCm — admin nhập khi tạo/sửa biến thể), không còn dùng giá trị mặc định
+ * cấu hình cứng ở .env.
+ *
+ * Đây chỉ là ước lượng đơn giản, không phải thuật toán đóng gói (bin packing) thật: chiều dài/
+ * rộng lấy giá trị LỚN NHẤT trong các sản phẩm (giả định xếp cạnh nhau trong cùng 1 kiện), chiều
+ * cao CỘNG DỒN theo số lượng (giả định xếp chồng lên nhau). Khối lượng luôn cộng dồn chính xác.
  */
-export function computeShippingFee(subtotal: number): number {
-	const FREE_SHIPPING_THRESHOLD = 500_000;
-	const FLAT_SHIPPING_FEE = 30_000;
-	return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_FEE;
+export function computeCartPackage(items: WeighableCartItem[]) {
+	let weightGram = 0;
+	let lengthCm = 0;
+	let widthCm = 0;
+	let heightCm = 0;
+
+	for (const item of items) {
+		weightGram += item.quantity * item.productSku.weightGram;
+		lengthCm = Math.max(lengthCm, item.productSku.lengthCm);
+		widthCm = Math.max(widthCm, item.productSku.widthCm);
+		heightCm += item.quantity * item.productSku.heightCm;
+	}
+
+	// GHN yêu cầu các giá trị này > 0
+	return {
+		weightGram: Math.max(weightGram, 1),
+		lengthCm: Math.max(lengthCm, 1),
+		widthCm: Math.max(widthCm, 1),
+		heightCm: Math.max(heightCm, 1),
+	};
 }

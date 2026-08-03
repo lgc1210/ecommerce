@@ -232,6 +232,14 @@ model ProductSku {
   price            Decimal     @db.Decimal(14, 2)
   stockQuantity    Int         @default(0) @map("stock_quantity")
   variationDetails Json        @map("variation_details")
+  // Kích thước & khối lượng vật lý của CHÍNH biến thể này — dùng để tính phí vận chuyển thật
+  // (GHN) theo từng đơn hàng thay vì 1 giá trị mặc định cấu hình cứng ở .env. Có default hợp lý
+  // (tương đương giá trị mặc định cũ) để không phá dữ liệu hiện có; admin nên cập nhật lại cho
+  // đúng thực tế từng biến thể.
+  weightGram       Int         @default(500) @map("weight_gram")
+  lengthCm         Int         @default(20) @map("length_cm")
+  widthCm          Int         @default(20) @map("width_cm")
+  heightCm         Int         @default(20) @map("height_cm")
   createdAt        DateTime?   @default(now()) @map("created_at")
   updatedAt        DateTime?   @updatedAt @map("updated_at")
 

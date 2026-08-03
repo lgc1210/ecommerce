@@ -10,5 +10,16 @@
     "draftAndPublish": true
   },
   "pluginOptions": {},
-  "attributes": {}
+  "attributes": {
+    "hero_section": {
+      "type": "component",
+      "component": "sections.story-section",
+      "repeatable": false
+    },
+    "value_item": {
+      "type": "component",
+      "component": "sections.value-item",
+      "repeatable": true
+    }
+  }
 }

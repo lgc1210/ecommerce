@@ -37,6 +37,7 @@ export interface MyOrderItem {
 		id: number;
 		sku: string;
 		product: { id: number; name: string; slug: string } | null;
+		images: { id: number; imageUrl: string; altText: string | null }[];
 	} | null;
 }
 
@@ -94,4 +95,20 @@ export interface ListMyOrdersParams {
 export interface ListMyOrdersResult {
 	data: MyOrderListItem[];
 	pagination: Pagination;
+}
+
+/** Payload đặt hàng (POST /orders) — đơn hàng được backend dựng trực tiếp từ giỏ hàng hiện tại của user. */
+export interface CreateOrderPayload {
+	shippingAddressId: number;
+	paymentMethod: PaymentMethod;
+	couponCode?: string;
+}
+
+/**
+ * Kết quả tính trước phí vận chuyển (POST /orders/shipping-fee), dùng ở trang thanh toán để hiển
+ * thị phí ship thật (GHN) theo địa chỉ đã chọn TRƯỚC khi khách bấm đặt hàng.
+ */
+export interface PreviewShippingFeeResult {
+	subtotalAmount: number;
+	shippingFee: number;
 }

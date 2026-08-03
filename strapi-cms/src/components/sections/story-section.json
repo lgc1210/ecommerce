@@ -26,6 +26,9 @@
     },
     "btn_text": {
       "type": "string"
+    },
+    "btn_second_text": {
+      "type": "string"
     }
   },
   "config": {}

@@ -28,6 +28,12 @@ export const CreateOrderSchema = z.object({
 	}),
 });
 
+export const PreviewShippingFeeSchema = z.object({
+	body: z.object({
+		shippingAddressId: z.number().int().positive({ message: "shippingAddressId không hợp lệ." }),
+	}),
+});
+
 export const ListOwnOrdersQuerySchema = z.object({
 	query: z.object({
 		page: z.string().regex(/^\d+$/).optional(),
