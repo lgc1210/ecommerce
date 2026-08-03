@@ -1,6 +1,11 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
-import { normalizeCouponCode, checkCouponUsability, computeDiscountAmount } from "../coupons/coupon.utils.js";
+import {
+	normalizeCouponCode,
+	checkCouponUsability,
+	checkCouponEmailOwnership,
+	computeDiscountAmount,
+} from "../coupons/coupon.utils.js";
 import { PAYMENT_STATUS } from "../payments/payment.constant.js";
 import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
 import { ORDER_STATUS, type PAYMENT_METHOD } from "./order.constant.js";
@@ -73,7 +78,7 @@ class OrderService {
 	 * transaction. LƯU Ý: KHÔNG xóa giỏ hàng sau khi đặt — khách có thể đặt lại/mua thêm từ đúng
 	 * giỏ hàng cũ, việc xóa/giữ giỏ hàng là do khách tự quyết định (qua API xóa giỏ hàng riêng).
 	 */
-	async checkout(userId: number, data: CreateOrderInput) {
+	async checkout(userId: number, data: CreateOrderInput, userEmail?: string | null) {
 		const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, data.shippingAddressId);
 
 		let couponId: number | null = null;
@@ -84,6 +89,12 @@ class OrderService {
 			const coupon = await prisma.coupon.findUnique({ where: { code: normalizeCouponCode(data.couponCode) } });
 			if (!coupon) {
 				throw new Error("NotFound: Mã giảm giá không tồn tại.");
+			}
+
+			// Coupon chào mừng đơn hàng đầu tiên (hoặc bất kỳ coupon nào bị gắn riêng cho 1 email) chỉ
+			// dùng được khi tài khoản đặt hàng có email trùng khớp.
+			if (!checkCouponEmailOwnership(coupon.email, userEmail)) {
+				throw new Error("Forbidden: Mã giảm giá này chỉ dành riêng cho một tài khoản khác.");
 			}
 
 			const usability = checkCouponUsability(coupon);

@@ -302,6 +302,9 @@ model CartItem {
 model Coupon {
   id               Int          @id @default(autoincrement())
   code             String       @unique @db.VarChar(50)
+  // Dùng cho coupon "chào mừng đơn hàng đầu tiên" (đăng ký email ở trang chủ): coupon này chỉ được
+  // dùng bởi tài khoản đăng nhập có email trùng khớp. NULL với coupon thường (không giới hạn email).
+  email            String?      @unique @db.VarChar(255)
   discountType     DiscountType @map("discount_type")
   discountValue    Decimal      @map("discount_value") @db.Decimal(14, 2)
   minOrderValue    Decimal      @default(0.00) @map("min_order_value") @db.Decimal(14, 2)

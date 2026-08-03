@@ -8,7 +8,7 @@ import { handleServiceError } from "../../shared/service-error-handler.js";
 // ==========================================
 export const checkout = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
 	try {
-		const order = await orderService.checkout(req.user!.id, req.body);
+		const order = await orderService.checkout(req.user!.id, req.body, req.user!.email);
 		res.status(201).json({ message: "Đặt hàng thành công.", data: order });
 	} catch (error) {
 		handleServiceError(error, res, next);

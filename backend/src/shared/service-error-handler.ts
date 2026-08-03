@@ -25,7 +25,7 @@ export function handleServiceError(error: any, res: Response, next: NextFunction
 
 	if (prefix) {
 		const statusCode = ERROR_MAP[prefix];
-		const cleanMessage = message.slice(prefix.length).trim();
+		const cleanMessage = message.slice(prefix.length + 1).trim();
 
 		res.status(statusCode!).json({ error: cleanMessage });
 		return;

@@ -16,3 +16,16 @@ export const useValidateCouponMutation = () => {
 		},
 	});
 };
+
+/** Đăng ký email ở trang chủ để nhận mã giảm giá chào mừng đơn hàng đầu tiên. */
+export const useRequestWelcomeCouponMutation = () => {
+	return useMutation({
+		mutationFn: (email: string) => couponService.requestWelcomeCoupon(email),
+		onSuccess: () => {
+			toast.success("Đã gửi mã giảm giá đến email của bạn, hãy kiểm tra hộp thư nhé!");
+		},
+		onError: (error) => {
+			toast.error(getApiErrorMessage(error, "Không thể đăng ký nhận mã giảm giá, vui lòng thử lại."));
+		},
+	});
+};

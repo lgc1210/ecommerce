@@ -1,7 +1,15 @@
 import prisma from "../../config/prisma.js";
+import transporter from "../../config/email.js";
 import { parsePagination } from "../../utils/index.js";
-import { DISCOUNT_TYPE } from "./coupon.constant.js";
-import { normalizeCouponCode, checkCouponUsability, computeDiscountAmount } from "./coupon.utils.js";
+import { DISCOUNT_TYPE, WELCOME_COUPON } from "./coupon.constant.js";
+import {
+	normalizeCouponCode,
+	normalizeEmail,
+	generateWelcomeCouponCode,
+	checkCouponUsability,
+	checkCouponEmailOwnership,
+	computeDiscountAmount,
+} from "./coupon.utils.js";
 
 export type DiscountType = (typeof DISCOUNT_TYPE)[keyof typeof DISCOUNT_TYPE];
 
@@ -155,11 +163,19 @@ class CouponService {
 	// ==========================================
 	// Public / Customer
 	// ==========================================
-	/** Kiểm tra mã giảm giá có áp dụng được cho 1 đơn hàng cụ thể không, trả về số tiền được giảm nếu hợp lệ */
-	async validateCoupon(code: string, orderSubtotal: number) {
+	/**
+	 * Kiểm tra mã giảm giá có áp dụng được cho 1 đơn hàng cụ thể không, trả về số tiền được giảm nếu hợp lệ.
+	 * `userEmail`: email tài khoản đang thực hiện thao tác — bắt buộc phải trùng với coupon.email nếu
+	 * coupon đó bị giới hạn theo email (vd: coupon chào mừng đơn hàng đầu tiên).
+	 */
+	async validateCoupon(code: string, orderSubtotal: number, userEmail?: string | null) {
 		const coupon = await prisma.coupon.findUnique({ where: { code: normalizeCouponCode(code) } });
 		if (!coupon) {
 			throw new Error("NotFound: Mã giảm giá không tồn tại.");
+		}
+
+		if (!checkCouponEmailOwnership(coupon.email, userEmail)) {
+			throw new Error("Forbidden: Mã giảm giá này chỉ dành riêng cho một tài khoản khác.");
 		}
 
 		const usability = checkCouponUsability(coupon);
@@ -189,6 +205,68 @@ class CouponService {
 	 */
 	async incrementUsage(couponId: number) {
 		await prisma.coupon.update({ where: { id: couponId }, data: { usedCount: { increment: 1 } } });
+	}
+
+	/**
+	 * Form đăng ký email ở trang chủ ("Đăng ký nhận ưu đãi 25% cho đơn hàng đầu tiên"): tạo 1 coupon
+	 * WELCOMEFIRST... gắn riêng cho email đó, lưu vào bảng coupons để validate lúc thanh toán, và gửi
+	 * mã qua email. Mỗi email chỉ được cấp 1 lần (email là @unique ở DB).
+	 */
+	async requestWelcomeCoupon(rawEmail: string) {
+		const email = normalizeEmail(rawEmail);
+
+		const existing = await prisma.coupon.findUnique({ where: { email } });
+		if (existing) {
+			throw new Error("Conflict: Email này đã được đăng ký nhận mã giảm giá chào mừng trước đó.");
+		}
+
+		const now = new Date();
+		const expiresAt = new Date(now.getTime() + WELCOME_COUPON.validityDays * 24 * 60 * 60 * 1000);
+
+		// Sinh mã ngẫu nhiên, thử lại vài lần cho trường hợp cực hiếm bị trùng code.
+		let coupon = null;
+		for (let attempt = 0; attempt < 5 && !coupon; attempt++) {
+			const code = generateWelcomeCouponCode();
+			const codeOwner = await prisma.coupon.findUnique({ where: { code } });
+			if (codeOwner) continue;
+
+			coupon = await prisma.coupon.create({
+				data: {
+					code,
+					email,
+					discountType: WELCOME_COUPON.discountType,
+					discountValue: WELCOME_COUPON.discountValue,
+					minOrderValue: WELCOME_COUPON.minOrderValue,
+					maxDiscountValue: WELCOME_COUPON.maxDiscountValue,
+					startsAt: now,
+					expiresAt,
+					usageLimit: WELCOME_COUPON.usageLimit,
+					isActive: true,
+				},
+			});
+		}
+
+		if (!coupon) {
+			throw new Error("Không thể tạo mã giảm giá, vui lòng thử lại.");
+		}
+
+		await this.sendWelcomeCouponEmail(email, coupon.code);
+
+		return { email: coupon.email, code: coupon.code, expiresAt: coupon.expiresAt };
+	}
+
+	private async sendWelcomeCouponEmail(email: string, code: string) {
+		await transporter.sendMail({
+			from: `"E-commerce Support" <no-reply@example.com>`,
+			to: email,
+			subject: "Mã giảm giá chào mừng đơn hàng đầu tiên của bạn",
+			html: `
+				<p>Cảm ơn bạn đã đăng ký nhận ưu đãi! Đây là mã giảm giá dành riêng cho đơn hàng đầu tiên của bạn:</p>
+				<p style="font-size: 20px;"><b>${code}</b></p>
+				<p>Giảm ${WELCOME_COUPON.discountValue}% (tối đa ${WELCOME_COUPON.maxDiscountValue.toLocaleString("vi-VN")}đ), có hiệu lực trong ${WELCOME_COUPON.validityDays} ngày kể từ hôm nay.</p>
+				<p>Mã chỉ áp dụng cho tài khoản đăng nhập bằng đúng email này.</p>
+			`,
+		});
 	}
 }
 

@@ -177,6 +177,7 @@ CREATE TABLE `cart_items` (
 CREATE TABLE `coupons` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(50) NOT NULL,
+    `email` VARCHAR(255) NULL,
     `discount_type` ENUM('fixed', 'percentage') NOT NULL,
     `discount_value` DECIMAL(14, 2) NOT NULL,
     `min_order_value` DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
@@ -188,6 +189,7 @@ CREATE TABLE `coupons` (
     `is_active` BOOLEAN NOT NULL DEFAULT true,
 
     UNIQUE INDEX `coupons_code_key`(`code`),
+    UNIQUE INDEX `coupons_email_key`(`email`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

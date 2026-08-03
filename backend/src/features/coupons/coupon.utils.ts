@@ -1,9 +1,31 @@
-import { DISCOUNT_TYPE } from "./coupon.constant.js";
+import crypto from "crypto";
+import { DISCOUNT_TYPE, WELCOME_COUPON } from "./coupon.constant.js";
 import type { DiscountType } from "./coupon.service.js";
 
 /** Chuẩn hóa mã coupon: viết hoa, bỏ khoảng trắng thừa 2 đầu, vd: " sale10 " -> "SALE10" */
 export function normalizeCouponCode(code: string): string {
 	return code.trim().toUpperCase();
+}
+
+/** Chuẩn hóa email: bỏ khoảng trắng thừa, viết thường, để so sánh/tra cứu nhất quán. */
+export function normalizeEmail(email: string): string {
+	return email.trim().toLowerCase();
+}
+
+/** Sinh mã coupon "chào mừng đơn hàng đầu tiên" ngẫu nhiên dạng WELCOMEFIRST + 8 ký tự hex viết hoa. */
+export function generateWelcomeCouponCode(): string {
+	const suffix = crypto.randomBytes(4).toString("hex").toUpperCase();
+	return `${WELCOME_COUPON.codePrefix}${suffix}`;
+}
+
+/**
+ * Coupon bị giới hạn theo email (coupon.email khác null) chỉ được dùng bởi tài khoản đăng nhập có
+ * email trùng khớp (so sánh không phân biệt hoa/thường). Coupon thường (email = null) thì ai cũng dùng được.
+ */
+export function checkCouponEmailOwnership(couponEmail: string | null, userEmail?: string | null): boolean {
+	if (!couponEmail) return true;
+	if (!userEmail) return false;
+	return normalizeEmail(couponEmail) === normalizeEmail(userEmail);
 }
 
 export interface CouponLike {

@@ -12,6 +12,12 @@ const isoDateTimeSchema = z.string().refine((value) => !Number.isNaN(Date.parse(
 // ==========================================
 // Public / Customer
 // ==========================================
+export const RequestWelcomeCouponSchema = z.object({
+	body: z.object({
+		email: z.email({ message: "Email không hợp lệ." }).max(255),
+	}),
+});
+
 export const ValidateCouponSchema = z.object({
 	body: z.object({
 		code: z.string().min(1, { message: "Vui lòng nhập mã giảm giá." }).max(50),

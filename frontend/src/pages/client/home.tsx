@@ -1,3 +1,4 @@
+import { useState, type SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
@@ -10,6 +11,7 @@ import Loading from "../../shared/components/loading";
 import { getStrapiMediaUrl } from "../../utils/strapi";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import FormControl from "../../components/form-control";
+import { useRequestWelcomeCouponMutation } from "../../features/client/coupon/hooks";
 
 const latestProducts = mockProducts.slice(0, 6);
 const popularProducts = [...mockProducts].reverse().slice(0, 6);
@@ -28,6 +30,18 @@ const HomePage = () => {
 	// Toàn bộ nội dung trang (hero, danh sách giá trị cốt lõi) đều lấy động từ Strapi qua single type "home".
 	const { data, isLoading, isError } = useHomePageQuery();
 	const page = data?.data;
+
+	// Form đăng ký email nhận mã giảm giá chào mừng đơn hàng đầu tiên
+	const [welcomeEmail, setWelcomeEmail] = useState("");
+	const requestWelcomeCouponMutation = useRequestWelcomeCouponMutation();
+
+	const handleWelcomeCouponSubmit = (e: SubmitEvent) => {
+		e.preventDefault();
+		if (!welcomeEmail) return;
+		requestWelcomeCouponMutation.mutate(welcomeEmail, {
+			onSuccess: () => setWelcomeEmail(""),
+		});
+	};
 
 	if (isLoading) {
 		return <Loading label='Đang tải nội dung...' />;
@@ -189,14 +203,23 @@ const HomePage = () => {
 							Nhận thông tin sản phẩm mới và mã giảm giá độc quyền qua email.
 						</p>
 						<form
-							onSubmit={(e) => e.preventDefault()}
+							onSubmit={handleWelcomeCouponSubmit}
 							className='mx-auto mt-6 flex max-w-md flex-col gap-3 sm:flex-row'>
-							<FormControl type='email' required placeholder='Nhập email của bạn' className='flex-1 rounded-full!' />
+							<FormControl
+								type='email'
+								required
+								placeholder='Nhập email của bạn'
+								className='flex-1 rounded-full!'
+								value={welcomeEmail}
+								onChange={(e) => setWelcomeEmail(e.target.value)}
+								disabled={requestWelcomeCouponMutation.isPending}
+							/>
 							<Button
 								type='submit'
 								variant='dark'
+								disabled={requestWelcomeCouponMutation.isPending}
 								className='h-12 shrink-0 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-ink-soft'>
-								Đăng ký
+								{requestWelcomeCouponMutation.isPending ? "Đang gửi..." : "Đăng ký"}
 							</Button>
 						</form>
 					</div>

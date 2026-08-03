@@ -1,5 +1,5 @@
 import apiClient from "../../../../configs/apis";
-import type { ValidateCouponResult } from "../types";
+import type { ValidateCouponResult, RequestWelcomeCouponResult } from "../types";
 
 const couponService = {
 	/**
@@ -9,6 +9,13 @@ const couponService = {
 	 */
 	validateCoupon: (code: string, orderSubtotal: number) =>
 		apiClient.post<{ data: ValidateCouponResult }>("/coupons/validate", { code, orderSubtotal }),
+
+	/**
+	 * Đăng ký email ở trang chủ để nhận mã giảm giá chào mừng đơn hàng đầu tiên (POST
+	 * /coupons/request-welcome). Public — không yêu cầu đăng nhập.
+	 */
+	requestWelcomeCoupon: (email: string) =>
+		apiClient.post<{ message: string; data: RequestWelcomeCouponResult }>("/coupons/request-welcome", { email }),
 };
 
 export default couponService;

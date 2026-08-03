@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import type { AuthenticatedRequest } from "../../middlewares/authenticate.js";
 import couponService from "./coupon.service.js";
 import { handleServiceError } from "../../shared/service-error-handler.js";
 
@@ -56,11 +57,25 @@ export const deleteCoupon = async (req: Request, res: Response, next: NextFuncti
 // ==========================================
 // Public / Customer
 // ==========================================
-export const validateCoupon = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const validateCoupon = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { code, orderSubtotal } = req.body;
-		const result = await couponService.validateCoupon(code, orderSubtotal);
+		const result = await couponService.validateCoupon(code, orderSubtotal, req.user?.email);
 		res.status(200).json({ data: result });
+	} catch (error) {
+		handleServiceError(error, res, next);
+	}
+};
+
+/** Public: đăng ký email ở trang chủ để nhận mã giảm giá chào mừng đơn hàng đầu tiên. */
+export const requestWelcomeCoupon = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	try {
+		const { email } = req.body;
+		const result = await couponService.requestWelcomeCoupon(email);
+		res.status(201).json({
+			message: "Mã giảm giá đã được gửi đến email của bạn.",
+			data: result,
+		});
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}
