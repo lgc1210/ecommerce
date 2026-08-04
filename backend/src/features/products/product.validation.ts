@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { listProductSort } from "./product.constant.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
 const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -38,7 +39,10 @@ export const ListProductsQuerySchema = z.object({
 			.string()
 			.regex(/^\d+(\.\d+)?$/)
 			.optional(),
-		sort: z.enum(["newest", "name_asc", "name_desc"]).optional(),
+		// "popular" = sắp xếp theo số lượng đánh giá (reviews) giảm dần, dùng cho mục "Được yêu thích
+		// nhất" ở trang chủ — xem ProductService.resolveSortOrder. "price_asc"/"price_desc" sắp xếp
+		// theo giá thấp nhất của sản phẩm (min giữa các SKU) — khớp với giá "từ" hiển thị ở ProductCard.
+		sort: z.enum(listProductSort).optional(),
 		// Áp dụng như nhau cho cả route public lẫn admin: lọc theo isActive nếu có truyền, mặc định
 		// (không truyền) trả về TẤT CẢ sản phẩm (active lẫn inactive) — xem thêm ProductService.listProducts.
 		isActive: z.enum(["true", "false"]).optional(),
@@ -57,12 +61,7 @@ export const ProductSlugParamSchema = z.object({
 export const CreateProductSchema = z.object({
 	body: z.object({
 		name: z.string().min(2, { message: "Tên sản phẩm phải có ít nhất 2 ký tự." }).max(100),
-		slug: z
-			.string()
-			.min(2)
-			.max(100)
-			.regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." })
-			.optional(),
+		slug: z.string().min(2).max(100).regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }).optional(),
 		description: z.string().max(5000).optional(),
 		categoryId: z.number().int().positive().nullable().optional(),
 		isActive: z.boolean().optional(),
@@ -77,12 +76,7 @@ export const UpdateProductSchema = z.object({
 	body: z
 		.object({
 			name: z.string().min(2, { message: "Tên sản phẩm phải có ít nhất 2 ký tự." }).max(100).optional(),
-			slug: z
-				.string()
-				.min(2)
-				.max(100)
-				.regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." })
-				.optional(),
+			slug: z.string().min(2).max(100).regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }).optional(),
 			description: z.string().max(5000).optional(),
 			categoryId: z.number().int().positive().nullable().optional(),
 			isActive: z.boolean().optional(),
@@ -136,11 +130,7 @@ export const UpdateStockSchema = z.object({
 export const CreateSkuImageSchema = z.object({
 	params: z.object({ id: numericIdString, skuId: numericIdString }),
 	body: z.object({
-		imageUrl: z
-			.string()
-			.min(1, { message: "imageUrl không được để trống." })
-			.max(500)
-			.url({ message: "imageUrl phải là một URL hợp lệ." }),
+		imageUrl: z.string().min(1, { message: "imageUrl không được để trống." }).max(500).url({ message: "imageUrl phải là một URL hợp lệ." }),
 		altText: z.string().max(255).optional(),
 		isPrimary: z.boolean().optional(),
 		sortOrder: z.number().int().min(0).optional(),

@@ -1,15 +1,10 @@
 import { Link } from "react-router-dom";
 import paths from "../../../../configs/constants/paths";
-import { mockProducts } from "../../../../configs/constants/mock-data";
 import { formatCurrency } from "../../../../utils/currency";
-import {
-	FacebookIcon,
-	InstagramIcon,
-	MailIcon,
-	MapPinIcon,
-	PhoneIcon,
-	TwitterIcon,
-} from "../../../../components/icons";
+import { FacebookIcon, InstagramIcon, MailIcon, MapPinIcon, PhoneIcon, TwitterIcon } from "../../../../components/icons";
+import { useProductsQuery } from "../../product/hooks";
+import { toProductCardItem } from "../../product/utils";
+import { productSort } from "../../product/constants";
 
 const quickLinks = [
 	{ to: paths.client.home, label: "Trang chủ" },
@@ -45,31 +40,26 @@ const contactItems = [
 	},
 ];
 
-const newProducts = mockProducts.slice(0, 3);
+const NEW_PRODUCTS_LIMIT = 3;
 
 const Footer = () => {
+	// Sản phẩm mới — GET /products?sort=newest, dùng chung logic map với ProductCard (toProductCardItem).
+	const { data: newProductsData } = useProductsQuery({ limit: NEW_PRODUCTS_LIMIT, sort: productSort.newest });
+	const newProducts = (newProductsData?.data ?? []).map(toProductCardItem);
+
 	return (
 		<footer className='border-t border-border bg-ink text-cream'>
 			<div className='mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8'>
 				<div className='grid grid-cols-2 gap-10 md:grid-cols-4'>
 					<div className='col-span-2 md:col-span-1'>
 						<Link to={paths.client.home} className='flex items-center gap-2'>
-							<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>
-								E
-							</span>
+							<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 							<span className='text-xl font-extrabold tracking-tight text-white'>Commerce</span>
 						</Link>
-						<p className='mt-4 text-sm leading-relaxed text-cream/60'>
-							Cửa hàng phụ kiện công nghệ với những sản phẩm được tuyển chọn kỹ lưỡng, giao hàng nhanh và chính sách đổi
-							trả rõ ràng.
-						</p>
+						<p className='mt-4 text-sm leading-relaxed text-cream/60'>Cửa hàng phụ kiện công nghệ với những sản phẩm được tuyển chọn kỹ lưỡng, giao hàng nhanh và chính sách đổi trả rõ ràng.</p>
 						<div className='mt-5 flex items-center gap-3'>
 							{[FacebookIcon, InstagramIcon, TwitterIcon].map((Icon, i) => (
-								<a
-									key={i}
-									href='#'
-									aria-label='Mạng xã hội'
-									className='flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-cream/70 hover:bg-primary hover:text-white'>
+								<a key={i} href='#' aria-label='Mạng xã hội' className='flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-cream/70 hover:bg-primary hover:text-white'>
 									<Icon className='h-4 w-4' />
 								</a>
 							))}
@@ -112,17 +102,11 @@ const Footer = () => {
 						<h3 className='text-sm font-semibold uppercase tracking-wider text-cream/40'>Sản phẩm mới</h3>
 						<ul className='mt-4 space-y-3'>
 							{newProducts.map((product) => (
-								<li key={product.slug + new Date().getTime()}>
+								<li key={product.slug}>
 									<Link to={paths.client.productDetail(product.slug)} className='flex items-center gap-3 group'>
-										<img
-											src={product.image}
-											alt={product.name}
-											className='h-12 w-12 shrink-0 rounded-lg object-cover'
-										/>
+										<img src={product.image} alt={product.name} className='h-12 w-12 shrink-0 rounded-lg object-cover' />
 										<span>
-											<span className='block line-clamp-1 text-sm text-cream/80 group-hover:text-primary'>
-												{product.name}
-											</span>
+											<span className='block line-clamp-1 text-sm text-cream/80 group-hover:text-primary'>{product.name}</span>
 											<span className='block text-xs font-semibold text-primary'>{formatCurrency(product.price)}</span>
 										</span>
 									</Link>

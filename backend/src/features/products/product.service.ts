@@ -1,21 +1,9 @@
 import prisma from "../../config/prisma.js";
 import type { Prisma } from "../../generated/prisma/index.js";
-import {
-	computeAverageRating,
-	buildSkuBaseCode,
-	DEFAULT_SKU_WEIGHT_GRAM,
-	DEFAULT_SKU_LENGTH_CM,
-	DEFAULT_SKU_WIDTH_CM,
-	DEFAULT_SKU_HEIGHT_CM,
-} from "./product.utils.js";
+import { computeAverageRating, buildSkuBaseCode, DEFAULT_SKU_WEIGHT_GRAM, DEFAULT_SKU_LENGTH_CM, DEFAULT_SKU_WIDTH_CM, DEFAULT_SKU_HEIGHT_CM } from "./product.utils.js";
 import { parsePagination, slugify } from "../../utils/index.js";
-import type {
-	CreateProductInput,
-	ListProductsParams,
-	SkuInput,
-	UpdateProductInput,
-	UpdateSkuInput,
-} from "./product.type.js";
+import type { CreateProductInput, ListProductsParams, SkuInput, UpdateProductInput, UpdateSkuInput } from "./product.type.js";
+import { productSort } from "./product.constant.js";
 
 const productListInclude = {
 	category: { select: { id: true, name: true, slug: true } },
@@ -73,19 +61,30 @@ class ProductService {
 			where.skus = { some: { price: priceFilter } };
 		}
 
-		const orderBy = this.resolveSortOrder(params.sort);
-
 		const { page, limit, skip } = parsePagination(params);
-		const [products, total] = await Promise.all([
-			prisma.product.findMany({
-				where,
-				include: productListInclude,
-				orderBy,
-				skip,
-				take: limit,
-			}),
-			prisma.product.count({ where }),
-		]);
+		const total = await prisma.product.count({ where });
+
+		// "price_asc"/"price_desc" sắp xếp theo giá THẤP NHẤT trong các SKU của sản phẩm (khớp giá "từ"
+		// hiển thị ở ProductCard/toProductCardItem). Prisma không hỗ trợ orderBy trực tiếp theo MIN/MAX
+		// của quan hệ 1-nhiều ở findMany (relation orderBy chỉ hỗ trợ _count) -> tự xử lý ở tầng ứng
+		// dụng: lấy id sản phẩm khớp `where`, gộp giá thấp nhất theo từng sản phẩm qua productSku.groupBy,
+		// sắp xếp rồi mới phân trang (xem resolvePriceSortedProducts bên dưới).
+		if (params.sort === productSort.price_asc || params.sort === productSort.price_desc) {
+			const products = await this.resolvePriceSortedProducts(where, params.sort, skip, limit);
+			return {
+				data: products,
+				pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+			};
+		}
+
+		const orderBy = this.resolveSortOrder(params.sort);
+		const products = await prisma.product.findMany({
+			where,
+			include: productListInclude,
+			orderBy,
+			skip,
+			take: limit,
+		});
 
 		return {
 			data: products,
@@ -153,8 +152,7 @@ class ProductService {
 			const reservedCodes = new Set<string>(providedSkuCodes);
 			const resolvedSkus = [];
 			for (const s of data.skus) {
-				const sku =
-					s.sku ?? (await this.resolveUniqueSkuCode(buildSkuBaseCode(data.name, s.variationDetails), reservedCodes));
+				const sku = s.sku ?? (await this.resolveUniqueSkuCode(buildSkuBaseCode(data.name, s.variationDetails), reservedCodes));
 				resolvedSkus.push({
 					sku,
 					price: s.price,
@@ -221,16 +219,12 @@ class ProductService {
 		}
 
 		if (product._count.reviews > 0) {
-			throw new Error(
-				"Conflict: Không thể xóa sản phẩm vì đã có đánh giá. Hãy vô hiệu hóa (isActive=false) thay vì xóa.",
-			);
+			throw new Error("Conflict: Không thể xóa sản phẩm vì đã có đánh giá. Hãy vô hiệu hóa (isActive=false) thay vì xóa.");
 		}
 
 		const hasReferencedSku = product.skus.some((s) => s._count.cartItems > 0 || s._count.orderItems > 0);
 		if (hasReferencedSku) {
-			throw new Error(
-				"Conflict: Không thể xóa sản phẩm vì có biến thể đang nằm trong giỏ hàng hoặc đơn hàng. Hãy vô hiệu hóa thay vì xóa.",
-			);
+			throw new Error("Conflict: Không thể xóa sản phẩm vì có biến thể đang nằm trong giỏ hàng hoặc đơn hàng. Hãy vô hiệu hóa thay vì xóa.");
 		}
 
 		await prisma.$transaction([
@@ -275,8 +269,7 @@ class ProductService {
 		const updateData: Record<string, unknown> = {};
 		if (data.price !== undefined) updateData.price = data.price;
 		if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
-		if (data.variationDetails !== undefined)
-			updateData.variationDetails = data.variationDetails as Prisma.InputJsonValue;
+		if (data.variationDetails !== undefined) updateData.variationDetails = data.variationDetails as Prisma.InputJsonValue;
 		if (data.weightGram !== undefined) updateData.weightGram = data.weightGram;
 		if (data.lengthCm !== undefined) updateData.lengthCm = data.lengthCm;
 		if (data.widthCm !== undefined) updateData.widthCm = data.widthCm;
@@ -318,11 +311,7 @@ class ProductService {
 	// Admin - Product SKU Images (ảnh theo từng biến thể)
 	// ==========================================
 	/** Thêm ảnh cho 1 SKU. Ảnh đầu tiên của SKU đó luôn tự động là ảnh đại diện (isPrimary), bất kể input truyền vào. */
-	async addSkuImage(
-		productId: number,
-		skuId: number,
-		data: { imageUrl: string; altText?: string; isPrimary?: boolean; sortOrder?: number },
-	) {
+	async addSkuImage(productId: number, skuId: number, data: { imageUrl: string; altText?: string; isPrimary?: boolean; sortOrder?: number }) {
 		await this.assertSkuBelongsToProduct(productId, skuId);
 
 		const existingCount = await prisma.productImage.count({ where: { productSkuId: skuId } });
@@ -351,12 +340,7 @@ class ProductService {
 		});
 	}
 
-	async updateSkuImage(
-		productId: number,
-		skuId: number,
-		imageId: number,
-		data: { imageUrl?: string; altText?: string | null; isPrimary?: boolean; sortOrder?: number },
-	) {
+	async updateSkuImage(productId: number, skuId: number, imageId: number, data: { imageUrl?: string; altText?: string | null; isPrimary?: boolean; sortOrder?: number }) {
 		await this.assertImageBelongsToSku(skuId, imageId);
 		await this.assertSkuBelongsToProduct(productId, skuId);
 
@@ -427,14 +411,55 @@ class ProductService {
 
 	private resolveSortOrder(sort?: string) {
 		switch (sort) {
-			case "name_asc":
+			case productSort.name_asc:
 				return { name: "asc" as const };
-			case "name_desc":
+			case productSort.name_desc:
 				return { name: "desc" as const };
-			case "newest":
+			// "Được yêu thích nhất" = sản phẩm có nhiều đánh giá (reviews) nhất — dùng số lượng review
+			// làm proxy cho độ phổ biến vì hệ thống chưa có số liệu lượt bán/lượt xem riêng.
+			case productSort.popular:
+				return { reviews: { _count: "desc" as const } };
+			case productSort.newest:
 			default:
 				return { createdAt: "desc" as const };
 		}
+	}
+
+	/**
+	 * Sắp xếp + phân trang sản phẩm theo giá thấp nhất (min price) — dùng riêng cho sort=price_asc/
+	 * price_desc vì Prisma không hỗ trợ orderBy theo MIN/MAX của quan hệ 1-nhiều ở findMany (xem
+	 * listProducts). Sản phẩm chưa có SKU nào (không có giá) luôn bị xếp CUỐI, bất kể tăng/giảm dần,
+	 * vì không có gì để so sánh.
+	 */
+	private async resolvePriceSortedProducts(where: Record<string, unknown>, sort: "price_asc" | "price_desc", skip: number, take: number) {
+		const candidates = await prisma.product.findMany({ where, select: { id: true } });
+		const candidateIds = candidates.map((product) => product.id);
+		if (candidateIds.length === 0) return [];
+
+		const priceGroups = await prisma.productSku.groupBy({
+			by: ["productId"],
+			where: { productId: { in: candidateIds } },
+			_min: { price: true },
+		});
+		const minPriceById = new Map(priceGroups.filter((group): group is typeof group & { productId: number } => group.productId !== null).map((group) => [group.productId, Number(group._min.price)]));
+
+		const direction = sort === productSort.price_asc ? 1 : -1;
+		const sortedIds = [...candidateIds].sort((a, b) => {
+			const priceA = minPriceById.get(a);
+			const priceB = minPriceById.get(b);
+			if (priceA === undefined && priceB === undefined) return 0;
+			if (priceA === undefined) return 1;
+			if (priceB === undefined) return -1;
+			return (priceA - priceB) * direction;
+		});
+
+		const pageIds = sortedIds.slice(skip, skip + take);
+		if (pageIds.length === 0) return [];
+
+		const products = await prisma.product.findMany({ where: { id: { in: pageIds } }, include: productListInclude });
+		const productById = new Map(products.map((product) => [product.id, product]));
+		// findMany với `id: { in }` không đảm bảo giữ thứ tự -> sắp lại theo đúng thứ tự đã tính ở trên.
+		return pageIds.map((id) => productById.get(id)).filter((product) => product !== undefined);
 	}
 
 	private async assertCategoryExists(categoryId: number) {

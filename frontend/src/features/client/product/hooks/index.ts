@@ -1,13 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import productService from "../services";
-import type {
-	ListCategoriesParams,
-	ListCategoriesResult,
-	ListProductsParams,
-	ListProductsResult,
-	PublicCategoryTreeNode,
-	PublicProductDetail,
-} from "../types";
+import type { FeaturedCategoriesResult, ListCategoriesParams, ListCategoriesResult, ListProductsParams, ListProductsResult, PublicCategoryTreeNode, PublicProductDetail } from "../types";
 
 export const PUBLIC_PRODUCTS_QUERY_KEY = ["client", "products"] as const;
 export const PUBLIC_CATEGORIES_QUERY_KEY = ["client", "categories"] as const;
@@ -37,7 +30,7 @@ export const useProductBySlugQuery = (slug: string | undefined) => {
 };
 
 /** Danh sách danh mục dùng cho bộ lọc ở trang Shop. limit cao để lấy đủ danh mục trong 1 lần gọi. */
-export const useCategoriesQuery = (params: ListCategoriesParams = { limit: 100 }) => {
+export const useCategoriesQuery = (params: ListCategoriesParams = { limit: 100 }, options: { enabled?: boolean } = {}) => {
 	return useQuery<ListCategoriesResult>({
 		queryKey: [...PUBLIC_CATEGORIES_QUERY_KEY, "list", params],
 		queryFn: async () => {
@@ -45,6 +38,7 @@ export const useCategoriesQuery = (params: ListCategoriesParams = { limit: 100 }
 			return res.data;
 		},
 		staleTime: 5 * 60 * 1000,
+		enabled: options.enabled ?? true,
 	});
 };
 
@@ -58,6 +52,18 @@ export const useCategoryTreeQuery = () => {
 		queryFn: async () => {
 			const res = await productService.getCategoryTree();
 			return res.data.data;
+		},
+		staleTime: 5 * 60 * 1000,
+	});
+};
+
+/** Danh mục nổi bật dùng cho mục "Danh mục nổi bật" ở trang chủ (xem CategoryService.getFeaturedCategories). */
+export const useFeaturedCategoriesQuery = (limit?: number) => {
+	return useQuery<FeaturedCategoriesResult>({
+		queryKey: [...PUBLIC_CATEGORIES_QUERY_KEY, "featured", limit],
+		queryFn: async () => {
+			const res = await productService.getFeaturedCategories(limit);
+			return res.data;
 		},
 		staleTime: 5 * 60 * 1000,
 	});
