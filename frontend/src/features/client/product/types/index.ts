@@ -1,7 +1,4 @@
 import type { Pagination } from "../../../../types";
-import type { productSort } from "../constants";
-
-export type productSort = (typeof productSort)[keyof typeof productSort];
 
 export interface PublicCategoryRef {
 	id: number;
@@ -64,6 +61,7 @@ export interface PublicProductListItem {
 	slug: string;
 	description: string | null;
 	isActive: boolean;
+	isFeatured: boolean;
 	thumbnailUrl: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -112,12 +110,17 @@ export interface ListProductsParams {
 	/** Chỉ các giá trị này được backend hỗ trợ (xem ListProductsQuerySchema). "popular" sắp xếp theo số
 	 *  lượng đánh giá giảm dần — dùng cho mục "Được yêu thích nhất" ở trang chủ. "price_asc"/"price_desc"
 	 *  sắp xếp theo giá thấp nhất của sản phẩm (min giữa các SKU). */
-	sort?: productSort;
+	sort?: "newest" | "name_asc" | "name_desc" | "popular" | "price_asc" | "price_desc";
 }
 
 export interface ListProductsResult {
 	data: PublicProductListItem[];
 	pagination: Pagination;
+}
+
+/** Khớp GET /products/featured — không phân trang (xem ProductService.getFeaturedProducts ở backend). */
+export interface FeaturedProductsResult {
+	data: PublicProductListItem[];
 }
 
 export interface ListCategoriesParams {

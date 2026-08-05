@@ -1,8 +1,8 @@
 import { useState, type SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 import Button from "../../components/button";
+import Carousel from "../../shared/components/carousel";
 import paths from "../../configs/constants/paths";
-import { mockProducts } from "../../configs/constants/mock-data";
 import { formatCurrency } from "../../utils/currency";
 import { ChevronRightIcon, HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../components/icons";
 import ProductCard from "../../features/client/product/components/product-card";
@@ -12,14 +12,9 @@ import { getStrapiMediaUrl } from "../../utils/strapi";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import FormControl from "../../components/form-control";
 import { useRequestWelcomeCouponMutation } from "../../features/client/coupon/hooks";
-import { useCategoriesQuery, useFeaturedCategoriesQuery, useProductsQuery } from "../../features/client/product/hooks";
-import { toProductCardItem } from "../../features/client/product/utils";
-import type { PublicCategory } from "../../features/client/product/types";
-import { productSort } from "../../features/client/product/constants";
-
-// Banner "Giá chỉ từ" chưa gắn với dữ liệu thật (không nằm trong phạm vi các mục cần triển khai),
-// vẫn tạm dùng dữ liệu mẫu.
-const featuredBanners = mockProducts.slice(2, 4);
+import { useCategoriesQuery, useFeaturedCategoriesQuery, useFeaturedProductsQuery, useProductsQuery } from "../../features/client/product/hooks";
+import { computePriceRange, getProductThumbnail, toProductCardItem } from "../../features/client/product/utils";
+import type { PublicCategory, PublicProductListItem } from "../../features/client/product/types";
 
 const DEFAULT_BANNER_URL = "https://placehold.co/700x700/faf6f0/d9641f?font=montserrat&text=Ecommerce";
 
@@ -29,6 +24,7 @@ const getCategoryImage = (name: string) => `https://placehold.co/200x200/f3ede4/
 
 const HOME_PRODUCTS_LIMIT = 6;
 const FEATURED_CATEGORIES_LIMIT = 10;
+const FEATURED_PRODUCTS_LIMIT = 6;
 
 /** Map "icon_name" cấu hình ở Strapi (field value_item.icon_name) sang icon component tương ứng ở frontend. */
 const VALUE_ICON_MAP: Record<string, typeof TruckIcon> = {
@@ -57,16 +53,24 @@ const HomePage = () => {
 	// Sản phẩm mới nhất — GET /products?sort=newest.
 	const { data: latestProductsData, isLoading: isLatestProductsLoading } = useProductsQuery({
 		limit: HOME_PRODUCTS_LIMIT,
-		sort: productSort.newest,
+		sort: "newest",
 	});
 	const latestProducts = latestProductsData?.data ?? [];
 
 	// Được yêu thích nhất — GET /products?sort=popular (sắp xếp theo số lượng đánh giá giảm dần).
 	const { data: popularProductsData, isLoading: isPopularProductsLoading } = useProductsQuery({
 		limit: HOME_PRODUCTS_LIMIT,
-		sort: productSort.popular,
+		sort: "popular",
 	});
 	const popularProducts = popularProductsData?.data ?? [];
+
+	// Sản phẩm nổi bật (isFeatured=true, admin đánh dấu) — hiển thị ở carousel banner. Nếu admin chưa
+	// đánh dấu sản phẩm nào, tạm dùng sản phẩm mới nhất (đã tải ở trên) để mục này không bị bỏ trống.
+	const { data: featuredProductsData, isLoading: isFeaturedProductsLoading } = useFeaturedProductsQuery(FEATURED_PRODUCTS_LIMIT);
+	const featuredProducts = featuredProductsData?.data ?? [];
+	const shouldFallbackFeaturedProducts = !isFeaturedProductsLoading && featuredProducts.length === 0;
+	const displayedFeaturedProducts: PublicProductListItem[] = shouldFallbackFeaturedProducts ? latestProducts : featuredProducts;
+	const isFeaturedProductsLoadingCombined = isFeaturedProductsLoading || (shouldFallbackFeaturedProducts && isLatestProductsLoading);
 
 	// Form đăng ký email nhận mã giảm giá chào mừng đơn hàng đầu tiên
 	const [welcomeEmail, setWelcomeEmail] = useState("");
@@ -197,24 +201,41 @@ const HomePage = () => {
 
 				{/* Featured banners */}
 				<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
-					<div className='grid gap-6 lg:grid-cols-2'>
-						{featuredBanners.map((product) => (
-							<div key={product.slug} className='flex items-center gap-6 rounded-3xl bg-ink p-8 text-cream'>
-								<div className='flex-1'>
-									<p className='text-xs font-bold uppercase tracking-wider text-primary'>Giá chỉ từ</p>
-									<h3 className='mt-2 text-2xl font-extrabold'>{product.name}</h3>
-									<p className='mt-2 text-2xl font-bold text-primary'>{formatCurrency(product.price)}</p>
-									<p className='mt-3 max-w-xs text-sm text-cream/60'>{product.shortDescription}</p>
-									<Link to={paths.client.productDetail(product.slug)}>
-										<Button variant='primary' size='sm' className='mt-5'>
-											Xem sản phẩm
-										</Button>
-									</Link>
-								</div>
-								<img src={product.image} alt={product.name} className='hidden h-32 w-32 shrink-0 rounded-2xl object-cover sm:block' />
-							</div>
-						))}
-					</div>
+					<h2 className='text-2xl font-extrabold tracking-tight text-ink sm:text-3xl'>Sản phẩm nổi bật</h2>
+					{isFeaturedProductsLoadingCombined ? (
+						<div className='mt-8'>
+							<Loading size='sm' fullPage={false} />
+						</div>
+					) : displayedFeaturedProducts.length > 0 ? (
+						<Carousel
+							className='mt-8'
+							items={displayedFeaturedProducts}
+							getKey={(product) => product.slug}
+							renderItem={(product) => {
+								const { min } = computePriceRange(product.skus);
+								return (
+									<div className='h-full flex flex-col-reverse items-center gap-6 bg-ink p-8 text-cream sm:flex-row sm:p-12'>
+										<div className='flex-1 h-full flex flex-col'>
+											<div className='flex-1 shrink-0'>
+												<p className='text-xs font-bold uppercase tracking-wider text-primary'>Giá chỉ từ</p>
+												<h3 className='mt-2 text-2xl font-extrabold sm:text-3xl'>{product.name}</h3>
+												<p className='mt-2 text-2xl font-bold text-primary'>{formatCurrency(min)}</p>
+												{product.description && <p className='mt-3 max-w-md text-sm text-cream/60'>{product.description}</p>}
+											</div>
+											<Link to={paths.client.productDetail(product.slug)} className='mt-auto'>
+												<Button variant='primary' size='sm' className='mt-5'>
+													Xem sản phẩm
+												</Button>
+											</Link>
+										</div>
+										<img src={getProductThumbnail(product)} alt={product.name} className='h-40 w-40 shrink-0 rounded-2xl object-cover sm:h-48 sm:w-48' />
+									</div>
+								);
+							}}
+						/>
+					) : (
+						<p className='mt-8 text-sm text-muted'>Chưa có sản phẩm nào để hiển thị.</p>
+					)}
 				</section>
 
 				{/* Most popular */}

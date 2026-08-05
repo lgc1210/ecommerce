@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { listProductSort } from "./product.constant.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
 const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -42,7 +41,7 @@ export const ListProductsQuerySchema = z.object({
 		// "popular" = sắp xếp theo số lượng đánh giá (reviews) giảm dần, dùng cho mục "Được yêu thích
 		// nhất" ở trang chủ — xem ProductService.resolveSortOrder. "price_asc"/"price_desc" sắp xếp
 		// theo giá thấp nhất của sản phẩm (min giữa các SKU) — khớp với giá "từ" hiển thị ở ProductCard.
-		sort: z.enum(listProductSort).optional(),
+		sort: z.enum(["newest", "name_asc", "name_desc", "popular", "price_asc", "price_desc"]).optional(),
 		// Áp dụng như nhau cho cả route public lẫn admin: lọc theo isActive nếu có truyền, mặc định
 		// (không truyền) trả về TẤT CẢ sản phẩm (active lẫn inactive) — xem thêm ProductService.listProducts.
 		isActive: z.enum(["true", "false"]).optional(),
@@ -52,6 +51,12 @@ export const ListProductsQuerySchema = z.object({
 export const ProductSlugParamSchema = z.object({
 	params: z.object({
 		slug: z.string().min(1, { message: "Slug không hợp lệ." }).max(100),
+	}),
+});
+
+export const FeaturedProductsQuerySchema = z.object({
+	query: z.object({
+		limit: z.string().regex(/^\d+$/).optional(),
 	}),
 });
 
@@ -65,6 +70,8 @@ export const CreateProductSchema = z.object({
 		description: z.string().max(5000).optional(),
 		categoryId: z.number().int().positive().nullable().optional(),
 		isActive: z.boolean().optional(),
+		// Đánh dấu hiển thị ở carousel "Sản phẩm nổi bật" trên trang chủ
+		isFeatured: z.boolean().optional(),
 		// URL trả về từ POST /uploads/product-image sau khi admin chọn ảnh thumbnail từ máy
 		thumbnailUrl: z.string().max(500).url({ message: "thumbnailUrl phải là một URL hợp lệ." }).optional(),
 		skus: z.array(SkuInputSchema).optional(),
@@ -80,6 +87,7 @@ export const UpdateProductSchema = z.object({
 			description: z.string().max(5000).optional(),
 			categoryId: z.number().int().positive().nullable().optional(),
 			isActive: z.boolean().optional(),
+			isFeatured: z.boolean().optional(),
 			thumbnailUrl: z.url({ message: "thumbnailUrl phải là một URL hợp lệ." }).nullable().optional(),
 		})
 		.refine((data) => Object.keys(data).length > 0, { message: "Cần ít nhất 1 trường để cập nhật." }),

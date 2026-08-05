@@ -1,13 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-	CreateOrderPayload,
-	ListMyOrdersParams,
-	ListMyOrdersResult,
-	MyOrderDetail,
-	PreviewShippingFeeResult,
-} from "../types";
+import type { CreateOrderPayload, ListMyOrdersParams, ListMyOrdersResult, MyOrderDetail, PreviewShippingFeeResult } from "../types";
 import orderService from "../services";
-import type { AdminOrderDetail } from "../../../admin/order/types";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "../../../../utils/api";
 

@@ -3,7 +3,6 @@ import type { Prisma } from "../../generated/prisma/index.js";
 import { computeAverageRating, buildSkuBaseCode, DEFAULT_SKU_WEIGHT_GRAM, DEFAULT_SKU_LENGTH_CM, DEFAULT_SKU_WIDTH_CM, DEFAULT_SKU_HEIGHT_CM } from "./product.utils.js";
 import { parsePagination, slugify } from "../../utils/index.js";
 import type { CreateProductInput, ListProductsParams, SkuInput, UpdateProductInput, UpdateSkuInput } from "./product.type.js";
-import { productSort } from "./product.constant.js";
 
 const productListInclude = {
 	category: { select: { id: true, name: true, slug: true } },
@@ -69,7 +68,7 @@ class ProductService {
 		// của quan hệ 1-nhiều ở findMany (relation orderBy chỉ hỗ trợ _count) -> tự xử lý ở tầng ứng
 		// dụng: lấy id sản phẩm khớp `where`, gộp giá thấp nhất theo từng sản phẩm qua productSku.groupBy,
 		// sắp xếp rồi mới phân trang (xem resolvePriceSortedProducts bên dưới).
-		if (params.sort === productSort.price_asc || params.sort === productSort.price_desc) {
+		if (params.sort === "price_asc" || params.sort === "price_desc") {
 			const products = await this.resolvePriceSortedProducts(where, params.sort, skip, limit);
 			return {
 				data: products,
@@ -107,6 +106,18 @@ class ProductService {
 		return { ...product, averageRating: computeAverageRating(product.reviews), related };
 	}
 
+	/** Sản phẩm nổi bật (isFeatured=true, admin đánh dấu), dùng cho carousel ở trang chủ. Chỉ lấy sản phẩm đang active. */
+	async getFeaturedProducts(limit?: number) {
+		const products = await prisma.product.findMany({
+			where: { isFeatured: true, isActive: true },
+			include: productListInclude,
+			orderBy: { createdAt: "desc" },
+			...(limit !== undefined ? { take: limit } : {}),
+		});
+
+		return { data: products };
+	}
+
 	// ==========================================
 	// Admin - Product
 	// ==========================================
@@ -141,6 +152,7 @@ class ProductService {
 			description: data.description ?? null,
 			categoryId: data.categoryId ?? null,
 			isActive: data.isActive ?? true,
+			isFeatured: data.isFeatured ?? false,
 			// Thumbnail chọn thủ công lúc tạo sản phẩm (chưa có SKU/ảnh biến thể nào). Lưu ý:
 			// giá trị này sẽ bị syncProductThumbnail() ghi đè ngay khi SKU đầu tiên có ảnh được
 			// thêm vào — xem addSkuImage/updateSkuImage/deleteSkuImage bên dưới.
@@ -184,6 +196,7 @@ class ProductService {
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.description !== undefined) updateData.description = data.description;
 		if (data.isActive !== undefined) updateData.isActive = data.isActive;
+		if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
 		// Cũng có thể bị syncProductThumbnail() ghi đè sau đó nếu ảnh biến thể thay đổi (xem createProduct).
 		if (data.thumbnailUrl !== undefined) updateData.thumbnailUrl = data.thumbnailUrl;
 
@@ -411,15 +424,15 @@ class ProductService {
 
 	private resolveSortOrder(sort?: string) {
 		switch (sort) {
-			case productSort.name_asc:
+			case "name_asc":
 				return { name: "asc" as const };
-			case productSort.name_desc:
+			case "name_desc":
 				return { name: "desc" as const };
 			// "Được yêu thích nhất" = sản phẩm có nhiều đánh giá (reviews) nhất — dùng số lượng review
 			// làm proxy cho độ phổ biến vì hệ thống chưa có số liệu lượt bán/lượt xem riêng.
-			case productSort.popular:
+			case "popular":
 				return { reviews: { _count: "desc" as const } };
-			case productSort.newest:
+			case "newest":
 			default:
 				return { createdAt: "desc" as const };
 		}
@@ -443,7 +456,7 @@ class ProductService {
 		});
 		const minPriceById = new Map(priceGroups.filter((group): group is typeof group & { productId: number } => group.productId !== null).map((group) => [group.productId, Number(group._min.price)]));
 
-		const direction = sort === productSort.price_asc ? 1 : -1;
+		const direction = sort === "price_asc" ? 1 : -1;
 		const sortedIds = [...candidateIds].sort((a, b) => {
 			const priceA = minPriceById.get(a);
 			const priceB = minPriceById.get(b);

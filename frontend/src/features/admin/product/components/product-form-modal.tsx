@@ -34,6 +34,7 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 	const [description, setDescription] = useState(product?.description ?? "");
 	const [categoryId, setCategoryId] = useState<number | "">(product?.categoryId ?? "");
 	const [isActive, setIsActive] = useState(product?.isActive ?? true);
+	const [isFeatured, setIsFeatured] = useState(product?.isFeatured ?? false);
 	const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(product?.thumbnailUrl ?? null);
 	const [errors, setErrors] = useState<Errors>({});
 
@@ -64,6 +65,7 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 			...(isEditing || description.trim() ? { description: description.trim() } : {}),
 			categoryId: categoryId === "" ? null : Number(categoryId),
 			isActive,
+			isFeatured,
 			// CreateProductSchema chỉ nhận string|undefined (không nhận null) cho thumbnailUrl, còn
 			// UpdateProductSchema cho phép null để admin chủ động xóa thumbnail đã chọn trước đó.
 			...(isEditing ? { thumbnailUrl } : thumbnailUrl ? { thumbnailUrl } : {}),
@@ -91,13 +93,7 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 					hint='Chỉ chữ thường, số và dấu gạch ngang, vd: "ao-thun-cotton-basic".'
 					error={errors.slug}
 				/>
-				<FormControl
-					as='textarea'
-					label='Mô tả'
-					rows={4}
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
-				/>
+				<FormControl as='textarea' label='Mô tả' rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
 				<FormSelect
 					label='Danh mục'
 					fullWidth
@@ -106,15 +102,10 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 					placeholder='— Không có danh mục —'
 					options={categoryOptions.map((option) => ({ value: option.id, label: option.label }))}
 				/>
-				<FormCheckbox
-					label='Cho phép hiển thị và bán sản phẩm này ngay'
-					checked={isActive}
-					onChange={(e) => setIsActive(e.target.checked)}
-				/>
+				<FormCheckbox label='Cho phép hiển thị và bán sản phẩm này ngay' checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+				<FormCheckbox label='Đánh dấu là sản phẩm nổi bật (hiển thị ở carousel trang chủ)' checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
 
-				{isEditing && (
-					<p className='text-xs text-muted'>Quản lý biến thể (SKU) và hình ảnh ở trang chi tiết sau khi lưu.</p>
-				)}
+				{isEditing && <p className='text-xs text-muted'>Quản lý biến thể (SKU) và hình ảnh ở trang chi tiết sau khi lưu.</p>}
 
 				<div className='flex justify-end gap-2 pt-2'>
 					<Button type='button' variant='outline' size='sm' onClick={onClose}>

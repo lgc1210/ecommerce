@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
 	listProducts,
 	getProductBySlug,
+	getFeaturedProducts,
 	listProductsAdmin,
 	getProductById,
 	createProduct,
@@ -19,6 +20,7 @@ import { validate } from "../../middlewares/validate.js";
 import {
 	ListProductsQuerySchema,
 	ProductSlugParamSchema,
+	FeaturedProductsQuerySchema,
 	ProductIdParamSchema,
 	CreateProductSchema,
 	UpdateProductSchema,
@@ -39,6 +41,7 @@ const router = Router();
 // Public (không yêu cầu đăng nhập)
 // ==========================================
 router.get("/", validate(ListProductsQuerySchema), listProducts);
+router.get("/featured", validate(FeaturedProductsQuerySchema), getFeaturedProducts);
 router.get("/slug/:slug", validate(ProductSlugParamSchema), getProductBySlug);
 
 // ==========================================

@@ -109,12 +109,14 @@ CREATE TABLE `products` (
     `slug` VARCHAR(100) NOT NULL,
     `description` TEXT NULL,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
+    `is_featured` BOOLEAN NOT NULL DEFAULT false,
     `thumbnail_url` VARCHAR(500) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
 
     UNIQUE INDEX `products_slug_key`(`slug`),
     INDEX `products_category_id_is_active_idx`(`category_id`, `is_active`),
+    INDEX `products_is_featured_is_active_idx`(`is_featured`, `is_active`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

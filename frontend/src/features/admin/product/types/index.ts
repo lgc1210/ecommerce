@@ -58,6 +58,7 @@ export interface AdminProductListItem {
 	slug: string;
 	description: string | null;
 	isActive: boolean;
+	isFeatured: boolean;
 	thumbnailUrl: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -82,6 +83,7 @@ export interface AdminProductDetail {
 	slug: string;
 	description: string | null;
 	isActive: boolean;
+	isFeatured: boolean;
 	thumbnailUrl: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -122,6 +124,8 @@ export interface CreateProductPayload {
 	description?: string;
 	categoryId?: number | null;
 	isActive?: boolean;
+	/** Đánh dấu hiển thị ở carousel "Sản phẩm nổi bật" trên trang chủ. */
+	isFeatured?: boolean;
 	/** URL trả về từ POST /uploads/product-image sau khi chọn ảnh từ máy. */
 	thumbnailUrl?: string | null;
 }

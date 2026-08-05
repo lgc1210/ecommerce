@@ -23,6 +23,16 @@ export const getProductBySlug = async (req: Request, res: Response, next: NextFu
 	}
 };
 
+export const getFeaturedProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	try {
+		const limit = req.query.limit ? Number(req.query.limit) : undefined;
+		const result = await productService.getFeaturedProducts(limit);
+		res.status(200).json(result);
+	} catch (error) {
+		handleServiceError(error, res, next);
+	}
+};
+
 // ==========================================
 // Admin - Product
 // ==========================================

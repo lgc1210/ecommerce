@@ -1,6 +1,15 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import productService from "../services";
-import type { FeaturedCategoriesResult, ListCategoriesParams, ListCategoriesResult, ListProductsParams, ListProductsResult, PublicCategoryTreeNode, PublicProductDetail } from "../types";
+import type {
+	FeaturedCategoriesResult,
+	FeaturedProductsResult,
+	ListCategoriesParams,
+	ListCategoriesResult,
+	ListProductsParams,
+	ListProductsResult,
+	PublicCategoryTreeNode,
+	PublicProductDetail,
+} from "../types";
 
 export const PUBLIC_PRODUCTS_QUERY_KEY = ["client", "products"] as const;
 export const PUBLIC_CATEGORIES_QUERY_KEY = ["client", "categories"] as const;
@@ -26,6 +35,18 @@ export const useProductBySlugQuery = (slug: string | undefined) => {
 		},
 		enabled: Boolean(slug),
 		retry: false, // Slug không tồn tại/ngừng kinh doanh -> 404, không cần thử lại
+	});
+};
+
+/** Sản phẩm nổi bật dùng cho carousel "Sản phẩm nổi bật" ở trang chủ (xem ProductService.getFeaturedProducts). */
+export const useFeaturedProductsQuery = (limit?: number) => {
+	return useQuery<FeaturedProductsResult>({
+		queryKey: [...PUBLIC_PRODUCTS_QUERY_KEY, "featured", limit],
+		queryFn: async () => {
+			const res = await productService.getFeaturedProducts(limit);
+			return res.data;
+		},
+		staleTime: 5 * 60 * 1000,
 	});
 };
 

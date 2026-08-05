@@ -16,6 +16,8 @@ const productService = {
 			},
 		}),
 	getProductBySlug: (slug: string) => apiClient.get(`/products/slug/${slug}`),
+	/** Sản phẩm nổi bật (is_featured=true), dùng cho carousel "Sản phẩm nổi bật" ở trang chủ. */
+	getFeaturedProducts: (limit?: number) => apiClient.get("/products/featured", { params: { limit } }),
 
 	// ---- Category (public) — chỉ dùng để hiển thị bộ lọc danh mục ở trang Shop ----
 	getCategories: (params: ListCategoriesParams = {}) =>

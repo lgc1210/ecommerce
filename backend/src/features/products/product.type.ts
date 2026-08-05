@@ -17,6 +17,7 @@ export interface CreateProductInput {
 	description?: string;
 	categoryId?: number | null;
 	isActive?: boolean;
+	isFeatured?: boolean;
 	thumbnailUrl?: string;
 	skus?: SkuInput[];
 }
@@ -27,6 +28,7 @@ export interface UpdateProductInput {
 	description?: string;
 	categoryId?: number | null;
 	isActive?: boolean;
+	isFeatured?: boolean;
 	thumbnailUrl?: string | null;
 }
 

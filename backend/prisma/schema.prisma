@@ -211,6 +211,8 @@ model Product {
   slug        String       @unique @db.VarChar(100)
   description String?      @db.Text
   isActive    Boolean      @default(true) @map("is_active")
+  // Admin đánh dấu để hiển thị ở carousel "Sản phẩm nổi bật" trên trang chủ (xem ProductService.getFeaturedProducts)
+  isFeatured  Boolean      @default(false) @map("is_featured")
   thumbnailUrl   String?      @map("thumbnail_url") @db.VarChar(500)
   createdAt   DateTime?    @default(now()) @map("created_at")
   updatedAt   DateTime?    @updatedAt @map("updated_at")
@@ -222,6 +224,7 @@ model Product {
   @@map("products")
 
   @@index([categoryId, isActive])
+  @@index([isFeatured, isActive])
 }
 
 /// Mỗi dòng là 1 biến thể duy nhất (vd: Đỏ - M, Trắng - L) để lưu giá và tồn kho riêng
