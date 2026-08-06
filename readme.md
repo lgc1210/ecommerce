@@ -95,7 +95,7 @@ Các nhóm bảng chính (xem `backend/prisma/schema.prisma`):
 5. **Tương tác khách hàng**: `reviews`, `otps` (xác thực đăng ký / đổi mật khẩu / đổi SĐT), `contacts`.
 
 Sơ đồ ERD Database
-![Ảnh sơ đồ ERD Database](docs/images/project-structure/ER%20database.png)
+![Ảnh sơ đồ ERD Database](docs/images/project-structure/ERD.png)
 
 ### 2.4. Xác thực & phân quyền (RBAC)
 
@@ -324,7 +324,7 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **RBAC linh hoạt** (resource:action), seed mặc định 3 role nhưng có thể tùy biến qua UI/API mà không bị seed ghi đè.
 - **Tích hợp vận chuyển & thanh toán thực tế cho thị trường Việt Nam**: GHN tính phí ship theo kích thước/khối lượng từng biến thể sản phẩm, VNPay & ZaloPay, cơ chế tự hủy đơn "pending" quá hạn.
 - **Tách CMS khỏi hệ thống giao dịch**: nội dung marketing (Home/About/Contact/Shop banner) quản lý độc lập qua Strapi, không cần deploy lại frontend khi đổi nội dung.
-- Giao diện Client theo phong cách **Etonal** (tông màu kem – cam cháy), giao diện Admin có dashboard trực quan bằng ECharts.
+- Giao diện Client lấy cảm hứng từ **Etonal** (tông màu kem – cam cháy), giao diện Admin có dashboard trực quan bằng ECharts.
 
 ## 7. Định hướng phát triển tiếp theo
 
