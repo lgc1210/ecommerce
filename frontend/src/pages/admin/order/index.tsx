@@ -10,10 +10,11 @@ import { parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
 import { useOrdersAdminQuery } from "../../../features/admin/order/hooks";
 import type { OrderStatus } from "../../../features/admin/order/types";
-import { formatOrderDate, ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../features/admin/order/utils";
+import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../features/admin/order/utils";
 import PaymentStatusBadge from "../../../features/admin/order/components/payment-status-badge";
 import OrderDetailModal from "../../../features/admin/order/components/order-detail-modal";
 import OrderStatusBadge from "../../../features/admin/order/components/order-status-badge";
+import { formatDate } from "../../../utils";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
@@ -33,10 +34,9 @@ const PAGE_SIZE = 10;
  * link chia sẻ được.
  */
 const AdminOrderPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const status = parseEnumParam<OrderStatus>(searchParams, "status");
 	// dateFrom/dateTo giữ nguyên dạng chuỗi thô (không cần parser riêng) — chỉ convert sang ISO
@@ -77,18 +77,8 @@ const AdminOrderPage = () => {
 					placeholder='Tất cả trạng thái'
 					options={Object.entries(ORDER_STATUS_LABEL).map(([value, label]) => ({ value, label }))}
 				/>
-				<FormControl
-					type='date'
-					value={dateFrom}
-					onChange={(e) => setFilter("dateFrom", e.target.value || undefined)}
-					wrapperClassName='w-40'
-				/>
-				<FormControl
-					type='date'
-					value={dateTo}
-					onChange={(e) => setFilter("dateTo", e.target.value || undefined)}
-					wrapperClassName='w-40'
-				/>
+				<FormControl type='date' value={dateFrom} onChange={(e) => setFilter("dateFrom", e.target.value || undefined)} wrapperClassName='w-40' />
+				<FormControl type='date' value={dateTo} onChange={(e) => setFilter("dateTo", e.target.value || undefined)} wrapperClassName='w-40' />
 				{hasActiveFilters(["status", "dateFrom", "dateTo"]) && (
 					<Button
 						type='button'
@@ -131,10 +121,7 @@ const AdminOrderPage = () => {
 							</tr>
 						) : (
 							orders.map((order) => (
-								<tr
-									key={order.id}
-									onClick={() => setSelectedOrderId(order.id)}
-									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr key={order.id} onClick={() => setSelectedOrderId(order.id)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{order.orderNumber}</p>
 										<p className='text-xs text-muted'>{order._count.items} sản phẩm</p>
@@ -157,7 +144,7 @@ const AdminOrderPage = () => {
 									<td className='px-5 py-3.5'>
 										<OrderStatusBadge status={order.orderStatus} />
 									</td>
-									<td className='px-5 py-3.5 text-ink/70'>{formatOrderDate(order.createdAt)}</td>
+									<td className='px-5 py-3.5 text-ink/70'>{formatDate(order.createdAt)}</td>
 								</tr>
 							))
 						)}
@@ -169,9 +156,7 @@ const AdminOrderPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{selectedOrderId !== null && (
-				<OrderDetailModal orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
-			)}
+			{selectedOrderId !== null && <OrderDetailModal orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />}
 		</div>
 	);
 };

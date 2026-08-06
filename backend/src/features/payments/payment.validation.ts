@@ -1,21 +1,10 @@
 import { z } from "zod";
 import { PAYMENT_STATUS } from "./payment.constant.js";
-import { PAYMENT_METHOD } from "../orders/order.constant.js";
+import { PAYMENT_METHOD } from "../payments/payment.constant.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
-const paymentStatusEnum = z.enum([
-	PAYMENT_STATUS.pending,
-	PAYMENT_STATUS.completed,
-	PAYMENT_STATUS.failed,
-	PAYMENT_STATUS.refunded,
-]);
-const paymentMethodEnum = z.enum([
-	PAYMENT_METHOD.cod,
-	PAYMENT_METHOD.vnpay,
-	PAYMENT_METHOD.momo,
-	PAYMENT_METHOD.stripe,
-	PAYMENT_METHOD.paypal,
-]);
+const paymentStatusEnum = z.enum([PAYMENT_STATUS.pending, PAYMENT_STATUS.completed, PAYMENT_STATUS.failed, PAYMENT_STATUS.refunded]);
+const paymentMethodEnum = z.enum([PAYMENT_METHOD.cod, PAYMENT_METHOD.vnpay, PAYMENT_METHOD.momo, PAYMENT_METHOD.stripe, PAYMENT_METHOD.paypal]);
 
 // ==========================================
 // Self-service: xem & xác nhận thanh toán đơn của chính mình

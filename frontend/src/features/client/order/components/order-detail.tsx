@@ -2,12 +2,15 @@ import Button from "../../../../components/button";
 import { ChevronRightIcon, MapPinIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 import { useCancelMyOrder, useMyOrderDetailQuery } from "../hooks";
-import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL, formatOrderDate } from "../../../admin/order/utils";
+import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../admin/order/utils";
 import OrderStatusBadge from "../../../admin/order/components/order-status-badge";
 import PaymentStatusBadge from "../../../admin/order/components/payment-status-badge";
 import OrderTracking from "./order-tracking";
 import { Link } from "react-router-dom";
 import paths from "../../../../configs/constants/paths";
+import { ONLINE_GATEWAY_METHODS } from "../../payment/constants";
+import { useCreatePaymentUrlMutation } from "../../payment/hooks";
+import { formatDate } from "../../../../utils";
 
 /** "Đen / M" — trả về null nếu sản phẩm không có snapshot biến thể. */
 const formatVariationSnapshot = (snapshot: Record<string, string> | null): string | null => {
@@ -29,13 +32,19 @@ interface OrderDetailProps {
 const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 	const { data: order, isLoading } = useMyOrderDetailQuery(orderId);
 	const cancelOrder = useCancelMyOrder();
+	const createPaymentUrl = useCreatePaymentUrlMutation();
+
+	const handlePayNow = () => {
+		createPaymentUrl.mutate(orderId, {
+			onSuccess: (res) => {
+				window.location.href = res.data.data.url;
+			},
+		});
+	};
 
 	return (
 		<div>
-			<button
-				type='button'
-				onClick={onBack}
-				className='mb-4 flex items-center gap-1 text-sm font-semibold text-primary-dark hover:underline'>
+			<button type='button' onClick={onBack} className='mb-4 flex items-center gap-1 text-sm font-semibold text-primary-dark hover:underline'>
 				<ChevronRightIcon className='h-4 w-4 rotate-180' />
 				Quay lại danh sách đơn hàng
 			</button>
@@ -48,7 +57,7 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 					<div className='flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-border bg-surface p-5'>
 						<div>
 							<p className='font-bold text-ink'>{order.orderNumber}</p>
-							<p className='mt-1 text-xs text-muted'>Đặt lúc {formatOrderDate(order.createdAt)}</p>
+							<p className='mt-1 text-xs text-muted'>Đặt lúc {formatDate(order.createdAt)}</p>
 						</div>
 						<OrderStatusBadge status={order.orderStatus} />
 					</div>
@@ -69,8 +78,7 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 								<span className='text-ink/70'>· {order.shippingAddress.phoneNumber}</span>
 							</div>
 							<p className='pl-6 text-ink/80'>
-								{order.shippingAddress.addressLine}, {order.shippingAddress.wardName},{" "}
-								{order.shippingAddress.districtName}, {order.shippingAddress.provinceName}
+								{order.shippingAddress.addressLine}, {order.shippingAddress.wardName}, {order.shippingAddress.districtName}, {order.shippingAddress.provinceName}
 							</p>
 						</div>
 					)}
@@ -82,10 +90,7 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 							{order.items.map((item) => {
 								const variation = formatVariationSnapshot(item.variationSnapshot);
 								return (
-									<Link
-										to={`${paths.client.productDetail(`${item.productSku?.product?.slug}`)}`}
-										key={item.id}
-										className='flex items-center justify-between py-3 text-sm'>
+									<Link to={`${paths.client.productDetail(`${item.productSku?.product?.slug}`)}`} key={item.id} className='flex items-center justify-between py-3 text-sm'>
 										<div className='flex items-center justify-start gap-4'>
 											<img
 												src={item?.productSku?.images[0]?.imageUrl ?? ""}
@@ -95,18 +100,14 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 												className='shrink-0 rounded border border-border'
 											/>
 											<div className='min-w-0'>
-												<p className='truncate font-medium text-ink'>
-													{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}
-												</p>
+												<p className='truncate font-medium text-ink'>{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}</p>
 												<p className='text-xs text-muted'>
 													SL: {item.quantity}
 													{variation ? ` · ${variation}` : ""}
 												</p>
 											</div>
 										</div>
-										<p className='shrink-0 font-semibold text-ink'>
-											{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}
-										</p>
+										<p className='shrink-0 font-semibold text-ink'>{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}</p>
 									</Link>
 								);
 							})}
@@ -137,22 +138,26 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 
 					{/* Thanh toán */}
 					{order.payment && (
-						<div className='space-y-1.5 rounded-2xl border border-border bg-surface p-5 text-sm'>
+						<div className='space-y-3 rounded-2xl border border-border bg-surface p-5 text-sm'>
 							<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>Thanh toán</p>
 							<div className='flex items-center justify-between'>
 								<span className='text-ink/80'>{PAYMENT_METHOD_LABEL[order.payment.paymentMethod]}</span>
 								<PaymentStatusBadge status={order.payment.paymentStatus} />
 							</div>
+
+							{/* Đơn thanh toán qua cổng online (VNPay/ZaloPay) nhưng chưa/không thành công ->
+							    cho khách thử lại ngay tại đây thay vì phải đặt lại đơn từ đầu. */}
+							{ONLINE_GATEWAY_METHODS.includes(order.payment.paymentMethod) && (order.payment.paymentStatus === "pending" || order.payment.paymentStatus === "failed") && (
+								<Button variant='outline' size='sm' className='w-full' disabled={createPaymentUrl.isPending} onClick={handlePayNow}>
+									{createPaymentUrl.isPending ? "Đang chuyển hướng..." : "Thanh toán ngay"}
+								</Button>
+							)}
 						</div>
 					)}
 
 					{order.orderStatus === "pending" && (
 						<div className='flex justify-end'>
-							<Button
-								variant='outline'
-								size='sm'
-								disabled={cancelOrder.isPending}
-								onClick={() => cancelOrder.mutate(order.id)}>
+							<Button variant='outline' size='sm' disabled={cancelOrder.isPending} onClick={() => cancelOrder.mutate(order.id)}>
 								{cancelOrder.isPending ? "Đang hủy..." : `Hủy đơn (${ORDER_STATUS_LABEL[order.orderStatus]})`}
 							</Button>
 						</div>

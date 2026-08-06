@@ -79,14 +79,10 @@ const OrderPage = () => {
 						{/* Cart lines */}
 						<div className='space-y-4'>
 							{lines.map(({ product, quantity }) => (
-								<div
-									key={product.slug}
-									className='flex items-center gap-4 rounded-2xl border border-border bg-surface p-4'>
+								<div key={product.slug} className='flex items-center gap-4 rounded-2xl border border-border bg-surface p-4'>
 									<img src={product.image} alt={product.name} className='h-20 w-20 shrink-0 rounded-xl object-cover' />
 									<div className='min-w-0 flex-1'>
-										<Link
-											to={paths.client.productDetail(product.slug)}
-											className='line-clamp-1 font-semibold text-ink hover:text-primary-dark'>
+										<Link to={paths.client.productDetail(product.slug)} className='line-clamp-1 font-semibold text-ink hover:text-primary-dark'>
 											{product.name}
 										</Link>
 										<p className='mt-1 text-sm font-bold text-primary-dark'>{formatCurrency(product.price)}</p>
@@ -110,15 +106,9 @@ const OrderPage = () => {
 										</button>
 									</div>
 
-									<p className='hidden w-28 text-right font-bold text-ink sm:block'>
-										{formatCurrency(product.price * quantity)}
-									</p>
+									<p className='hidden w-28 text-right font-bold text-ink sm:block'>{formatCurrency(product.price * quantity)}</p>
 
-									<button
-										type='button'
-										onClick={() => removeLine(product.slug)}
-										aria-label='Xoá sản phẩm'
-										className='text-muted hover:text-red-600'>
+									<button type='button' onClick={() => removeLine(product.slug)} aria-label='Xoá sản phẩm' className='text-muted hover:text-red-600'>
 										<TrashIcon className='h-5 w-5' />
 									</button>
 								</div>
@@ -136,10 +126,7 @@ const OrderPage = () => {
 									placeholder='Mã giảm giá (ETONAL25)'
 									className='h-11 flex-1 rounded-full border border-border bg-cream-soft px-4 text-sm text-ink outline-none focus:border-primary'
 								/>
-								<button
-									type='button'
-									onClick={applyCoupon}
-									className='rounded-full bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-soft'>
+								<button type='button' onClick={applyCoupon} className='rounded-full bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-soft'>
 									Áp dụng
 								</button>
 							</div>
@@ -168,9 +155,7 @@ const OrderPage = () => {
 							<Button fullWidth className='mt-6'>
 								Tiến hành thanh toán
 							</Button>
-							<Link
-								to={paths.client.shop}
-								className='mt-3 block text-center text-sm font-semibold text-primary-dark hover:underline'>
+							<Link to={paths.client.shop} className='mt-3 block text-center text-sm font-semibold text-primary-dark hover:underline'>
 								Tiếp tục mua sắm
 							</Link>
 						</div>

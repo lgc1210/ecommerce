@@ -38,6 +38,7 @@ enum OrderStatus {
 enum PaymentMethod {
   cod
   vnpay
+  zalopay
   momo
   stripe
   paypal

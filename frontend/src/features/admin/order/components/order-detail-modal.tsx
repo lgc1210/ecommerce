@@ -6,15 +6,10 @@ import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from "../../../../component
 import { formatCurrency } from "../../../../utils/currency";
 import { useOrderDetailQuery, useUpdateOrderStatus } from "../hooks";
 import type { AdminOrderDetail, OrderStatus } from "../types";
-import {
-	formatOrderDate,
-	getNextOrderStatusOptions,
-	isTerminalOrderStatus,
-	ORDER_STATUS_LABEL,
-	PAYMENT_METHOD_LABEL,
-} from "../utils";
+import { getNextOrderStatusOptions, isTerminalOrderStatus, ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../utils";
 import OrderStatusBadge from "./order-status-badge";
 import PaymentStatusBadge from "./payment-status-badge";
+import { formatDate } from "../../../../utils";
 
 interface OrderDetailModalProps {
 	orderId: number;
@@ -50,7 +45,7 @@ const OrderDetailContent = ({ order }: OrderDetailContentProps) => {
 			<div className='flex flex-wrap items-start justify-between gap-2'>
 				<div>
 					<p className='font-semibold text-ink'>{order.orderNumber}</p>
-					<p className='mt-1 text-xs text-muted'>Đặt lúc {formatOrderDate(order.createdAt)}</p>
+					<p className='mt-1 text-xs text-muted'>Đặt lúc {formatDate(order.createdAt)}</p>
 				</div>
 				<OrderStatusBadge status={order.orderStatus} />
 			</div>
@@ -89,8 +84,7 @@ const OrderDetailContent = ({ order }: OrderDetailContentProps) => {
 								<span className='text-ink/70'>· {order.shippingAddress.phoneNumber}</span>
 							</div>
 							<p className='pl-6 text-ink/80'>
-								{order.shippingAddress.addressLine}, {order.shippingAddress.wardName},{" "}
-								{order.shippingAddress.districtName}, {order.shippingAddress.provinceName}
+								{order.shippingAddress.addressLine}, {order.shippingAddress.wardName}, {order.shippingAddress.districtName}, {order.shippingAddress.provinceName}
 							</p>
 						</>
 					) : (
@@ -126,9 +120,7 @@ const OrderDetailContent = ({ order }: OrderDetailContentProps) => {
 										</td>
 										<td className='px-4 py-2.5 text-ink/80'>{item.quantity}</td>
 										<td className='px-4 py-2.5 text-ink/80'>{formatCurrency(Number(item.priceAtPurchase))}</td>
-										<td className='px-4 py-2.5 text-right font-medium text-ink'>
-											{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}
-										</td>
+										<td className='px-4 py-2.5 text-right font-medium text-ink'>{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}</td>
 									</tr>
 								);
 							})}
@@ -165,12 +157,8 @@ const OrderDetailContent = ({ order }: OrderDetailContentProps) => {
 						<span className='text-ink/80'>{PAYMENT_METHOD_LABEL[order.payment.paymentMethod]}</span>
 						<PaymentStatusBadge status={order.payment.paymentStatus} />
 					</div>
-					{order.payment.transactionId && (
-						<p className='text-xs text-muted'>Mã giao dịch: {order.payment.transactionId}</p>
-					)}
-					{order.payment.paidAt && (
-						<p className='text-xs text-muted'>Thanh toán lúc {formatOrderDate(order.payment.paidAt)}</p>
-					)}
+					{order.payment.transactionId && <p className='text-xs text-muted'>Mã giao dịch: {order.payment.transactionId}</p>}
+					{order.payment.paidAt && <p className='text-xs text-muted'>Thanh toán lúc {formatDate(order.payment.paidAt)}</p>}
 				</div>
 			)}
 
@@ -184,11 +172,7 @@ const OrderDetailContent = ({ order }: OrderDetailContentProps) => {
 					onChange={(e) => setPendingStatus(e.target.value as OrderStatus)}
 					options={statusOptions.map((status) => ({ value: status, label: ORDER_STATUS_LABEL[status] }))}
 				/>
-				<Button
-					size='sm'
-					type='button'
-					disabled={!hasStatusChanged || updateOrderStatus.isPending}
-					onClick={() => updateOrderStatus.mutate({ id: order.id, status: pendingStatus })}>
+				<Button size='sm' type='button' disabled={!hasStatusChanged || updateOrderStatus.isPending} onClick={() => updateOrderStatus.mutate({ id: order.id, status: pendingStatus })}>
 					{updateOrderStatus.isPending ? "Đang lưu..." : "Lưu trạng thái"}
 				</Button>
 			</div>
@@ -206,11 +190,7 @@ const OrderDetailModal = ({ orderId, onClose }: OrderDetailModalProps) => {
 
 	return (
 		<ModalShell title='Chi tiết đơn hàng' onClose={onClose} maxWidthClassName='max-w-2xl'>
-			{isLoading || !order ? (
-				<p className='py-8 text-center text-sm text-muted'>Đang tải...</p>
-			) : (
-				<OrderDetailContent key={`${order.id}-${order.orderStatus}`} order={order} />
-			)}
+			{isLoading || !order ? <p className='py-8 text-center text-sm text-muted'>Đang tải...</p> : <OrderDetailContent key={`${order.id}-${order.orderStatus}`} order={order} />}
 		</ModalShell>
 	);
 };

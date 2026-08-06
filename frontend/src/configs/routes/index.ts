@@ -13,6 +13,7 @@ import RegisterPage from "../../pages/auth/register";
 import ForgotPasswordPage from "../../pages/auth/forgot-password";
 import ResetPasswordPage from "../../pages/auth/reset-password";
 import AccountPage from "../../pages/client/account";
+import PaymentResultPage from "../../pages/client/payment-result";
 
 // Error pages
 import NotFoundPage from "../../pages/404";
@@ -59,12 +60,12 @@ const router = createBrowserRouter([
 				},
 			},
 			{
-				path: "about",
+				path: paths.client.about,
 				Component: AboutPage,
 				handle: { title: "Giới thiệu", crumb: () => "Giới thiệu" },
 			},
 			{
-				path: "shop",
+				path: paths.client.shop,
 				Component: ShopPage,
 				handle: { title: "Cửa hàng", crumb: () => "Cửa hàng", preventScrollReset: true },
 			},
@@ -84,7 +85,7 @@ const router = createBrowserRouter([
 				],
 			},
 			{
-				path: "contact",
+				path: paths.client.contact,
 				Component: ContactPage,
 				handle: { title: "Liên hệ", crumb: () => "Liên hệ" },
 			},
@@ -92,7 +93,7 @@ const router = createBrowserRouter([
 				// Giỏ hàng KHÔNG gắn requireAuthLoader: khách chưa đăng nhập vẫn phải
 				// xem/sửa được giỏ hàng (giỏ hàng sống ở zustand + localStorage, xem
 				// features/client/cart/store).
-				path: "cart",
+				path: paths.client.cart,
 				Component: CartPage,
 				handle: { title: "Giỏ hàng", crumb: () => "Giỏ hàng" },
 			},
@@ -100,31 +101,37 @@ const router = createBrowserRouter([
 				// Thanh toán yêu cầu đăng nhập (cần xác định người đặt hàng): chọn địa chỉ, xem phí
 				// vận chuyển GHN thật (POST /orders/shipping-fee), áp mã giảm giá (POST /coupons/validate)
 				// và đặt hàng thật (POST /orders) khi bấm nút "Đặt hàng".
-				path: "payment",
+				path: paths.client.payment,
 				loader: requireAuthLoader,
 				Component: PaymentPage,
 				handle: { title: "Thanh toán", crumb: () => "Thanh toán" },
 			},
 			{
-				path: "account",
+				path: paths.client.paymentResult,
+				loader: requireAuthLoader,
+				Component: PaymentResultPage,
+				handle: { title: "Kết quả thanh toán", crumb: () => "Kết quả thanh toán" },
+			},
+			{
+				path: paths.client.account,
 				loader: requireAuthLoader,
 				Component: AccountPage,
 				handle: { title: "Tài khoản của tôi", crumb: () => "Tài khoản của tôi" },
 			},
 			{
-				path: "login",
+				path: paths.auth.login,
 				loader: guestOnlyLoader,
 				Component: LoginPage,
 				handle: { title: "Đăng nhập", crumb: () => "Đăng nhập" },
 			},
 			{
-				path: "register",
+				path: paths.auth.register,
 				loader: guestOnlyLoader,
 				Component: RegisterPage,
 				handle: { title: "Đăng ký", crumb: () => "Đăng ký" },
 			},
 			{
-				path: "forgot-password",
+				path: paths.auth.forgotPassword,
 				loader: guestOnlyLoader,
 				Component: ForgotPasswordPage,
 				handle: { title: "Quên mật khẩu", crumb: () => "Quên mật khẩu" },

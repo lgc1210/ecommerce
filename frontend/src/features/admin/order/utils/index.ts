@@ -20,6 +20,7 @@ export const ORDER_STATUS_BADGE_CLASSNAME: Record<OrderStatus, string> = {
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
 	[PAYMENT_METHOD.cod]: "Thanh toán khi nhận hàng",
 	[PAYMENT_METHOD.vnpay]: "VNPay",
+	[PAYMENT_METHOD.zalopay]: "ZaloPay",
 	[PAYMENT_METHOD.momo]: "MoMo",
 	[PAYMENT_METHOD.stripe]: "Stripe",
 	[PAYMENT_METHOD.paypal]: "PayPal",
@@ -55,23 +56,8 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 export const getNextOrderStatusOptions = (current: OrderStatus): OrderStatus[] => {
-	console.log("=== DEBUG getNextOrderStatusOptions ===");
-	console.log("current =", current);
-	console.log("typeof current =", typeof current);
-	console.log("ALLOWED_TRANSITIONS =", ALLOWED_TRANSITIONS);
-	console.log("Object.keys(ALLOWED_TRANSITIONS) =", Object.keys(ALLOWED_TRANSITIONS));
-	console.log("ALLOWED_TRANSITIONS[current] =", ALLOWED_TRANSITIONS[current]);
 	return [current, ...ALLOWED_TRANSITIONS[current]];
 };
 
 /** true nếu đơn đang ở trạng thái cuối (không thể đổi trạng thái được nữa). */
 export const isTerminalOrderStatus = (status: OrderStatus): boolean => ALLOWED_TRANSITIONS[status].length === 0;
-
-export const formatOrderDate = (value: string) =>
-	new Date(value).toLocaleString("vi-VN", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});

@@ -14,6 +14,11 @@ const paymentMethods: { id: string; name: string; description: string }[] = [
 		description: "Thanh toán qua cổng VNPay",
 	},
 	{
+		id: PAYMENT_METHOD.zalopay,
+		name: "ZaloPay",
+		description: "Thanh toán qua ví ZaloPay",
+	},
+	{
 		id: PAYMENT_METHOD.momo,
 		name: "MoMo",
 		description: "Ví điện tử MoMo",
@@ -46,15 +51,7 @@ const CheckoutPaymentMethodSection = ({ value, onChange }: CheckoutPaymentMethod
 
 			<div className='space-y-3'>
 				{paymentMethods.map((method) => (
-					<FormRadio
-						key={method.id}
-						variant='card'
-						name='payment'
-						label={method.name}
-						description={method.description}
-						checked={value === method.id}
-						onChange={() => onChange(method.id)}
-					/>
+					<FormRadio key={method.id} variant='card' name='payment' label={method.name} description={method.description} checked={value === method.id} onChange={() => onChange(method.id)} />
 				))}
 			</div>
 		</section>

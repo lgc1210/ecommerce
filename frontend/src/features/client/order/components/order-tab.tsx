@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMyOrdersQuery } from "../hooks";
 import OrderDetail from "./order-detail";
-import { formatOrderDate } from "../../../admin/order/utils";
 import { formatCurrency } from "../../../../utils/currency";
 import OrderStatusBadge from "../../../admin/order/components/order-status-badge";
 import Pagination from "../../../../components/pagination";
 import { BoxIcon } from "../../../../components/icons";
+import { formatDate } from "../../../../utils";
 
 const PAGE_SIZE = 10;
 
@@ -55,7 +55,7 @@ const OrdersTab = () => {
 						<div>
 							<p className='font-semibold text-ink'>{order.orderNumber}</p>
 							<p className='mt-1 text-xs text-muted'>
-								Đặt lúc {formatOrderDate(order.createdAt)} · {order._count.items} sản phẩm
+								Đặt lúc {formatDate(order.createdAt)} · {order._count.items} sản phẩm
 							</p>
 						</div>
 						<div className='flex items-center gap-4'>
@@ -66,9 +66,7 @@ const OrdersTab = () => {
 				))}
 			</div>
 
-			{data && (
-				<Pagination total={data.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoading} />
-			)}
+			{data && <Pagination total={data.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoading} />}
 		</div>
 	);
 };

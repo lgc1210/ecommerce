@@ -1,21 +1,10 @@
 import { z } from "zod";
-import { ORDER_STATUS, PAYMENT_METHOD } from "./order.constant.js";
+import { ORDER_STATUS } from "./order.constant.js";
+import { PAYMENT_METHOD } from "../payments/payment.constant.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
-const orderStatusEnum = z.enum([
-	ORDER_STATUS.pending,
-	ORDER_STATUS.processing,
-	ORDER_STATUS.shipped,
-	ORDER_STATUS.delivered,
-	ORDER_STATUS.cancelled,
-]);
-const paymentMethodEnum = z.enum([
-	PAYMENT_METHOD.cod,
-	PAYMENT_METHOD.vnpay,
-	PAYMENT_METHOD.momo,
-	PAYMENT_METHOD.stripe,
-	PAYMENT_METHOD.paypal,
-]);
+const orderStatusEnum = z.enum([ORDER_STATUS.pending, ORDER_STATUS.processing, ORDER_STATUS.shipped, ORDER_STATUS.delivered, ORDER_STATUS.cancelled]);
+const paymentMethodEnum = z.enum([PAYMENT_METHOD.cod, PAYMENT_METHOD.vnpay, PAYMENT_METHOD.zalopay, PAYMENT_METHOD.momo, PAYMENT_METHOD.stripe, PAYMENT_METHOD.paypal]);
 
 // ==========================================
 // Self-service: checkout

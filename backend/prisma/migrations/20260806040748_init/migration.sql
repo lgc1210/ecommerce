@@ -235,7 +235,7 @@ CREATE TABLE `order_items` (
 CREATE TABLE `payments` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `order_id` INTEGER NOT NULL,
-    `payment_method` ENUM('cod', 'vnpay', 'momo', 'stripe', 'paypal') NOT NULL,
+    `payment_method` ENUM('cod', 'vnpay', 'zalopay', 'momo', 'stripe', 'paypal') NOT NULL,
     `payment_status` ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
     `transaction_id` VARCHAR(255) NULL,
     `amount` DECIMAL(14, 2) NOT NULL,

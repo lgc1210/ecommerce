@@ -5,7 +5,8 @@ import BreadCrumb from "../../components/breadcrumb";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
 import { CartIcon } from "../../components/icons";
-import { PAYMENT_METHOD } from "../../features/client/payment/constants";
+import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD } from "../../features/client/payment/constants";
+import { useCreatePaymentUrlMutation } from "../../features/client/payment/hooks";
 import { useCart } from "../../features/client/cart/hooks";
 import { usePreviewShippingFeeQuery, useCreateOrderMutation } from "../../features/client/order/hooks";
 import type { PaymentMethod } from "../../features/client/order/types";
@@ -31,6 +32,7 @@ const PaymentPage = () => {
 	const shippingFee = shippingFeeQuery.data?.shippingFee ?? null;
 
 	const createOrder = useCreateOrderMutation();
+	const createPaymentUrl = useCreatePaymentUrlMutation();
 
 	// Mã giảm giá được tính trước theo subtotal hiện tại tại thời điểm áp dụng; nếu giỏ hàng đổi
 	// sau đó (số tiền giảm không còn khớp), backend vẫn tự tính lại chính xác lúc đặt hàng thật.
@@ -61,18 +63,37 @@ const PaymentPage = () => {
 			},
 			{
 				onSuccess: (res) => {
-					const orderNumber = res.data.data.orderNumber;
-					toast.success(`Đặt hàng thành công! Mã đơn hàng: ${orderNumber}.`);
-					navigate(paths.client.account, { state: { tab: "orders" } });
+					const order = res.data.data;
+
+					// Phương thức thanh toán qua cổng online (VNPay/ZaloPay) -> lấy URL rồi redirect thẳng
+					// trình duyệt sang trang gateway để khách hoàn tất thanh toán ngay (trang payment-result
+					// sẽ được hiển thị sau khi gateway redirect ngược về). COD/các phương thức khác chưa hỗ
+					// trợ thì không có bước redirect gateway, nhưng vẫn cần cho khách thấy kết quả đặt hàng
+					// -> điều hướng thẳng tới trang payment-result kèm orderId, KHÔNG toast rồi về thẳng
+					// trang "Đơn hàng của tôi" như trước (khiến khách không thấy xác nhận đơn/phương thức
+					// thanh toán vừa chọn).
+					if (ONLINE_GATEWAY_METHODS.includes(paymentMethod)) {
+						createPaymentUrl.mutate(order.id, {
+							onSuccess: (urlRes) => {
+								window.location.href = urlRes.data.data.url;
+							},
+							onError: () => {
+								// Tạo URL thất bại (vd lỗi cấu hình cổng) -> đơn vẫn đã tạo thành công, khách có
+								// thể vào "Đơn hàng của tôi" để thử thanh toán lại sau (xem order-detail.tsx).
+								navigate(paths.client.account, { state: { tab: "orders" } });
+							},
+						});
+						return;
+					}
+
+					navigate(`${paths.client.paymentResult}?orderId=${order.id}`);
 				},
 			},
 		);
 	};
 
 	if (isCartLoading) {
-		return (
-			<div className='mx-auto max-w-7xl px-4 py-24 text-center text-muted sm:px-6 lg:px-8'>Đang tải giỏ hàng...</div>
-		);
+		return <div className='mx-auto max-w-7xl px-4 py-24 text-center text-muted sm:px-6 lg:px-8'>Đang tải giỏ hàng...</div>;
 	}
 
 	if (items.length === 0) {
@@ -99,39 +120,22 @@ const PaymentPage = () => {
 				<div className='grid gap-8 lg:grid-cols-12'>
 					{/* LEFT */}
 					<div className='space-y-6 lg:col-span-8'>
-						<CheckoutAddressSection
-							selectedAddressId={selectedAddressId}
-							onSelectAddress={(address) => setSelectedAddressId(address.id)}
-						/>
-
+						<CheckoutAddressSection selectedAddressId={selectedAddressId} onSelectAddress={(address) => setSelectedAddressId(address.id)} />
 						<CheckoutProductSection items={items} />
-
-						<CheckoutDeliveryMethodSection
-							shippingFee={shippingFee}
-							isLoading={selectedAddressId !== null && shippingFeeQuery.isLoading}
-							isError={shippingFeeQuery.isError}
-						/>
-
+						<CheckoutDeliveryMethodSection shippingFee={shippingFee} isLoading={selectedAddressId !== null && shippingFeeQuery.isLoading} isError={shippingFeeQuery.isError} />
 						<CheckoutPaymentMethodSection value={paymentMethod} onChange={(value) => setPaymentMethod(value as PaymentMethod)} />
 					</div>
-
 					{/* RIGHT */}
 					<div className='lg:col-span-4'>
 						<div className='sticky top-24 space-y-6'>
-							<CheckoutDiscountSection
-								orderSubtotal={subtotal}
-								appliedCoupon={appliedCoupon}
-								onApply={setAppliedCoupon}
-								onRemove={() => setAppliedCoupon(null)}
-							/>
-
+							<CheckoutDiscountSection orderSubtotal={subtotal} appliedCoupon={appliedCoupon} onApply={setAppliedCoupon} onRemove={() => setAppliedCoupon(null)} />
 							<CheckoutSummarySection
 								subtotal={subtotal}
 								shippingFee={shippingFee ?? 0}
 								discount={discount}
 								total={total}
 								onPlaceOrder={handlePlaceOrder}
-								isPlacingOrder={createOrder.isPending}
+								isPlacingOrder={createOrder.isPending || createPaymentUrl.isPending}
 								disabled={!selectedAddressId}
 							/>
 						</div>

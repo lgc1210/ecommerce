@@ -1,22 +1,11 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
-import {
-	normalizeCouponCode,
-	checkCouponUsability,
-	checkCouponEmailOwnership,
-	computeDiscountAmount,
-} from "../coupons/coupon.utils.js";
+import { normalizeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "../coupons/coupon.utils.js";
 import { PAYMENT_STATUS } from "../payments/payment.constant.js";
 import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
-import { ORDER_STATUS, type PAYMENT_METHOD } from "./order.constant.js";
-import {
-	generateOrderNumber,
-	computeCartPackage,
-	isValidOrderStatusTransition,
-	isCancellation,
-	mapGhnStatusToOrderStatus,
-	type OrderStatus,
-} from "./order.utils.js";
+import { ORDER_STATUS } from "./order.constant.js";
+import { PAYMENT_METHOD } from "../payments/payment.constant.js";
+import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus, type OrderStatus } from "./order.utils.js";
 
 type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
 
@@ -102,9 +91,7 @@ class OrderService {
 				throw new Error(`BadRequest: ${usability.reason}`);
 			}
 			if (subtotalAmount < Number(coupon.minOrderValue)) {
-				throw new Error(
-					`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`,
-				);
+				throw new Error(`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`);
 			}
 
 			couponId = coupon.id;
@@ -177,32 +164,44 @@ class OrderService {
 					include: orderDetailInclude,
 				});
 
-				// Tạo đơn vận chuyển thật bên GHN NGAY TRONG transaction này — "đặt hàng thành
-				// công" ở hệ thống mình PHẢI đi đôi với việc tạo được đơn bên GHN. Nếu GHN tạo
-				// đơn thất bại, ném lỗi ở đây sẽ rollback toàn bộ (trừ kho, dùng coupon, tạo đơn)
-				// — khách sẽ thấy checkout thất bại thay vì có 1 đơn hàng "mồ côi" không có vận đơn.
-				const cartPackage = computeCartPackage(cart.items);
-				const shipment = await createShippingOrder({
-					clientOrderCode: createdOrder.orderNumber,
-					toName: address.recipientName,
-					toPhone: address.phoneNumber,
-					toAddress: address.addressLine,
-					toWardCode: address.wardCode,
-					toDistrictId: address.districtId,
-					codAmount: data.paymentMethod === "cod" ? totalAmount : 0,
-					insuranceValue: subtotalAmount,
-					items: cart.items.map((item) => ({
-						name: item.productSku.product?.name ?? item.productSku.sku,
-						quantity: item.quantity,
-					})),
-					...cartPackage,
-				});
+				// COD: tiền được thu trực tiếp khi giao hàng nên "đặt hàng thành công" = tạo vận đơn
+				// GHN ngay. Nếu GHN tạo đơn thất bại, ném lỗi ở đây sẽ rollback toàn bộ (trừ kho,
+				// dùng coupon, tạo đơn) — khách sẽ thấy checkout thất bại thay vì có 1 đơn "mồ côi".
+				//
+				// Thanh toán online (vnpay/zalopay/momo/...): KHÔNG được tạo vận đơn ở đây — khách
+				// mới chỉ tạo đơn, CHƯA thanh toán (bước /pay và IPN xảy ra sau, ở request khác).
+				// Tạo vận đơn ngay lúc này nghĩa là hàng đã "sẵn sàng giao" dù khách có thể không bao
+				// giờ thanh toán hoặc thanh toán thất bại. Với các đơn này, order được tạo với
+				// ghnOrderCode = null; vận đơn thật sự chỉ được tạo sau khi IPN xác nhận thanh toán
+				// "completed" (xem payment.service.ts -> createShipmentAfterPayment bên dưới). Nếu
+				// thanh toán thất bại, đơn vẫn ở "pending" (không có vận đơn "ảo" nào cả) để khách có
+				// thể thử thanh toán lại (payment.utils.ts cho phép failed -> pending).
+				if (data.paymentMethod === PAYMENT_METHOD.cod) {
+					const cartPackage = computeCartPackage(cart.items);
+					const shipment = await createShippingOrder({
+						clientOrderCode: createdOrder.orderNumber,
+						toName: address.recipientName,
+						toPhone: address.phoneNumber,
+						toAddress: address.addressLine,
+						toWardCode: address.wardCode,
+						toDistrictId: address.districtId,
+						codAmount: totalAmount,
+						insuranceValue: subtotalAmount,
+						items: cart.items.map((item) => ({
+							name: item.productSku.product?.name ?? item.productSku.sku,
+							quantity: item.quantity,
+						})),
+						...cartPackage,
+					});
 
-				return tx.order.update({
-					where: { id: createdOrder.id },
-					data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
-					include: orderDetailInclude,
-				});
+					return tx.order.update({
+						where: { id: createdOrder.id },
+						data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
+						include: orderDetailInclude,
+					});
+				}
+
+				return createdOrder;
 			},
 			{ timeout: 15_000 }, // Mặc định Prisma là 5s — nới ra vì transaction này có thêm 1 lượt gọi API GHN
 		);
@@ -228,10 +227,7 @@ class OrderService {
 		if (params.status) where.orderStatus = params.status;
 
 		const { page, limit, skip } = parsePagination(params);
-		const [orders, total] = await Promise.all([
-			prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }),
-			prisma.order.count({ where }),
-		]);
+		const [orders, total] = await Promise.all([prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }), prisma.order.count({ where })]);
 
 		return {
 			data: orders,
@@ -269,11 +265,7 @@ class OrderService {
 		if (params.status) where.orderStatus = params.status;
 		if (params.userId) where.userId = Number(params.userId);
 		if (params.search) {
-			where.OR = [
-				{ orderNumber: { contains: params.search } },
-				{ user: { email: { contains: params.search } } },
-				{ user: { name: { contains: params.search } } },
-			];
+			where.OR = [{ orderNumber: { contains: params.search } }, { user: { email: { contains: params.search } } }, { user: { name: { contains: params.search } } }];
 		}
 		if (params.dateFrom || params.dateTo) {
 			where.createdAt = {
@@ -283,10 +275,7 @@ class OrderService {
 		}
 
 		const { page, limit, skip } = parsePagination(params);
-		const [orders, total] = await Promise.all([
-			prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }),
-			prisma.order.count({ where }),
-		]);
+		const [orders, total] = await Promise.all([prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }), prisma.order.count({ where })]);
 
 		return {
 			data: orders,
@@ -327,11 +316,7 @@ class OrderService {
 			// có đối soát/chuyển khoản tiền COD đó về cho shop hay chưa là công nợ nội bộ giữa
 			// Shop <-> GHN (theo chu kỳ đối soát riêng), KHÔNG liên quan tới trạng thái thanh toán
 			// hiển thị cho khách trên đơn này.
-			if (
-				mappedStatus === ORDER_STATUS.delivered &&
-				order.payment?.paymentMethod === "cod" &&
-				order.payment.paymentStatus !== PAYMENT_STATUS.completed
-			) {
+			if (mappedStatus === ORDER_STATUS.delivered && order.payment?.paymentMethod === "cod" && order.payment.paymentStatus !== PAYMENT_STATUS.completed) {
 				await prisma.payment.update({
 					where: { orderId: order.id },
 					data: { paymentStatus: PAYMENT_STATUS.completed, paidAt: new Date() },
@@ -340,6 +325,89 @@ class OrderService {
 		} else {
 			await prisma.order.update({ where: { id: order.id }, data: { ghnStatus } });
 		}
+	}
+
+	// ==========================================
+	// Được gọi từ payment.service.ts sau khi có kết quả thanh toán online (IPN)
+	// ==========================================
+	/**
+	 * Tạo vận đơn GHN thật SAU KHI thanh toán online đã "completed" (gọi từ payment.service.ts).
+	 * Idempotent: bỏ qua nếu đơn đã có ghnOrderCode (IPN có thể gọi lại nhiều lần). Không thu COD
+	 * vì tiền đã thu qua cổng thanh toán. Lỗi ở đây KHÔNG được rollback thanh toán (tiền đã thu
+	 * thật) — ném lỗi để caller tự log lại, xử lý thủ công (không có transaction bao ngoài).
+	 */
+	async createShipmentAfterPayment(orderId: number) {
+		const order = await prisma.order.findUnique({
+			where: { id: orderId },
+			include: { ...orderItemInclude, shippingAddress: true },
+		});
+		if (!order || order.ghnOrderCode) return;
+
+		if (!order.shippingAddress) {
+			throw new Error(`Config: Đơn hàng #${order.orderNumber} không còn địa chỉ giao hàng hợp lệ, không thể tạo vận đơn.`);
+		}
+		const items = order.items.filter((item): item is typeof item & { productSku: NonNullable<typeof item.productSku> } => item.productSku !== null);
+		if (items.length !== order.items.length) {
+			throw new Error(`Config: Đơn hàng #${order.orderNumber} có sản phẩm đã bị xóa khỏi hệ thống, không thể tự tạo vận đơn.`);
+		}
+
+		const cartPackage = computeCartPackage(items);
+		const shipment = await createShippingOrder({
+			clientOrderCode: order.orderNumber,
+			toName: order.shippingAddress.recipientName,
+			toPhone: order.shippingAddress.phoneNumber,
+			toAddress: order.shippingAddress.addressLine,
+			toWardCode: order.shippingAddress.wardCode,
+			toDistrictId: order.shippingAddress.districtId,
+			codAmount: 0,
+			insuranceValue: Number(order.subtotalAmount),
+			items: items.map((item) => ({
+				name: item.productSku.product?.name ?? item.productSku.sku,
+				quantity: item.quantity,
+			})),
+			...cartPackage,
+		});
+
+		await prisma.order.update({
+			where: { id: order.id },
+			data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
+		});
+	}
+
+	/**
+	 * Dọn đơn "pending" thanh toán online quá hạn (job định kỳ gọi, xem order.cleanup.job.ts) —
+	 * khách đặt hàng nhưng bỏ ngang, không bao giờ thanh toán hoặc thanh toán fail rồi không thử
+	 * lại (payment.utils.ts cho phép failed -> pending nên vẫn phải chờ hết hạn mới hủy, không hủy
+	 * ngay khi fail). Chỉ nhắm đến đơn thanh toán ONLINE (COD không có khái niệm hết hạn thanh toán
+	 * — COD đã có vận đơn GHN thật ngay lúc đặt, vòng đời do GHN dẫn dắt). Hủy từng đơn qua
+	 * transitionOrderStatus để tái dùng đúng logic hoàn tồn kho + lượt dùng coupon; đơn online quá
+	 * hạn chưa từng có ghnOrderCode (xem checkout()) nên không cần gọi cancelShippingOrder.
+	 */
+	async cancelExpiredPendingOrders(ttlHours: number) {
+		const cutoff = new Date(Date.now() - ttlHours * 60 * 60 * 1000);
+
+		const staleOrders = await prisma.order.findMany({
+			where: {
+				orderStatus: ORDER_STATUS.pending,
+				createdAt: { lt: cutoff },
+				payment: { paymentMethod: { not: "cod" } },
+			},
+			select: { id: true, orderStatus: true, couponId: true, ghnOrderCode: true },
+		});
+
+		let cancelledCount = 0;
+		for (const order of staleOrders) {
+			try {
+				await this.transitionOrderStatus(order, ORDER_STATUS.cancelled);
+				cancelledCount++;
+			} catch (error: any) {
+				// Lỗi ở 1 đơn (vd transition không hợp lệ do vừa được xử lý ở request khác ngay
+				// trước đó) không được chặn các đơn còn lại trong lượt dọn dẹp này.
+				console.error(`[order-cleanup] Hủy đơn quá hạn thất bại cho orderId=${order.id}:`, error?.message ?? error);
+			}
+		}
+
+		return { scanned: staleOrders.length, cancelled: cancelledCount };
 	}
 
 	// ==========================================
@@ -385,9 +453,7 @@ class OrderService {
 				throw new Error("BadRequest: Một số sản phẩm trong giỏ hàng đã ngừng kinh doanh, vui lòng cập nhật giỏ hàng.");
 			}
 			if (item.quantity > item.productSku.stockQuantity) {
-				throw new Error(
-					`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`,
-				);
+				throw new Error(`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`);
 			}
 		}
 
@@ -457,6 +523,17 @@ class OrderService {
 						data: { usedCount: { decrement: 1 } },
 					});
 				}
+
+				// Đơn bị hủy mà payment vẫn "pending" -> chuyển luôn payment sang "failed", tránh để
+				// lại 1 payment "pending" mồ côi (đơn đã hủy nhưng payment vẫn treo lơ lửng như chưa
+				// có chuyện gì xảy ra). Dùng updateMany điều kiện paymentStatus = pending thay vì
+				// update vô điều kiện: nếu payment đã "completed" (vd COD giao thành công) thì đây
+				// PHẢI là 1 case hoàn tiền (đi qua payment.service.ts -> refunded), không phải hủy
+				// thường — không được tự ý ghi đè "completed"/"refunded" ở đây.
+				await tx.payment.updateMany({
+					where: { orderId: order.id, paymentStatus: PAYMENT_STATUS.pending },
+					data: { paymentStatus: PAYMENT_STATUS.failed },
+				});
 			}
 
 			return tx.order.update({

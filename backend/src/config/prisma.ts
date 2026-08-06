@@ -14,7 +14,7 @@ const adapter = new PrismaMariaDb(env.DATABASE_URL);
 // 3. Pass the adapter straight into your primary Prisma Client constructor configuration
 const prisma = new PrismaClient({
 	adapter,
-	log: env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+	// log: env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
 });
 
 export default prisma;

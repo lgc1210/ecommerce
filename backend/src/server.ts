@@ -10,6 +10,7 @@ import { reviewSeed } from "./features/reviews/review.seed.js";
 import { contactSeed } from "./features/contacts/contact.seed.js";
 import { orderSeed } from "./features/orders/order.seed.js";
 import { categorySeed } from "./features/categories/category.seed.js";
+import { startOrderCleanupJob } from "./cronjob/index.js";
 
 async function bootstrap(): Promise<void> {
 	try {
@@ -38,6 +39,9 @@ async function bootstrap(): Promise<void> {
 			console.log(`Active App Operating Mode: [${env.NODE_ENV.toUpperCase()}]`);
 			console.log(`=======================================================`);
 		});
+
+		// 2.1. Bắt đầu job nền dọn đơn "pending" thanh toán online quá hạn (xem order.cleanup.job.ts)
+		startOrderCleanupJob();
 
 		// 3. Graceful Shutdown handlers (Ensures database connections close cleanly if server stops)
 		const handleSignal = async (signal: string) => {

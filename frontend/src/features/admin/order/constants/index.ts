@@ -9,6 +9,7 @@ export const ORDER_STATUS = Object.freeze({
 export const PAYMENT_METHOD = Object.freeze({
 	cod: "cod",
 	vnpay: "vnpay",
+	zalopay: "zalopay",
 	momo: "momo",
 	stripe: "stripe",
 	paypal: "paypal",
