@@ -44,12 +44,10 @@ const PaymentPage = () => {
 			toast.error("Vui lòng chọn địa chỉ nhận hàng trước khi đặt hàng.");
 			return;
 		}
-
 		if (items.some((item) => !item.inStock)) {
 			toast.error("Một số sản phẩm trong giỏ đã hết hàng hoặc ngừng kinh doanh, vui lòng quay lại giỏ hàng để xóa.");
 			return;
 		}
-
 		if (shippingFeeQuery.isLoading || shippingFeeQuery.isError || shippingFee === null) {
 			toast.error("Chưa tính được phí vận chuyển cho địa chỉ này, vui lòng thử lại hoặc đổi địa chỉ khác.");
 			return;
@@ -64,7 +62,6 @@ const PaymentPage = () => {
 			{
 				onSuccess: (res) => {
 					const order = res.data.data;
-
 					// Phương thức thanh toán qua cổng online (VNPay/ZaloPay) -> lấy URL rồi redirect thẳng
 					// trình duyệt sang trang gateway để khách hoàn tất thanh toán ngay (trang payment-result
 					// sẽ được hiển thị sau khi gateway redirect ngược về). COD/các phương thức khác chưa hỗ
@@ -85,7 +82,6 @@ const PaymentPage = () => {
 						});
 						return;
 					}
-
 					navigate(`${paths.client.paymentResult}?orderId=${order.id}`);
 				},
 			},
@@ -112,10 +108,17 @@ const PaymentPage = () => {
 		);
 	}
 
+	const handlePaymentMethodChange = (value: string) => {
+		if (value === PAYMENT_METHOD.momo || value === PAYMENT_METHOD.stripe || value === PAYMENT_METHOD.paypal) {
+			toast.info("Tính năng đang được phát triển, vui lồng chọn phương thức thanh toán khác.");
+			return;
+		}
+		setPaymentMethod(value as PaymentMethod);
+	};
+
 	return (
 		<>
 			<BreadCrumb title='Thanh toán' description='Xác nhận đơn hàng và hoàn tất thanh toán' />
-
 			<div className='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
 				<div className='grid gap-8 lg:grid-cols-12'>
 					{/* LEFT */}
@@ -123,7 +126,7 @@ const PaymentPage = () => {
 						<CheckoutAddressSection selectedAddressId={selectedAddressId} onSelectAddress={(address) => setSelectedAddressId(address.id)} />
 						<CheckoutProductSection items={items} />
 						<CheckoutDeliveryMethodSection shippingFee={shippingFee} isLoading={selectedAddressId !== null && shippingFeeQuery.isLoading} isError={shippingFeeQuery.isError} />
-						<CheckoutPaymentMethodSection value={paymentMethod} onChange={(value) => setPaymentMethod(value as PaymentMethod)} />
+						<CheckoutPaymentMethodSection value={paymentMethod} onChange={handlePaymentMethodChange} />
 					</div>
 					{/* RIGHT */}
 					<div className='lg:col-span-4'>

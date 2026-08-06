@@ -48,7 +48,6 @@ const CheckoutPaymentMethodSection = ({ value, onChange }: CheckoutPaymentMethod
 				<CreditCardIcon className='h-5 w-5 text-primary' />
 				<h2 className='text-lg font-bold text-ink'>Phương thức thanh toán</h2>
 			</div>
-
 			<div className='space-y-3'>
 				{paymentMethods.map((method) => (
 					<FormRadio key={method.id} variant='card' name='payment' label={method.name} description={method.description} checked={value === method.id} onChange={() => onChange(method.id)} />
