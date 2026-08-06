@@ -197,21 +197,51 @@ Các trang: **Trang chủ, Cửa hàng (Shop), Chi tiết sản phẩm, Giỏ h�
 - Trang Thanh toán tính phí vận chuyển GHN thật theo địa chỉ đã chọn, áp mã giảm giá, rồi tạo đơn hàng thật.
 - Nội dung tĩnh của Trang chủ / Giới thiệu / Liên hệ / banner Cửa hàng được lấy từ **Strapi CMS** (không hard-code trong code frontend), cho phép chỉnh nội dung marketing mà không cần deploy lại.
 
+Trang chủ
 ![Ảnh giao diện trang chủ client](docs/images/client/home.png)
 
+Trang giới thiệu
+![Ảnh giao diện trang giới thiệu](docs/images/client/about.png)
+
+Trang liên hệ
+![Ảnh giao diện trang liên hệ](docs/images/client/contact.png)
+
+Trang cửa hàng
 ![Ảnh giao diện trang sản phẩm](docs/images/client/shop.png)
 
+Trang sản phẩm
 ![Ảnh giao diện trang chi tiết sản phẩm](docs/images/client/product.png)
 
+Trang giỏ hàng
 ![Ảnh giao diện trang giỏ hàng](docs/images/client/cart.png)
+
+Trang thanh toán
+![Ảnh giao diện trang thanh toán](docs/images/client/checkout.png)
+
+Trang đơn hàng của tôi
+![Ảnh giao diện trang đơn hàng của tôi](docs/images/client/order-me.png)
+
+Trang chi tiết đơn hàng của tôi
+![Ảnh giao diện trang chi tiết đơn hàng của tôi](docs/images/client/order-detail-me.png)
 
 ### 3.4. Giao diện Admin
 
 Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Thanh toán**, **Liên hệ**.
 
+Trang dashboard admin
 ![Ảnh giao diện Dashboard Admin](docs/images/admin/dashboard.png)
 
+Trang quản lý RBAC / ma trận quyền
 ![Ảnh giao diện quản lý RBAC / ma trận quyền](docs/images/admin/rbac.png)
+
+Trang quản lý danh mục phân cấp
+![Ảnh giao diện quản lý danh mục phân cấp](docs/images/admin/categories.png)
+
+Trang quản lý sản phẩm
+![Ảnh giao diện quản lý sản phẩm](docs/images/admin/products.png)
+
+Trang quản lý biến thể của sản phẩm
+![Ảnh giao diện quản lý biến thể của sản phẩm](docs/images/admin/product-variation.png)
 
 ### 3.5. Xác thực phía frontend
 
