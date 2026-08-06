@@ -27,6 +27,7 @@ Website thương mại điện tử (tiếng Việt) gồm 3 dự án độc l�
                             └──────────────────────────────┘
 ```
 
+Sơ đồ kiến trúc tổng thể
 ![Sơ đồ kiến trúc tổng thể](docs/images/project-structure/architecture.svg)
 
 - **`frontend`** gọi hai API độc lập song song:
@@ -80,7 +81,8 @@ backend/src/
 
 Mỗi feature theo cùng một khuôn mẫu: `*.routes.ts` (định tuyến + khai báo quyền), `*.controller.ts`, `*.service.ts` (nghiệp vụ + Prisma), `*.validation.ts` (Zod schema), `*.utils.ts`, và `*.seed.ts` (dữ liệu mẫu khi khởi động).
 
-> 🖼️ [Ảnh: sơ đồ thư mục backend]
+Ảnh sơ đồ thư mục backend
+![Ảnh sơ đồ thư mục backend](docs/images/project-structure/backend-structure.svg)
 
 ### 2.3. Mô hình dữ liệu (Prisma schema)
 
@@ -92,7 +94,8 @@ Các nhóm bảng chính (xem `backend/prisma/schema.prisma`):
 4. **Đơn hàng & thanh toán**: `coupons`, `orders` (lưu cả mã vận đơn + trạng thái vận chuyển GHN), `order_items` (chụp lại giá & biến thể tại thời điểm mua), `payments` (state machine: `pending → completed/failed → refunded`).
 5. **Tương tác khách hàng**: `reviews`, `otps` (xác thực đăng ký / đổi mật khẩu / đổi SĐT), `contacts`.
 
-> 🖼️ [Ảnh: sơ đồ ER database]
+Sơ đồ ERD Database
+![Ảnh sơ đồ ERD Database](docs/images/project-structure/ER%20database.png)
 
 ### 2.4. Xác thực & phân quyền (RBAC)
 
@@ -159,8 +162,6 @@ Các script khác: `npm run build` (prisma generate + tsc), `npm start` (chạy 
 - **Bảng màu**: lấy cảm hứng từ template Etonal (Webflow) — nền kem ấm (`--color-cream: #faf6f0`), mực gần đen (`--color-ink`), điểm nhấn cam cháy (`--color-primary: #d9641f`).
 - Thư viện khác: `@react-oauth/google` (đăng nhập Google), `echarts` (biểu đồ dashboard admin), `react-toastify` (thông báo), `@strapi/blocks-react-renderer` (render rich text từ Strapi).
 
-> 🖼️ [Ảnh: bảng màu / design token]
-
 ### 3.2. Kiến trúc thư mục — modular theo feature, tách rõ Admin / Client
 
 ```
@@ -187,7 +188,8 @@ frontend/src/
 
 Mỗi feature con thường có: `components/`, `hooks/`, `services/` (gọi API), `types/`, `utils/`, đúng khuôn mẫu với backend để hai bên "nói cùng ngôn ngữ".
 
-> 🖼️ [Ảnh: sơ đồ thư mục frontend]
+Ảnh sơ đồ thư mục frontend
+![Ảnh sơ đồ thư mục frontend](docs/images/project-structure/frontend-structure.svg)
 
 ### 3.3. Giao diện Client (khách hàng)
 
@@ -217,6 +219,9 @@ Trang giỏ hàng
 
 Trang thanh toán
 ![Ảnh giao diện trang thanh toán](docs/images/client/checkout.png)
+
+Trang đặt hàng thành công
+![Ảnh giao diện đặt hàng thành công](docs/images/client/checkout-success.png)
 
 Trang đơn hàng của tôi
 ![Ảnh giao diện trang đơn hàng của tôi](docs/images/client/order-me.png)
@@ -284,6 +289,7 @@ CMS phụ trợ (Strapi 5) quản lý **nội dung tĩnh/marketing** cho fronten
 
 `breadcrumb`, `story-section` (badge/title/nội dung rich-text/banner ảnh/2 nút CTA), `stats-section` (value + label, lặp lại), `value-section` + `value-item` (icon/title/description, lặp lại), `cta-section` (title/description/nút).
 
+Ảnh giao diện Strapi CMS Headless Admin panel - Chỉnh nội dung trang chủ
 ![Ảnh giao diện Strapi Admin panel — chỉnh nội dung trang chủ](docs/images/strapi-cms/content-management.png)
 
 ### 4.4. Chạy Strapi CMS
@@ -307,6 +313,7 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 4. **Frontend**: `cd frontend && npm install`, cấu hình `.env` trỏ đúng `VITE_API_BASE_URL` (backend) và `VITE_STRAPI_BASE_URL` (Strapi), rồi `npm run dev` (mặc định Vite `http://localhost:5173`).
 5. Với các luồng cần callback công khai từ internet khi phát triển local (webhook GHN, IPN VNPay/ZaloPay/MoMo), cần dùng tunnel (ngrok/cloudflared) trỏ vào backend.
 
+Ảnh sơ đồ luồng chạy dev 3 service song song
 ![Ảnh sơ đồ luồng chạy dev 3 service song song](docs/images/project-structure/dev-flow.svg)
 
 ---
@@ -318,3 +325,11 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **Tích hợp vận chuyển & thanh toán thực tế cho thị trường Việt Nam**: GHN tính phí ship theo kích thước/khối lượng từng biến thể sản phẩm, VNPay & ZaloPay, cơ chế tự hủy đơn "pending" quá hạn.
 - **Tách CMS khỏi hệ thống giao dịch**: nội dung marketing (Home/About/Contact/Shop banner) quản lý độc lập qua Strapi, không cần deploy lại frontend khi đổi nội dung.
 - Giao diện Client theo phong cách **Etonal** (tông màu kem – cam cháy), giao diện Admin có dashboard trực quan bằng ECharts.
+
+## 7. Định hướng phát triển tiếp theo
+
+- **Thanh toán**: Tích hợp thêm các cổng thanh toán online phổ biến khác như MoMo, PayPal, Stripe.
+- **Trải nghiệm người dùng**: Tiếp tục tinh chỉnh UI/UX cho cả giao diện Client và Admin.
+- **Thông báo**: Xây dựng hệ thống thông báo (đơn hàng, khuyến mãi, cập nhật vận chuyển...).
+- **Chat trực tuyến**: Bổ sung tính năng hỗ trợ khách hàng realtime.
+- **AI**: Nghiên cứu và tích hợp AI vào các luồng nghiệp vụ của dự án (gợi ý sản phẩm, chatbot hỗ trợ...).
