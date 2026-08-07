@@ -98,12 +98,7 @@ const RevenueChart = ({ period, onChangePeriod }: RevenueChartProps) => {
 					<h3 className='text-base font-bold text-ink'>Doanh thu theo thời gian</h3>
 					<p className='mt-0.5 text-xs text-muted'>Chỉ tính các thanh toán đã hoàn tất.</p>
 				</div>
-				<FormSelect
-					size='sm'
-					value={period}
-					onChange={(e) => onChangePeriod(e.target.value as RevenuePeriod)}
-					options={REVENUE_PERIOD_OPTIONS}
-				/>
+				<FormSelect size='sm' value={period} onChange={(e) => onChangePeriod(e.target.value as RevenuePeriod)} options={REVENUE_PERIOD_OPTIONS} />
 			</div>
 			<EChart option={option} loading={isLoading || isFetching} className='mt-2' />
 		</div>

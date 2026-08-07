@@ -19,7 +19,7 @@ const Header = () => {
 	const navigate = useNavigate();
 	const { totalQuantity } = useCart();
 
-	const linkClass = ({ isActive }: { isActive: boolean }) => `text-sm font-semibold transition-colors ${isActive ? "text-primary-dark" : "text-ink/80 hover:text-primary-dark"}`;
+	const linkClass = ({ isActive }: { isActive: boolean }) => `text-sm font-semibold transition-colors cursor-default! ${isActive ? "text-primary-dark" : "text-ink/80 hover:text-primary-dark"}`;
 
 	return (
 		<header className='sticky top-0 z-30 border-b border-border bg-surface/95'>
@@ -54,7 +54,7 @@ const Header = () => {
 						]}
 					/>
 
-					<Link to={paths.client.cart} aria-label='Giỏ hàng' className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'>
+					<Link to={paths.client.cart} aria-label='Giỏ hàng' className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'>
 						<CartIcon className='h-5 w-5' />
 						{totalQuantity > 0 && (
 							<span className='absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-bold text-white'>
@@ -84,7 +84,7 @@ const Header = () => {
 							to={item.to}
 							end={item.end}
 							onClick={() => setMobileOpen(false)}
-							className={({ isActive }) => `rounded-lg px-3 py-2.5 text-sm font-semibold cursor-default ${isActive ? "bg-primary-light text-primary-dark" : "text-ink hover:bg-cream-soft"}`}>
+							className={({ isActive }) => `rounded-lg px-3 py-2.5 text-sm font-semibold cursor-default! ${isActive ? "bg-primary-light text-primary-dark" : "text-ink hover:bg-cream-soft"}`}>
 							{item.label}
 						</NavLink>
 					))}

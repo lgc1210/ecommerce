@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { DISCOUNT_TYPE, WELCOME_COUPON } from "./coupon.constant.js";
-import type { DiscountType } from "./coupon.service.js";
+import { WELCOME_COUPON } from "./coupon.constant.js";
+import { DiscountType } from "../../generated/prisma/index.js";
 
 /** Chuẩn hóa mã coupon: viết hoa, bỏ khoảng trắng thừa 2 đầu, vd: " sale10 " -> "SALE10" */
 export function normalizeCouponCode(code: string): string {
@@ -63,7 +63,7 @@ export function computeDiscountAmount(coupon: CouponLike, orderSubtotal: number)
 	const maxDiscountValue = coupon.maxDiscountValue !== null ? Number(coupon.maxDiscountValue) : null;
 
 	let discount: number;
-	if (coupon.discountType === DISCOUNT_TYPE.fixed) {
+	if (coupon.discountType === DiscountType.fixed) {
 		discount = discountValue;
 	} else {
 		discount = (orderSubtotal * discountValue) / 100;

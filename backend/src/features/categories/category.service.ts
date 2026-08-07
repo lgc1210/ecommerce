@@ -168,9 +168,7 @@ class CategoryService {
 				await this.assertParentExists(data.parentId);
 				const isDescendant = await this.isDescendantOf(data.parentId, id);
 				if (isDescendant) {
-					throw new Error(
-						"BadRequest: Không thể chọn danh mục con của chính nó làm danh mục cha (tạo vòng lặp phân cấp).",
-					);
+					throw new Error("BadRequest: Không thể chọn danh mục con của chính nó làm danh mục cha (tạo vòng lặp phân cấp).");
 				}
 			}
 			updateData.parentId = data.parentId;
@@ -190,15 +188,11 @@ class CategoryService {
 		}
 
 		if (category._count.subcategories > 0) {
-			throw new Error(
-				"Conflict: Không thể xóa danh mục vì vẫn còn danh mục con. Hãy xóa hoặc chuyển các danh mục con trước.",
-			);
+			throw new Error("Conflict: Không thể xóa danh mục vì vẫn còn danh mục con. Hãy xóa hoặc chuyển các danh mục con trước.");
 		}
 
 		if (category._count.products > 0) {
-			throw new Error(
-				"Conflict: Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Hãy chuyển sản phẩm sang danh mục khác trước.",
-			);
+			throw new Error("Conflict: Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Hãy chuyển sản phẩm sang danh mục khác trước.");
 		}
 
 		await prisma.category.delete({ where: { id } });

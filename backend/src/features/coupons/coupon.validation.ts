@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DISCOUNT_TYPE } from "./coupon.constant.js";
+import { DiscountType } from "../../generated/prisma/index.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
 const couponCodeRegex = /^[A-Za-z0-9_-]+$/;
@@ -34,7 +34,7 @@ export const ListCouponsQuerySchema = z.object({
 		limit: z.string().regex(/^\d+$/).optional(),
 		search: z.string().max(50).optional(),
 		isActive: z.enum(["true", "false"]).optional(),
-		discountType: z.enum([DISCOUNT_TYPE.fixed, DISCOUNT_TYPE.percentage]).optional(),
+		discountType: z.enum([DiscountType.fixed, DiscountType.percentage]).optional(),
 	}),
 });
 
@@ -46,8 +46,8 @@ const baseCouponBody = {
 	code: z.string().min(3, { message: "Mã giảm giá phải có ít nhất 3 ký tự." }).max(50).regex(couponCodeRegex, {
 		message: "Mã giảm giá chỉ được chứa chữ, số, gạch ngang và gạch dưới.",
 	}),
-	discountType: z.enum([DISCOUNT_TYPE.fixed, DISCOUNT_TYPE.percentage], {
-		message: `Loại giảm giá phải là '${DISCOUNT_TYPE.fixed}' hoặc '${DISCOUNT_TYPE.percentage}'.`,
+	discountType: z.enum([DiscountType.fixed, DiscountType.percentage], {
+		message: `Loại giảm giá phải là '${DiscountType.fixed}' hoặc '${DiscountType.percentage}'.`,
 	}),
 	discountValue: z.number().positive({ message: "Giá trị giảm giá phải lớn hơn 0." }),
 	minOrderValue: z.number().min(0, { message: "Giá trị đơn hàng tối thiểu không được âm." }).optional(),
@@ -61,7 +61,7 @@ const baseCouponBody = {
 export const CreateCouponSchema = z.object({
 	body: z
 		.object(baseCouponBody)
-		.refine((data) => data.discountType !== DISCOUNT_TYPE.percentage || data.discountValue <= 100, {
+		.refine((data) => data.discountType !== DiscountType.percentage || data.discountValue <= 100, {
 			message: "Giảm giá theo % không được vượt quá 100.",
 			path: ["discountValue"],
 		})
@@ -86,14 +86,10 @@ export const UpdateCouponSchema = z.object({
 			isActive: baseCouponBody.isActive,
 		})
 		.refine((data) => Object.keys(data).length > 0, { message: "Cần ít nhất 1 trường để cập nhật." })
-		.refine(
-			(data) =>
-				data.discountType !== DISCOUNT_TYPE.percentage || data.discountValue === undefined || data.discountValue <= 100,
-			{
-				message: "Giảm giá theo % không được vượt quá 100.",
-				path: ["discountValue"],
-			},
-		)
+		.refine((data) => data.discountType !== DiscountType.percentage || data.discountValue === undefined || data.discountValue <= 100, {
+			message: "Giảm giá theo % không được vượt quá 100.",
+			path: ["discountValue"],
+		})
 		.refine((data) => !data.startsAt || !data.expiresAt || new Date(data.expiresAt) > new Date(data.startsAt), {
 			message: "Ngày hết hạn phải sau ngày bắt đầu.",
 			path: ["expiresAt"],

@@ -57,15 +57,7 @@ const AccountPage = () => {
 						Liên hệ của tôi
 					</TabItem>
 				</Tabs>
-				{tab === TABS.profile ? (
-					<ProfileTab />
-				) : tab === TABS.addresses ? (
-					<AddressesTab />
-				) : tab === TABS.orders ? (
-					<OrdersTab />
-				) : (
-					<MyContactsTab />
-				)}
+				{tab === TABS.profile ? <ProfileTab /> : tab === TABS.addresses ? <AddressesTab /> : tab === TABS.orders ? <OrdersTab /> : <MyContactsTab />}
 			</div>
 		</div>
 	);

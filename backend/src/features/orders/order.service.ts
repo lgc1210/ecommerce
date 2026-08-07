@@ -1,13 +1,9 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
 import { normalizeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "../coupons/coupon.utils.js";
-import { PAYMENT_STATUS } from "../payments/payment.constant.js";
 import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
-import { ORDER_STATUS } from "./order.constant.js";
-import { PAYMENT_METHOD } from "../payments/payment.constant.js";
-import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus, type OrderStatus } from "./order.utils.js";
-
-type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
+import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus } from "./order.utils.js";
+import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
 
 interface CreateOrderInput {
 	shippingAddressId: number;
@@ -144,7 +140,7 @@ class OrderService {
 						discountAmount,
 						shippingFee,
 						totalAmount,
-						orderStatus: ORDER_STATUS.pending,
+						orderStatus: OrderStatus.pending,
 						items: {
 							create: cart.items.map((item) => ({
 								productSkuId: item.productSkuId,
@@ -156,7 +152,7 @@ class OrderService {
 						payment: {
 							create: {
 								paymentMethod: data.paymentMethod,
-								paymentStatus: PAYMENT_STATUS.pending,
+								paymentStatus: PaymentStatus.pending,
 								amount: totalAmount,
 							},
 						},
@@ -176,7 +172,7 @@ class OrderService {
 				// "completed" (xem payment.service.ts -> createShipmentAfterPayment bên dưới). Nếu
 				// thanh toán thất bại, đơn vẫn ở "pending" (không có vận đơn "ảo" nào cả) để khách có
 				// thể thử thanh toán lại (payment.utils.ts cho phép failed -> pending).
-				if (data.paymentMethod === PAYMENT_METHOD.cod) {
+				if (data.paymentMethod === PaymentMethod.cod) {
 					const cartPackage = computeCartPackage(cart.items);
 					const shipment = await createShippingOrder({
 						clientOrderCode: createdOrder.orderNumber,
@@ -305,7 +301,7 @@ class OrderService {
 		if (!order) return; // Không thuộc hệ thống này (hoặc sai mã) — bỏ qua, vẫn trả 200 để GHN không retry vô ích
 
 		const currentStatus = order.orderStatus as OrderStatus;
-		const isTerminal = currentStatus === ORDER_STATUS.delivered || currentStatus === ORDER_STATUS.cancelled;
+		const isTerminal = currentStatus === OrderStatus.delivered || currentStatus === OrderStatus.cancelled;
 		const mappedStatus = mapGhnStatusToOrderStatus(ghnStatus);
 
 		if (!isTerminal && mappedStatus && mappedStatus !== currentStatus) {
@@ -316,10 +312,10 @@ class OrderService {
 			// có đối soát/chuyển khoản tiền COD đó về cho shop hay chưa là công nợ nội bộ giữa
 			// Shop <-> GHN (theo chu kỳ đối soát riêng), KHÔNG liên quan tới trạng thái thanh toán
 			// hiển thị cho khách trên đơn này.
-			if (mappedStatus === ORDER_STATUS.delivered && order.payment?.paymentMethod === "cod" && order.payment.paymentStatus !== PAYMENT_STATUS.completed) {
+			if (mappedStatus === OrderStatus.delivered && order.payment?.paymentMethod === PaymentMethod.cod && order.payment.paymentStatus !== PaymentStatus.completed) {
 				await prisma.payment.update({
 					where: { orderId: order.id },
-					data: { paymentStatus: PAYMENT_STATUS.completed, paidAt: new Date() },
+					data: { paymentStatus: PaymentStatus.completed, paidAt: new Date() },
 				});
 			}
 		} else {
@@ -388,9 +384,9 @@ class OrderService {
 
 		const staleOrders = await prisma.order.findMany({
 			where: {
-				orderStatus: ORDER_STATUS.pending,
+				orderStatus: OrderStatus.pending,
 				createdAt: { lt: cutoff },
-				payment: { paymentMethod: { not: "cod" } },
+				payment: { paymentMethod: { not: PaymentMethod.cod } },
 			},
 			select: { id: true, orderStatus: true, couponId: true, ghnOrderCode: true },
 		});
@@ -398,7 +394,7 @@ class OrderService {
 		let cancelledCount = 0;
 		for (const order of staleOrders) {
 			try {
-				await this.transitionOrderStatus(order, ORDER_STATUS.cancelled);
+				await this.transitionOrderStatus(order, OrderStatus.cancelled);
 				cancelledCount++;
 			} catch (error: any) {
 				// Lỗi ở 1 đơn (vd transition không hợp lệ do vừa được xử lý ở request khác ngay
@@ -531,8 +527,8 @@ class OrderService {
 				// PHẢI là 1 case hoàn tiền (đi qua payment.service.ts -> refunded), không phải hủy
 				// thường — không được tự ý ghi đè "completed"/"refunded" ở đây.
 				await tx.payment.updateMany({
-					where: { orderId: order.id, paymentStatus: PAYMENT_STATUS.pending },
-					data: { paymentStatus: PAYMENT_STATUS.failed },
+					where: { orderId: order.id, paymentStatus: PaymentStatus.pending },
+					data: { paymentStatus: PaymentStatus.failed },
 				});
 			}
 

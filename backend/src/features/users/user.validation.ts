@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AddressTag } from "../../generated/prisma/index.js";
 
 const vietnamesePhoneRegex = /^(0|\+84)[0-9]{9,10}$/;
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
@@ -19,7 +20,7 @@ export const UpdateOwnProfileSchema = z.object({
 // Self-service: addresses
 // ==========================================
 const addressBodyShape = {
-	tag: z.enum(["home", "office"]).optional(),
+	tag: z.enum([AddressTag.home, AddressTag.office]).optional(),
 	recipientName: z.string().min(2, { message: "Tên người nhận phải có ít nhất 2 ký tự." }).max(100),
 	phoneNumber: z.string().regex(vietnamesePhoneRegex, { message: "Số điện thoại không hợp lệ." }),
 	addressLine: z.string().min(5, { message: "Địa chỉ cụ thể phải có ít nhất 5 ký tự." }).max(150),

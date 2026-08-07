@@ -34,12 +34,7 @@ export const CategorySlugParamSchema = z.object({
 export const CreateCategorySchema = z.object({
 	body: z.object({
 		name: z.string().min(2, { message: "Tên danh mục phải có ít nhất 2 ký tự." }).max(100),
-		slug: z
-			.string()
-			.min(2)
-			.max(100)
-			.regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." })
-			.optional(),
+		slug: z.string().min(2).max(100).regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }).optional(),
 		description: z.string().max(5000).optional(),
 		parentId: z.number().int().positive().nullable().optional(),
 		isFeatured: z.boolean().optional(),
@@ -51,12 +46,7 @@ export const UpdateCategorySchema = z.object({
 	body: z
 		.object({
 			name: z.string().min(2, { message: "Tên danh mục phải có ít nhất 2 ký tự." }).max(100).optional(),
-			slug: z
-				.string()
-				.min(2)
-				.max(100)
-				.regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." })
-				.optional(),
+			slug: z.string().min(2).max(100).regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }).optional(),
 			description: z.string().max(5000).optional(),
 			parentId: z.number().int().positive().nullable().optional(),
 			isFeatured: z.boolean().optional(),

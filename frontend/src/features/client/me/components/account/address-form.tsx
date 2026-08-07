@@ -55,26 +55,11 @@ const AddressFormModal = ({ initialValue, onClose, onSubmit, isSubmitting }: Add
 	const { data: districts = [], isLoading: isLoadingDistricts } = useDistrictsQuery(form.provinceId || undefined);
 	const { data: wards = [], isLoading: isLoadingWards } = useWardsQuery(form.districtId || undefined);
 
-	const provinceOptions: FormSelectOption[] = useMemo(
-		() => provinces.map((province) => ({ value: province.ProvinceID, label: province.ProvinceName })),
-		[provinces],
-	);
-	const districtOptions: FormSelectOption[] = useMemo(
-		() => districts.map((district) => ({ value: district.DistrictID, label: district.DistrictName })),
-		[districts],
-	);
-	const wardOptions: FormSelectOption[] = useMemo(
-		() => wards.map((ward) => ({ value: ward.WardCode, label: ward.WardName })),
-		[wards],
-	);
+	const provinceOptions: FormSelectOption[] = useMemo(() => provinces.map((province) => ({ value: province.ProvinceID, label: province.ProvinceName })), [provinces]);
+	const districtOptions: FormSelectOption[] = useMemo(() => districts.map((district) => ({ value: district.DistrictID, label: district.DistrictName })), [districts]);
+	const wardOptions: FormSelectOption[] = useMemo(() => wards.map((ward) => ({ value: ward.WardCode, label: ward.WardName })), [wards]);
 
-	const isValid =
-		form.recipientName.trim() &&
-		form.phoneNumber.trim() &&
-		form.addressLine.trim() &&
-		form.provinceId > 0 &&
-		form.districtId > 0 &&
-		form.wardCode.trim();
+	const isValid = form.recipientName.trim() && form.phoneNumber.trim() && form.addressLine.trim() && form.provinceId > 0 && form.districtId > 0 && form.wardCode.trim();
 
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -125,37 +110,16 @@ const AddressFormModal = ({ initialValue, onClose, onSubmit, isSubmitting }: Add
 							key={tag}
 							type='button'
 							onClick={() => updateField("tag", tag)}
-							className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors cursor-pointer ${
-								form.tag === tag
-									? "border-primary bg-primary-light text-primary-dark"
-									: "border-border text-ink hover:bg-cream-soft"
+							className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
+								form.tag === tag ? "border-primary bg-primary-light text-primary-dark" : "border-border text-ink hover:bg-cream-soft"
 							}`}>
 							{tag === "home" ? "Nhà riêng" : "Văn phòng"}
 						</button>
 					))}
 				</div>
-
-				<FormControl
-					label='Tên người nhận'
-					required
-					value={form.recipientName}
-					onChange={(e) => updateField("recipientName", e.target.value)}
-				/>
-				<FormControl
-					label='Số điện thoại'
-					required
-					value={form.phoneNumber}
-					onChange={(e) => updateField("phoneNumber", e.target.value)}
-					placeholder='0912345678'
-				/>
-				<FormControl
-					label='Địa chỉ cụ thể'
-					required
-					value={form.addressLine}
-					onChange={(e) => updateField("addressLine", e.target.value)}
-					placeholder='Số nhà, tên đường...'
-				/>
-
+				<FormControl label='Tên người nhận' required value={form.recipientName} onChange={(e) => updateField("recipientName", e.target.value)} />
+				<FormControl label='Số điện thoại' required value={form.phoneNumber} onChange={(e) => updateField("phoneNumber", e.target.value)} placeholder='0912345678' />
+				<FormControl label='Địa chỉ cụ thể' required value={form.addressLine} onChange={(e) => updateField("addressLine", e.target.value)} placeholder='Số nhà, tên đường...' />
 				<FormSelect
 					label='Tỉnh/Thành phố'
 					required
@@ -187,13 +151,7 @@ const AddressFormModal = ({ initialValue, onClose, onSubmit, isSubmitting }: Add
 					disabled={!form.districtId || isLoadingWards}
 				/>
 
-				{!initialValue?.isDefault && (
-					<FormCheckbox
-						label='Đặt làm địa chỉ mặc định'
-						checked={form.isDefault}
-						onChange={(e) => updateField("isDefault", e.target.checked)}
-					/>
-				)}
+				{!initialValue?.isDefault && <FormCheckbox label='Đặt làm địa chỉ mặc định' checked={form.isDefault} onChange={(e) => updateField("isDefault", e.target.checked)} />}
 
 				<div className='flex justify-end gap-2 pt-2'>
 					<Button type='button' variant='outline' size='sm' onClick={onClose}>

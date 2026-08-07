@@ -22,11 +22,7 @@ const ModalShell = ({ title, onClose, children, maxWidthClassName = "max-w-md" }
 		<div className={`relative w-full ${maxWidthClassName} rounded-2xl bg-surface p-6 shadow-xl`}>
 			<div className='mb-4 flex items-center justify-between'>
 				<h3 className='text-lg font-bold text-ink'>{title}</h3>
-				<button
-					type='button'
-					onClick={onClose}
-					aria-label='Đóng'
-					className='cursor-pointer rounded-lg p-1 text-muted hover:bg-cream-soft hover:text-ink'>
+				<button type='button' onClick={onClose} aria-label='Đóng' className='rounded-lg p-1 text-muted hover:bg-cream-soft hover:text-ink'>
 					<XIcon className='h-5 w-5' />
 				</button>
 			</div>

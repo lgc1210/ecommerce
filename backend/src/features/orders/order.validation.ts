@@ -1,10 +1,9 @@
 import { z } from "zod";
-import { ORDER_STATUS } from "./order.constant.js";
-import { PAYMENT_METHOD } from "../payments/payment.constant.js";
+import { OrderStatus, PaymentMethod } from "../../generated/prisma/index.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
-const orderStatusEnum = z.enum([ORDER_STATUS.pending, ORDER_STATUS.processing, ORDER_STATUS.shipped, ORDER_STATUS.delivered, ORDER_STATUS.cancelled]);
-const paymentMethodEnum = z.enum([PAYMENT_METHOD.cod, PAYMENT_METHOD.vnpay, PAYMENT_METHOD.zalopay, PAYMENT_METHOD.momo, PAYMENT_METHOD.stripe, PAYMENT_METHOD.paypal]);
+const orderStatusEnum = z.enum([OrderStatus.pending, OrderStatus.processing, OrderStatus.shipped, OrderStatus.delivered, OrderStatus.cancelled]);
+const paymentMethodEnum = z.enum([PaymentMethod.cod, PaymentMethod.vnpay, PaymentMethod.zalopay, PaymentMethod.momo, PaymentMethod.stripe, PaymentMethod.paypal]);
 
 // ==========================================
 // Self-service: checkout

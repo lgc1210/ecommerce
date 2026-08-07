@@ -1,6 +1,4 @@
-import type { ADDRESS_TAG } from "./user.const.js";
-
-type AddressTag = (typeof ADDRESS_TAG)[keyof typeof ADDRESS_TAG];
+import type { AddressTag } from "../../generated/prisma/index.js";
 
 export interface AddressInput {
 	tag?: AddressTag;

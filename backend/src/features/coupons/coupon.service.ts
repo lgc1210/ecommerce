@@ -1,17 +1,9 @@
 import prisma from "../../config/prisma.js";
 import transporter from "../../config/email.js";
 import { parsePagination } from "../../utils/index.js";
-import { DISCOUNT_TYPE, WELCOME_COUPON } from "./coupon.constant.js";
-import {
-	normalizeCouponCode,
-	normalizeEmail,
-	generateWelcomeCouponCode,
-	checkCouponUsability,
-	checkCouponEmailOwnership,
-	computeDiscountAmount,
-} from "./coupon.utils.js";
-
-export type DiscountType = (typeof DISCOUNT_TYPE)[keyof typeof DISCOUNT_TYPE];
+import { WELCOME_COUPON } from "./coupon.constant.js";
+import { normalizeCouponCode, normalizeEmail, generateWelcomeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "./coupon.utils.js";
+import { DiscountType } from "../../generated/prisma/index.js";
 
 interface CreateCouponInput {
 	code: string;
@@ -57,10 +49,7 @@ class CouponService {
 		if (params.discountType) where.discountType = params.discountType;
 
 		const { page, limit, skip } = parsePagination(params);
-		const [coupons, total] = await Promise.all([
-			prisma.coupon.findMany({ where, orderBy: { id: "desc" }, skip, take: limit }),
-			prisma.coupon.count({ where }),
-		]);
+		const [coupons, total] = await Promise.all([prisma.coupon.findMany({ where, orderBy: { id: "desc" }, skip, take: limit }), prisma.coupon.count({ where })]);
 
 		return {
 			data: coupons,
@@ -131,7 +120,7 @@ class CouponService {
 			expiresAt: data.expiresAt !== undefined ? new Date(data.expiresAt) : existing.expiresAt,
 		};
 
-		if (merged.discountType === DISCOUNT_TYPE.percentage && merged.discountValue > 100) {
+		if (merged.discountType === DiscountType.percentage && merged.discountValue > 100) {
 			throw new Error("BadRequest: Giảm giá theo % không được vượt quá 100.");
 		}
 		if (merged.expiresAt <= merged.startsAt) {
@@ -152,9 +141,7 @@ class CouponService {
 		}
 
 		if (coupon._count.orders > 0) {
-			throw new Error(
-				"Conflict: Không thể xóa mã giảm giá đã được sử dụng trong đơn hàng. Hãy vô hiệu hóa (isActive=false) thay vì xóa.",
-			);
+			throw new Error("Conflict: Không thể xóa mã giảm giá đã được sử dụng trong đơn hàng. Hãy vô hiệu hóa (isActive=false) thay vì xóa.");
 		}
 
 		await prisma.coupon.delete({ where: { id } });
@@ -184,9 +171,7 @@ class CouponService {
 		}
 
 		if (orderSubtotal < Number(coupon.minOrderValue)) {
-			throw new Error(
-				`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`,
-			);
+			throw new Error(`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`);
 		}
 
 		const discountAmount = computeDiscountAmount(coupon, orderSubtotal);

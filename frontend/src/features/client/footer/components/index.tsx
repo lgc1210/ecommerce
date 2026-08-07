@@ -71,14 +71,14 @@ const Footer = () => {
 						<ul className='mt-4 space-y-2.5 text-sm'>
 							{quickLinks.map((link) => (
 								<li key={link.to + new Date().getTime()}>
-									<Link to={link.to} className='text-cream/70 hover:text-primary'>
+									<Link to={link.to} className='text-cream/70 hover:text-primary cursor-default!'>
 										{link.label}
 									</Link>
 								</li>
 							))}
 							{accountLinks.map((link) => (
 								<li key={link.to + new Date().getTime()}>
-									<Link to={link.to} className='text-cream/70 hover:text-primary'>
+									<Link to={link.to} className='text-cream/70 hover:text-primary cursor-default!'>
 										{link.label}
 									</Link>
 								</li>
@@ -103,7 +103,7 @@ const Footer = () => {
 						<ul className='mt-4 space-y-3'>
 							{newProducts.map((product) => (
 								<li key={product.slug}>
-									<Link to={paths.client.productDetail(product.slug)} className='flex items-center gap-3 group'>
+									<Link to={paths.client.productDetail(product.slug)} className='flex items-center gap-3 group cursor-default!'>
 										<img src={product.image} alt={product.name} className='h-12 w-12 shrink-0 rounded-lg object-cover' />
 										<span>
 											<span className='block line-clamp-1 text-sm text-cream/80 group-hover:text-primary'>{product.name}</span>

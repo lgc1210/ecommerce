@@ -52,40 +52,37 @@ const PaymentPage = () => {
 			toast.error("Chưa tính được phí vận chuyển cho địa chỉ này, vui lòng thử lại hoặc đổi địa chỉ khác.");
 			return;
 		}
-
-		createOrder.mutate(
-			{
-				shippingAddressId: selectedAddressId,
-				paymentMethod,
-				couponCode: appliedCoupon?.code,
+		const payload = {
+			shippingAddressId: selectedAddressId,
+			paymentMethod,
+			couponCode: appliedCoupon?.code,
+		};
+		createOrder.mutate(payload, {
+			onSuccess: (res) => {
+				const order = res.data.data;
+				// Phương thức thanh toán qua cổng online (VNPay/ZaloPay) -> lấy URL rồi redirect thẳng
+				// trình duyệt sang trang gateway để khách hoàn tất thanh toán ngay (trang payment-result
+				// sẽ được hiển thị sau khi gateway redirect ngược về). COD/các phương thức khác chưa hỗ
+				// trợ thì không có bước redirect gateway, nhưng vẫn cần cho khách thấy kết quả đặt hàng
+				// -> điều hướng thẳng tới trang payment-result kèm orderId, KHÔNG toast rồi về thẳng
+				// trang "Đơn hàng của tôi" như trước (khiến khách không thấy xác nhận đơn/phương thức
+				// thanh toán vừa chọn).
+				if (ONLINE_GATEWAY_METHODS.includes(paymentMethod)) {
+					createPaymentUrl.mutate(order.id, {
+						onSuccess: (urlRes) => {
+							window.location.href = urlRes.data.data.url;
+						},
+						onError: () => {
+							// Tạo URL thất bại (vd lỗi cấu hình cổng) -> đơn vẫn đã tạo thành công, khách có
+							// thể vào "Đơn hàng của tôi" để thử thanh toán lại sau (xem order-detail.tsx).
+							navigate(paths.client.account, { state: { tab: "orders" } });
+						},
+					});
+					return;
+				}
+				navigate(`${paths.client.paymentResult}?orderId=${order.id}`);
 			},
-			{
-				onSuccess: (res) => {
-					const order = res.data.data;
-					// Phương thức thanh toán qua cổng online (VNPay/ZaloPay) -> lấy URL rồi redirect thẳng
-					// trình duyệt sang trang gateway để khách hoàn tất thanh toán ngay (trang payment-result
-					// sẽ được hiển thị sau khi gateway redirect ngược về). COD/các phương thức khác chưa hỗ
-					// trợ thì không có bước redirect gateway, nhưng vẫn cần cho khách thấy kết quả đặt hàng
-					// -> điều hướng thẳng tới trang payment-result kèm orderId, KHÔNG toast rồi về thẳng
-					// trang "Đơn hàng của tôi" như trước (khiến khách không thấy xác nhận đơn/phương thức
-					// thanh toán vừa chọn).
-					if (ONLINE_GATEWAY_METHODS.includes(paymentMethod)) {
-						createPaymentUrl.mutate(order.id, {
-							onSuccess: (urlRes) => {
-								window.location.href = urlRes.data.data.url;
-							},
-							onError: () => {
-								// Tạo URL thất bại (vd lỗi cấu hình cổng) -> đơn vẫn đã tạo thành công, khách có
-								// thể vào "Đơn hàng của tôi" để thử thanh toán lại sau (xem order-detail.tsx).
-								navigate(paths.client.account, { state: { tab: "orders" } });
-							},
-						});
-						return;
-					}
-					navigate(`${paths.client.paymentResult}?orderId=${order.id}`);
-				},
-			},
-		);
+		});
 	};
 
 	if (isCartLoading) {

@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma.js";
+import type { ContactStatus } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
-import { isValidContactStatusTransition, type ContactStatus } from "./contact.utils.js";
+import { isValidContactStatusTransition } from "./contact.utils.js";
 
 interface CreateContactInput {
 	name: string;
@@ -32,7 +33,6 @@ class ContactService {
 	// ==========================================
 	/** userId = null nếu khách gửi liên hệ mà chưa đăng nhập (guest submission) */
 	async createContact(userId: number | null, data: CreateContactInput) {
-		console.log("USERID: ", userId);
 		return prisma.contact.create({
 			data: {
 				userId: userId ?? null,
@@ -75,11 +75,7 @@ class ContactService {
 		if (params.status) where.status = params.status;
 		if (params.userId) where.userId = Number(params.userId);
 		if (params.search) {
-			where.OR = [
-				{ name: { contains: params.search } },
-				{ email: { contains: params.search } },
-				{ subject: { contains: params.search } },
-			];
+			where.OR = [{ name: { contains: params.search } }, { email: { contains: params.search } }, { subject: { contains: params.search } }];
 		}
 
 		const { page, limit, skip } = parsePagination(params);

@@ -110,10 +110,7 @@ class UserService {
 	// Admin
 	// ==========================================
 	async createUser(data: { name: string; email: string; phone: string; roleId: number }) {
-		const [existingUser, role] = await Promise.all([
-			prisma.user.findFirst({ where: { OR: [{ email: data.email }, { phone: data.phone }] } }),
-			prisma.role.findUnique({ where: { id: data.roleId } }),
-		]);
+		const [existingUser, role] = await Promise.all([prisma.user.findFirst({ where: { OR: [{ email: data.email }, { phone: data.phone }] } }), prisma.role.findUnique({ where: { id: data.roleId } })]);
 
 		if (existingUser) {
 			const field = existingUser.email === data.email ? "Email" : "Số điện thoại";
@@ -175,11 +172,7 @@ class UserService {
 
 		const where: Record<string, unknown> = {};
 		if (params.search) {
-			where.OR = [
-				{ name: { contains: params.search } },
-				{ email: { contains: params.search } },
-				{ phone: { contains: params.search } },
-			];
+			where.OR = [{ name: { contains: params.search } }, { email: { contains: params.search } }, { phone: { contains: params.search } }];
 		}
 		if (params.roleId) where.roleId = Number(params.roleId);
 		if (params.isActive !== undefined) where.isActive = params.isActive === "true";
@@ -213,10 +206,7 @@ class UserService {
 	}
 
 	async updateUserRole(id: number, roleId: number) {
-		const [user, role] = await Promise.all([
-			prisma.user.findUnique({ where: { id } }),
-			prisma.role.findUnique({ where: { id: roleId } }),
-		]);
+		const [user, role] = await Promise.all([prisma.user.findUnique({ where: { id } }), prisma.role.findUnique({ where: { id: roleId } })]);
 		if (!user) throw new Error("NotFound: Người dùng không tồn tại.");
 		if (!role) throw new Error("NotFound: Role không tồn tại.");
 

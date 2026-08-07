@@ -30,7 +30,7 @@ const sizeClasses: Record<FormSelectSize, string> = {
 };
 
 const baseClasses =
-	"border bg-cream-soft text-ink outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary-light disabled:cursor-not-allowed disabled:opacity-60 hover:not-disabled:cursor-pointer appearance-none bg-none";
+	"border bg-cream-soft text-ink outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary-light disabled:cursor-not-allowed disabled:opacity-60 hover:not-disabled:cursor-default appearance-none bg-none";
 
 /**
  * Select dùng chung, style đồng bộ với <FormControl>. Dùng cho mọi dropdown lọc/chọn
@@ -47,31 +47,12 @@ const baseClasses =
  * ```
  */
 const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>((props, ref) => {
-	const {
-		label,
-		error,
-		hint,
-		wrapperClassName = "",
-		size = "md",
-		options,
-		placeholder,
-		fullWidth = false,
-		id,
-		className = "",
-		children,
-		...rest
-	} = props;
+	const { label, error, hint, wrapperClassName = "", size = "md", options, placeholder, fullWidth = false, id, className = "", children, ...rest } = props;
 
 	const generatedId = useId();
 	const fieldId = id ?? generatedId;
 
-	const fieldClasses = [
-		baseClasses,
-		sizeClasses[size],
-		fullWidth ? "w-full" : "",
-		error ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-border",
-		className,
-	]
+	const fieldClasses = [baseClasses, sizeClasses[size], fullWidth ? "w-full" : "", error ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-border", className]
 		.filter(Boolean)
 		.join(" ");
 
@@ -94,11 +75,7 @@ const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>((props, ref) =
 					: children}
 			</select>
 
-			{error ? (
-				<p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>
-			) : hint ? (
-				<p className='mt-1.5 text-xs text-muted'>{hint}</p>
-			) : null}
+			{error ? <p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p> : hint ? <p className='mt-1.5 text-xs text-muted'>{hint}</p> : null}
 		</div>
 	);
 });

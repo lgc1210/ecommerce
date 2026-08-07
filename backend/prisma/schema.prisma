@@ -453,3 +453,7 @@ model Contact {
   @@map("contacts")
 }
 
+model Notification {
+  id Int @id @default(autoincrement())
+  userId Int? @map("user_id")
+}

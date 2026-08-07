@@ -2,7 +2,7 @@ import axios from "axios";
 import crypto from "crypto";
 import { env } from "../../../config/dotenv.js";
 import type { CreatePaymentUrlInput, GatewayVerifyResult, PaymentGateway } from "./gateway.types.js";
-import { PAYMENT_METHOD } from "../payment.constant.js";
+import { PaymentMethod } from "../../../generated/prisma/index.js";
 
 /** ZaloPay yêu cầu app_trans_id có tiền tố ngày theo giờ Việt Nam (UTC+7), định dạng "yyMMdd". */
 function formatYyMmDd(date: Date): string {
@@ -23,7 +23,7 @@ interface ZaloPayEmbedData {
 }
 
 export const zalopayGateway: PaymentGateway = {
-	method: PAYMENT_METHOD.zalopay,
+	method: PaymentMethod.zalopay,
 
 	async createPaymentUrl(input: CreatePaymentUrlInput): Promise<string> {
 		const now = new Date();
@@ -35,10 +35,8 @@ export const zalopayGateway: PaymentGateway = {
 		const embedDataStr = JSON.stringify(embedData);
 		const itemStr = JSON.stringify([]);
 		const amount = Math.round(input.amount);
-
 		const macData = [env.ZALOPAY_APP_ID, appTransId, "user", amount, appTime, embedDataStr, itemStr].join("|");
 		const mac = hmacSha256(env.ZALOPAY_KEY1, macData);
-
 		const body = new URLSearchParams({
 			app_id: env.ZALOPAY_APP_ID,
 			app_trans_id: appTransId,
@@ -52,7 +50,6 @@ export const zalopayGateway: PaymentGateway = {
 			callback_url: env.ZALOPAY_CALLBACK_URL,
 			mac,
 		});
-
 		try {
 			const response = await axios.post(`${env.ZALOPAY_ENDPOINT}/v2/create`, body);
 			const data = response.data;

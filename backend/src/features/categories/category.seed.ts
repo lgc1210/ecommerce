@@ -111,11 +111,7 @@ const categoryTree: CategorySeedNode[] = [
  * Đệ quy upsert từng node theo slug (idempotent) và gán parentId để dựng quan hệ cha-con
  * (self-relation "CategoryHierarchy" trong schema.prisma).
  */
-async function upsertCategoryNode(
-	node: CategorySeedNode,
-	parentId: number | null,
-	categoryIdByName: Map<string, number>,
-): Promise<void> {
+async function upsertCategoryNode(node: CategorySeedNode, parentId: number | null, categoryIdByName: Map<string, number>): Promise<void> {
 	const slug = slugify(node.name);
 
 	const category = await prisma.category.upsert({

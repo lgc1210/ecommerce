@@ -1,10 +1,9 @@
 import { z } from "zod";
-import { PAYMENT_STATUS } from "./payment.constant.js";
-import { PAYMENT_METHOD } from "../payments/payment.constant.js";
+import { PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
 
 const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
-const paymentStatusEnum = z.enum([PAYMENT_STATUS.pending, PAYMENT_STATUS.completed, PAYMENT_STATUS.failed, PAYMENT_STATUS.refunded]);
-const paymentMethodEnum = z.enum([PAYMENT_METHOD.cod, PAYMENT_METHOD.vnpay, PAYMENT_METHOD.momo, PAYMENT_METHOD.stripe, PAYMENT_METHOD.paypal]);
+const paymentStatusEnum = z.enum([PaymentStatus.pending, PaymentStatus.completed, PaymentStatus.failed, PaymentStatus.refunded]);
+const paymentMethodEnum = z.enum([PaymentMethod.cod, PaymentMethod.vnpay, PaymentMethod.momo, PaymentMethod.stripe, PaymentMethod.paypal]);
 
 // ==========================================
 // Self-service: xem & xác nhận thanh toán đơn của chính mình

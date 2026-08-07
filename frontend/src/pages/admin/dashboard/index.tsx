@@ -34,12 +34,7 @@ const AdminDashboardPage = () => {
 
 			{/* Thẻ thống kê */}
 			<div className='grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5'>
-				<StatCard
-					label='Tổng doanh thu'
-					value={formatCurrency(overview?.totalRevenue ?? 0)}
-					icon={<CreditCardIcon className='h-5 w-5' />}
-					isLoading={isOverviewLoading}
-				/>
+				<StatCard label='Tổng doanh thu' value={formatCurrency(overview?.totalRevenue ?? 0)} icon={<CreditCardIcon className='h-5 w-5' />} isLoading={isOverviewLoading} />
 				<StatCard
 					label='Doanh thu tháng này'
 					value={formatCurrency(overview?.revenueThisMonth ?? 0)}
@@ -47,26 +42,14 @@ const AdminDashboardPage = () => {
 					isLoading={isOverviewLoading}
 					footer={
 						growthLabel ? (
-							<span className={isGrowthPositive ? "font-semibold text-primary-dark" : "font-semibold text-red-600"}>
-								{growthLabel}
-							</span>
+							<span className={isGrowthPositive ? "font-semibold text-primary-dark" : "font-semibold text-red-600"}>{growthLabel}</span>
 						) : (
 							<span className='text-muted'>Chưa có dữ liệu so sánh</span>
 						)
 					}
 				/>
-				<StatCard
-					label='Tổng đơn hàng'
-					value={overview?.totalOrders ?? 0}
-					icon={<CartIcon className='h-5 w-5' />}
-					isLoading={isOverviewLoading}
-				/>
-				<StatCard
-					label='Tổng người dùng'
-					value={overview?.totalUsers ?? 0}
-					icon={<UsersIcon className='h-5 w-5' />}
-					isLoading={isOverviewLoading}
-				/>
+				<StatCard label='Tổng đơn hàng' value={overview?.totalOrders ?? 0} icon={<CartIcon className='h-5 w-5' />} isLoading={isOverviewLoading} />
+				<StatCard label='Tổng người dùng' value={overview?.totalUsers ?? 0} icon={<UsersIcon className='h-5 w-5' />} isLoading={isOverviewLoading} />
 				<StatCard
 					label='Sản phẩm đang bán'
 					value={overview?.totalProducts ?? 0}

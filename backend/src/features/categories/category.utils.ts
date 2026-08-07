@@ -12,11 +12,9 @@ export interface CategoryTreeNode {
 export function buildCategoryTree(categories: Array<Record<string, any>>): CategoryTreeNode[] {
 	const nodeById = new Map<number, CategoryTreeNode>();
 	const roots: CategoryTreeNode[] = [];
-
 	for (const category of categories) {
 		nodeById.set(category.id, { ...category, subcategories: [] } as unknown as CategoryTreeNode);
 	}
-
 	for (const category of categories) {
 		const node = nodeById.get(category.id)!;
 		if (category.parentId !== null && category.parentId !== undefined && nodeById.has(category.parentId)) {
@@ -25,8 +23,5 @@ export function buildCategoryTree(categories: Array<Record<string, any>>): Categ
 			roots.push(node);
 		}
 	}
-
-	console.log("roots: ", JSON.stringify(roots));
-
 	return roots;
 }

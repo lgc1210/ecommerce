@@ -1,5 +1,5 @@
 import prisma from "../../config/prisma.js";
-import type { PaymentStatus } from "../../generated/prisma/index.js";
+import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
 import { isValidPaymentStatusTransition } from "./payment.utils.js";
 import orderService from "../orders/order.service.js";
@@ -49,11 +49,10 @@ class PaymentService {
 		if (payment.order.userId !== userId) {
 			throw new Error("NotFound: Không tìm thấy thông tin thanh toán cho đơn hàng này.");
 		}
-		if (payment.paymentMethod === "cod") {
+		if (payment.paymentMethod === PaymentMethod.cod) {
 			throw new Error("BadRequest: Đơn hàng thanh toán khi nhận hàng (COD) không cần xác nhận thanh toán online.");
 		}
-
-		return this.transitionStatus(payment, "completed", transactionId);
+		return this.transitionStatus(payment, PaymentStatus.completed, transactionId);
 	}
 
 	// ==========================================
@@ -65,10 +64,10 @@ class PaymentService {
 		if (payment.order.userId !== userId) {
 			throw new Error("NotFound: Không tìm thấy thông tin thanh toán cho đơn hàng này.");
 		}
-		if (payment.paymentMethod === "cod") {
+		if (payment.paymentMethod === PaymentMethod.cod) {
 			throw new Error("BadRequest: Đơn hàng thanh toán khi nhận hàng (COD) không thể tạo giao dịch qua cổng thanh toán online.");
 		}
-		if (payment.paymentStatus === "completed" || payment.paymentStatus === "refunded") {
+		if (payment.paymentStatus === PaymentStatus.completed || payment.paymentStatus === PaymentStatus.refunded) {
 			throw new Error(`BadRequest: Đơn hàng này đã ở trạng thái thanh toán "${payment.paymentStatus}", không thể tạo giao dịch mới.`);
 		}
 		return payment;
@@ -77,7 +76,7 @@ class PaymentService {
 	/** Chuyển payment sang "completed" — CHỈ được gọi từ IPN/callback đã xác thực chữ ký hợp lệ (xem payment-gateway.service.ts). */
 	async completeGatewayPayment(orderId: number, transactionId: string | null) {
 		const payment = await this.getPaymentByOrderOrThrow(orderId);
-		return this.transitionStatus(payment, "completed", transactionId ?? undefined);
+		return this.transitionStatus(payment, PaymentStatus.completed, transactionId ?? undefined);
 	}
 
 	/** Chuyển payment sang "failed" — CHỈ được gọi từ IPN/callback đã xác thực chữ ký hợp lệ (xem payment-gateway.service.ts). */
@@ -85,10 +84,10 @@ class PaymentService {
 		const payment = await this.getPaymentByOrderOrThrow(orderId);
 		// Nếu payment đã ở trạng thái cuối (vd 1 IPN "completed" khác đã xử lý trước đó do gọi
 		// trùng/race) thì bỏ qua thay vì ném lỗi — giữ idempotent cho các lượt gateway gọi lại retry.
-		if (payment.paymentStatus === "completed" || payment.paymentStatus === "refunded") {
+		if (payment.paymentStatus === PaymentStatus.completed || payment.paymentStatus === PaymentStatus.refunded) {
 			return payment;
 		}
-		return this.transitionStatus(payment, "failed", transactionId ?? undefined);
+		return this.transitionStatus(payment, PaymentStatus.failed, transactionId ?? undefined);
 	}
 
 	/** Đọc nhanh trạng thái thanh toán hiện tại theo orderId — dùng để hiển thị UI ở trang return (xem payment-gateway.service.ts), trả null nếu không tìm thấy thay vì ném lỗi. */
@@ -168,21 +167,21 @@ class PaymentService {
 				data: {
 					paymentStatus: nextStatus,
 					...(transactionId ? { transactionId } : {}),
-					...(nextStatus === "completed" ? { paidAt: new Date() } : {}),
+					...(nextStatus === PaymentStatus.completed ? { paidAt: new Date() } : {}),
 				},
 				include: paymentDetailInclude,
 			});
 
-			if (nextStatus === "completed") {
+			if (nextStatus === PaymentStatus.completed) {
 				// Thanh toán thành công -> tự động đẩy đơn từ "pending" sang "processing" để xưởng bắt đầu xử lý.
 				// Dùng updateMany có điều kiện thay vì update để không ghi đè trạng thái nếu đơn đã được xử lý thủ công trước đó.
 				await tx.order.updateMany({
-					where: { id: payment.order.id, orderStatus: "pending" },
-					data: { orderStatus: "processing" },
+					where: { id: payment.order.id, orderStatus: OrderStatus.pending },
+					data: { orderStatus: OrderStatus.processing },
 				});
 			}
 
-			if (nextStatus === "refunded" && payment.order.orderStatus !== "cancelled" && payment.order.orderStatus !== "delivered") {
+			if (nextStatus === PaymentStatus.refunded && payment.order.orderStatus !== OrderStatus.cancelled && payment.order.orderStatus !== OrderStatus.delivered) {
 				// Hoàn tiền -> hoàn tồn kho + hoàn lượt dùng coupon + hủy đơn, tương tự luồng hủy đơn thông thường
 				const items = await tx.orderItem.findMany({ where: { orderId: payment.order.id } });
 				for (const item of items) {
@@ -196,7 +195,7 @@ class PaymentService {
 				if (payment.order.couponId) {
 					await tx.coupon.update({ where: { id: payment.order.couponId }, data: { usedCount: { decrement: 1 } } });
 				}
-				await tx.order.update({ where: { id: payment.order.id }, data: { orderStatus: "cancelled" } });
+				await tx.order.update({ where: { id: payment.order.id }, data: { orderStatus: OrderStatus.cancelled } });
 			}
 
 			return updated;
@@ -209,7 +208,7 @@ class PaymentService {
 		// failed -> pending (khách thử thanh toán lại đúng đơn này), nên đơn vẫn giữ nguyên "pending"
 		// và tồn kho vẫn đang giữ chỗ cho lần thử lại — không có vận đơn GHN nào được tạo lúc này
 		// (xem checkout()), nên không có dữ liệu "ảo" bên GHN.
-		if (nextStatus === "completed") {
+		if (nextStatus === PaymentStatus.completed) {
 			try {
 				await orderService.createShipmentAfterPayment(payment.order.id);
 			} catch (error: any) {

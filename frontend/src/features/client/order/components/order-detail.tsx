@@ -148,7 +148,7 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 							{/* Đơn thanh toán qua cổng online (VNPay/ZaloPay) nhưng chưa/không thành công ->
 							    cho khách thử lại ngay tại đây thay vì phải đặt lại đơn từ đầu. */}
 							{ONLINE_GATEWAY_METHODS.includes(order.payment.paymentMethod) && (order.payment.paymentStatus === "pending" || order.payment.paymentStatus === "failed") && (
-								<Button variant='outline' size='sm' className='w-full' disabled={createPaymentUrl.isPending} onClick={handlePayNow}>
+								<Button variant='outline' size='sm' className='w-full cursor-pointer!' disabled={createPaymentUrl.isPending} onClick={handlePayNow}>
 									{createPaymentUrl.isPending ? "Đang chuyển hướng..." : "Thanh toán ngay"}
 								</Button>
 							)}

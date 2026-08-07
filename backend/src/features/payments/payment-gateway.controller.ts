@@ -3,8 +3,7 @@ import type { AuthenticatedRequest } from "../../middlewares/authenticate.js";
 import { env } from "../../config/dotenv.js";
 import paymentGatewayService from "./payment-gateway.service.js";
 import { handleServiceError } from "../../shared/service-error-handler.js";
-import type { PaymentStatus } from "../../generated/prisma/index.js";
-import { PAYMENT_METHOD } from "../payments/payment.constant.js";
+import { PaymentMethod, type PaymentStatus } from "../../generated/prisma/index.js";
 
 // ==========================================
 // Self-service: tạo URL thanh toán cho đơn của chính mình
@@ -34,9 +33,9 @@ const STATUS_TO_RESULT: Record<PaymentStatus, string> = {
 
 /** VNPay redirect trình duyệt khách về đây sau khi thanh toán -> verify để hiển thị rồi chuyển tiếp sang trang kết quả ở frontend. */
 export const handleVnpayReturn = async (req: Request, res: Response): Promise<void> => {
-	const result = await paymentGatewayService.handleReturn(PAYMENT_METHOD.vnpay, req.query as Record<string, unknown>);
+	const result = await paymentGatewayService.handleReturn(PaymentMethod.vnpay, req.query as Record<string, unknown>);
 	const status = result.paymentStatus ? (STATUS_TO_RESULT[result.paymentStatus] ?? "unknown") : "unknown";
-	const params = new URLSearchParams({ method: PAYMENT_METHOD.vnpay, status, ...(result.orderId ? { orderId: String(result.orderId) } : {}) });
+	const params = new URLSearchParams({ method: PaymentMethod.vnpay, status, ...(result.orderId ? { orderId: String(result.orderId) } : {}) });
 	res.redirect(`${env.CLIENT_URL}/payment/result?${params.toString()}`);
 };
 
@@ -49,7 +48,7 @@ export const handleVnpayReturn = async (req: Request, res: Response): Promise<vo
  * nhận được và gọi lại IPN nhiều lần.
  */
 export const handleVnpayIpn = async (req: Request, res: Response): Promise<void> => {
-	const result = await paymentGatewayService.handleIpn(PAYMENT_METHOD.vnpay, req.query as Record<string, unknown>);
+	const result = await paymentGatewayService.handleIpn(PaymentMethod.vnpay, req.query as Record<string, unknown>);
 	if (!result.ok) {
 		res.status(200).json({ RspCode: "97", Message: result.message || "Invalid signature or unknown error" });
 		return;
@@ -62,7 +61,7 @@ export const handleVnpayIpn = async (req: Request, res: Response): Promise<void>
  * là ACK thành công (ZaloPay ngừng gọi lại); -1/0 khiến ZaloPay retry theo lịch của họ.
  */
 export const handleZalopayCallback = async (req: Request, res: Response): Promise<void> => {
-	const result = await paymentGatewayService.handleIpn(PAYMENT_METHOD.zalopay, req.body as Record<string, unknown>);
+	const result = await paymentGatewayService.handleIpn(PaymentMethod.zalopay, req.body as Record<string, unknown>);
 	if (!result.ok) {
 		res.status(200).json({ return_code: -1, return_message: result.message || "mac not match" });
 		return;

@@ -1,6 +1,5 @@
 import prisma from "../../config/prisma.js";
-import { ORDER_STATUS } from "../orders/order.constant.js";
-import { PAYMENT_STATUS } from "../payments/payment.constant.js";
+import { OrderStatus, PaymentStatus } from "../../generated/prisma/index.js";
 import { getPeriodRange, buildRevenueBuckets, computeGrowthPercent, type RevenuePeriod } from "./dashboard.utils.js";
 
 class DashboardService {
@@ -17,11 +16,11 @@ class DashboardService {
 			prisma.user.count(),
 			prisma.product.count({ where: { isActive: true } }),
 			prisma.order.count(),
-			prisma.payment.count({ where: { paymentStatus: PAYMENT_STATUS.pending } }),
+			prisma.payment.count({ where: { paymentStatus: PaymentStatus.pending } }),
 			prisma.order.groupBy({ by: ["orderStatus"], _count: { _all: true } }),
-			prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PAYMENT_STATUS.completed, paidAt: { gte: startOfThisMonth } } }),
-			prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PAYMENT_STATUS.completed, paidAt: { gte: startOfLastMonth, lte: endOfLastMonth } } }),
-			prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PAYMENT_STATUS.completed } }),
+			prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PaymentStatus.completed, paidAt: { gte: startOfThisMonth } } }),
+			prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PaymentStatus.completed, paidAt: { gte: startOfLastMonth, lte: endOfLastMonth } } }),
+			prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PaymentStatus.completed } }),
 		]);
 
 		const revenueThisMonth = Number(revenueThisMonthAgg._sum.amount ?? 0);
@@ -51,7 +50,7 @@ class DashboardService {
 	async getRevenueSeries(period: RevenuePeriod) {
 		const range = getPeriodRange(period);
 		const payments = await prisma.payment.findMany({
-			where: { paymentStatus: PAYMENT_STATUS.completed, paidAt: { gte: range.from, lte: range.to } },
+			where: { paymentStatus: PaymentStatus.completed, paidAt: { gte: range.from, lte: range.to } },
 			select: { amount: true, paidAt: true },
 		});
 
@@ -63,7 +62,7 @@ class DashboardService {
 	// ==========================================
 	async getTopProducts(limit: number) {
 		const items = await prisma.orderItem.findMany({
-			where: { productSkuId: { not: null }, order: { orderStatus: { not: ORDER_STATUS.cancelled } } },
+			where: { productSkuId: { not: null }, order: { orderStatus: { not: OrderStatus.cancelled } } },
 			select: {
 				quantity: true,
 				priceAtPurchase: true,

@@ -10,7 +10,6 @@ class PaymentGatewayService {
 	async createPaymentUrl(userId: number, orderId: number, ipAddress: string): Promise<string> {
 		const payment = await paymentService.getGatewayPaymentContext(userId, orderId);
 		const gateway = getPaymentGateway(payment.paymentMethod);
-
 		return gateway.createPaymentUrl({
 			orderId: payment.order.id,
 			orderNumber: payment.order.orderNumber,
@@ -29,11 +28,9 @@ class PaymentGatewayService {
 	async handleReturn(method: string, query: Record<string, unknown>) {
 		const gateway = getPaymentGateway(method);
 		const result = gateway.verifyReturn(query);
-
 		if (!result.orderId) {
 			return { orderId: null, paymentStatus: null, message: "Không xác định được đơn hàng từ dữ liệu trả về." };
 		}
-
 		const paymentStatus = await paymentService.getPaymentStatusByOrderId(result.orderId);
 		return { orderId: result.orderId, paymentStatus, message: result.message };
 	}
@@ -45,11 +42,9 @@ class PaymentGatewayService {
 	async handleIpn(method: string, payload: Record<string, unknown>) {
 		const gateway = getPaymentGateway(method);
 		const result = gateway.verifyIpn(payload);
-
 		if (!result.isValid || !result.orderId) {
 			return { ok: false, message: result.message };
 		}
-
 		try {
 			if (result.isSuccess) {
 				await paymentService.completeGatewayPayment(result.orderId, result.transactionId);

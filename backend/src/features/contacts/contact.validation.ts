@@ -11,10 +11,7 @@ export const CreateContactSchema = z.object({
 		name: z.string().min(2, { message: "Họ tên phải có ít nhất 2 ký tự." }).max(100),
 		email: z.email({ message: "Email không hợp lệ." }).max(255),
 		subject: z.string().max(255).optional(),
-		message: z
-			.string()
-			.min(10, { message: "Nội dung phải có ít nhất 10 ký tự." })
-			.max(5000, { message: "Nội dung tối đa 5000 ký tự." }),
+		message: z.string().min(10, { message: "Nội dung phải có ít nhất 10 ký tự." }).max(5000, { message: "Nội dung tối đa 5000 ký tự." }),
 	}),
 });
 

@@ -46,19 +46,7 @@ router.delete("/me/addresses/:addressId", authenticateJWT, validate(AddressIdPar
 router.post("/", authenticateJWT, requirePermission("user:write"), validate(CreateUserSchema), createUser);
 router.get("/", authenticateJWT, requirePermission("user:read"), validate(ListUsersQuerySchema), listUsers);
 router.get("/:id", authenticateJWT, requirePermission("user:read"), validate(UserIdParamSchema), getUserById);
-router.patch(
-	"/:id/role",
-	authenticateJWT,
-	requirePermission("user:write"),
-	validate(UpdateUserRoleSchema),
-	updateUserRole,
-);
-router.patch(
-	"/:id/status",
-	authenticateJWT,
-	requirePermission("user:write"),
-	validate(UpdateUserStatusSchema),
-	updateUserStatus,
-);
+router.patch("/:id/role", authenticateJWT, requirePermission("user:write"), validate(UpdateUserRoleSchema), updateUserRole);
+router.patch("/:id/status", authenticateJWT, requirePermission("user:write"), validate(UpdateUserStatusSchema), updateUserStatus);
 
 export default router;

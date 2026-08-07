@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { env } from "../../../config/dotenv.js";
 import type { CreatePaymentUrlInput, GatewayVerifyResult, PaymentGateway } from "./gateway.types.js";
-import { PAYMENT_METHOD } from "../payment.constant.js";
+import { PaymentMethod } from "../../../generated/prisma/index.js";
 
 /** VNPay yêu cầu vnp_CreateDate/vnp_ExpireDate theo giờ Việt Nam (UTC+7), bất kể múi giờ máy chủ chạy Node là gì. */
 function formatVnpDate(date: Date): string {
@@ -41,22 +41,18 @@ function verify(payload: Record<string, unknown>): GatewayVerifyResult {
 	const secureHash = params.vnp_SecureHash;
 	delete params.vnp_SecureHash;
 	delete params.vnp_SecureHashType;
-
 	if (!secureHash) {
 		return { isValid: false, orderId: null, transactionId: null, isSuccess: false, message: "Thiếu vnp_SecureHash." };
 	}
-
 	const { hash: computedHash } = signParams(params);
 	if (computedHash.toLowerCase() !== secureHash.toLowerCase()) {
 		return { isValid: false, orderId: null, transactionId: null, isSuccess: false, message: "Chữ ký không hợp lệ." };
 	}
-
 	// vnp_TxnRef được tạo dạng "<orderId>-<timestamp>" (xem createPaymentUrl) để luôn duy nhất
 	// theo từng lượt thử thanh toán mà vẫn tra ngược được đúng Order.id.
 	const orderId = Number(params.vnp_TxnRef?.split("-")[0]);
 	// vnp_TransactionStatus chỉ có ở 1 số phiên bản callback; nếu thiếu thì chỉ xét vnp_ResponseCode.
 	const isSuccess = params.vnp_ResponseCode === "00" && (params.vnp_TransactionStatus ?? "00") === "00";
-
 	return {
 		isValid: true,
 		orderId: Number.isFinite(orderId) ? orderId : null,
@@ -67,7 +63,7 @@ function verify(payload: Record<string, unknown>): GatewayVerifyResult {
 }
 
 export const vnpayGateway: PaymentGateway = {
-	method: PAYMENT_METHOD.vnpay,
+	method: PaymentMethod.vnpay,
 
 	async createPaymentUrl(input: CreatePaymentUrlInput): Promise<string> {
 		const now = new Date();

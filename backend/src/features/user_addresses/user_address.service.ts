@@ -1,7 +1,6 @@
 import prisma from "../../config/prisma.js";
+import type { AddressTag } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
-
-type AddressTag = "home" | "office";
 
 interface AdminUpdateAddressInput {
 	tag?: AddressTag;

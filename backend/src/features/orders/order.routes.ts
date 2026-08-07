@@ -1,15 +1,5 @@
 import { Router } from "express";
-import {
-	checkout,
-	previewShippingFee,
-	listOwnOrders,
-	getOwnOrderById,
-	cancelOwnOrder,
-	listOrdersAdmin,
-	getOrderById,
-	updateOrderStatus,
-	receiveGhnWebhook,
-} from "./order.controller.js";
+import { checkout, previewShippingFee, listOwnOrders, getOwnOrderById, cancelOwnOrder, listOrdersAdmin, getOrderById, updateOrderStatus, receiveGhnWebhook } from "./order.controller.js";
 import { validate } from "../../middlewares/validate.js";
 import {
 	CreateOrderSchema,
@@ -36,22 +26,10 @@ router.post("/webhooks/ghn", validate(GhnWebhookSchema), receiveGhnWebhook);
 // ==========================================
 router.post("/", authenticateJWT, requirePermission("order:create"), validate(CreateOrderSchema), checkout);
 // Tính trước phí vận chuyển GHN theo giỏ hàng + địa chỉ, để FE hiển thị cho khách trước khi đặt hàng
-router.post(
-	"/shipping-fee",
-	authenticateJWT,
-	requirePermission("order:create"),
-	validate(PreviewShippingFeeSchema),
-	previewShippingFee,
-);
+router.post("/shipping-fee", authenticateJWT, requirePermission("order:create"), validate(PreviewShippingFeeSchema), previewShippingFee);
 router.get("/me", authenticateJWT, requirePermission("order:read"), validate(ListOwnOrdersQuerySchema), listOwnOrders);
 router.get("/me/:id", authenticateJWT, requirePermission("order:read"), validate(OrderIdParamSchema), getOwnOrderById);
-router.patch(
-	"/me/:id/cancel",
-	authenticateJWT,
-	requirePermission("order:create"),
-	validate(OrderIdParamSchema),
-	cancelOwnOrder,
-);
+router.patch("/me/:id/cancel", authenticateJWT, requirePermission("order:create"), validate(OrderIdParamSchema), cancelOwnOrder);
 
 // ==========================================
 // Admin (yêu cầu permission "order:update" — CHỦ Ý dùng "order:update" thay vì "order:read" cho
@@ -60,26 +38,8 @@ router.patch(
 // thường sẽ vô tình có quyền xem TOÀN BỘ đơn hàng của mọi người qua route admin. "order:update"
 // chỉ được cấp cho manager/admin, nên dùng nó để tách hẳn quyền truy cập admin khỏi self-service.
 // ==========================================
-router.get(
-	"/admin",
-	authenticateJWT,
-	requirePermission("order:update"),
-	validate(ListOrdersAdminQuerySchema),
-	listOrdersAdmin,
-);
-router.get(
-	"/admin/:id",
-	authenticateJWT,
-	requirePermission("order:update"),
-	validate(OrderIdParamSchema),
-	getOrderById,
-);
-router.patch(
-	"/admin/:id/status",
-	authenticateJWT,
-	requirePermission("order:update"),
-	validate(UpdateOrderStatusSchema),
-	updateOrderStatus,
-);
+router.get("/admin", authenticateJWT, requirePermission("order:update"), validate(ListOrdersAdminQuerySchema), listOrdersAdmin);
+router.get("/admin/:id", authenticateJWT, requirePermission("order:update"), validate(OrderIdParamSchema), getOrderById);
+router.patch("/admin/:id/status", authenticateJWT, requirePermission("order:update"), validate(UpdateOrderStatusSchema), updateOrderStatus);
 
 export default router;

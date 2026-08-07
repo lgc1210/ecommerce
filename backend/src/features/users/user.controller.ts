@@ -46,11 +46,7 @@ export const updateOwnAddress = async (req: AuthenticatedRequest, res: Response,
 	}
 };
 
-export const setDefaultOwnAddress = async (
-	req: AuthenticatedRequest,
-	res: Response,
-	next: NextFunction,
-): Promise<void> => {
+export const setDefaultOwnAddress = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const addressId = Number(req.params.addressId);
 		const address = await userService.setDefaultOwnAddress(req.user!.id, addressId);

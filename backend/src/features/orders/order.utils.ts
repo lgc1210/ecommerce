@@ -1,20 +1,13 @@
-import {
-	GHN_CANCELLED_STATUSES,
-	GHN_DELIVERED_STATUSES,
-	GHN_PROCESSING_STATUSES,
-	GHN_SHIPPED_STATUSES,
-} from "../../external/ghn/ghn.constant.js";
-import { ORDER_STATUS } from "./order.constant.js";
-
-export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+import { GHN_CANCELLED_STATUSES, GHN_DELIVERED_STATUSES, GHN_PROCESSING_STATUSES, GHN_SHIPPED_STATUSES } from "../../external/ghn/ghn.constant.js";
+import { OrderStatus } from "../../generated/prisma/index.js";
 
 /** Các bước chuyển trạng thái đơn hàng hợp lệ. Trạng thái "delivered"/"cancelled" là trạng thái cuối, không đổi được nữa. */
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-	[ORDER_STATUS.pending]: [ORDER_STATUS.processing, ORDER_STATUS.cancelled],
-	[ORDER_STATUS.processing]: [ORDER_STATUS.shipped, ORDER_STATUS.cancelled],
-	[ORDER_STATUS.shipped]: [ORDER_STATUS.delivered, ORDER_STATUS.cancelled],
-	[ORDER_STATUS.delivered]: [],
-	[ORDER_STATUS.cancelled]: [],
+	[OrderStatus.pending]: [OrderStatus.processing, OrderStatus.cancelled],
+	[OrderStatus.processing]: [OrderStatus.shipped, OrderStatus.cancelled],
+	[OrderStatus.shipped]: [OrderStatus.delivered, OrderStatus.cancelled],
+	[OrderStatus.delivered]: [],
+	[OrderStatus.cancelled]: [],
 };
 
 /** Kiểm tra việc chuyển từ trạng thái hiện tại sang trạng thái mới có hợp lệ hay không */
@@ -25,7 +18,7 @@ export function isValidOrderStatusTransition(current: OrderStatus, next: OrderSt
 
 /** Đơn hàng chỉ được phép khôi phục tồn kho / lượt dùng coupon đúng 1 lần, khi vừa chuyển SANG "cancelled" */
 export function isCancellation(previous: OrderStatus, next: OrderStatus): boolean {
-	return previous !== ORDER_STATUS.cancelled && next === ORDER_STATUS.cancelled;
+	return previous !== OrderStatus.cancelled && next === OrderStatus.cancelled;
 }
 
 /**
@@ -45,10 +38,10 @@ export function generateOrderNumber(now: Date = new Date()): string {
  * lại ghn_status thô để tham khảo.
  */
 export function mapGhnStatusToOrderStatus(ghnStatus: string): OrderStatus | null {
-	if (GHN_DELIVERED_STATUSES.has(ghnStatus)) return ORDER_STATUS.delivered;
-	if (GHN_CANCELLED_STATUSES.has(ghnStatus)) return ORDER_STATUS.cancelled;
-	if (GHN_SHIPPED_STATUSES.has(ghnStatus)) return ORDER_STATUS.shipped;
-	if (GHN_PROCESSING_STATUSES.has(ghnStatus)) return ORDER_STATUS.processing;
+	if (GHN_DELIVERED_STATUSES.has(ghnStatus)) return OrderStatus.delivered;
+	if (GHN_CANCELLED_STATUSES.has(ghnStatus)) return OrderStatus.cancelled;
+	if (GHN_SHIPPED_STATUSES.has(ghnStatus)) return OrderStatus.shipped;
+	if (GHN_PROCESSING_STATUSES.has(ghnStatus)) return OrderStatus.processing;
 	return null;
 }
 
