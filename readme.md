@@ -124,8 +124,8 @@ Sơ đồ ERD Database
 | Uploads           | `/uploads/product-image`                                                                                                                                    | Admin, multipart/form-data                        |
 | GHN               | `/external/ghn/provinces`, `/districts`, `/wards`                                                                                                           | Proxy tra cứu địa chỉ hành chính cho GHN          |
 
-Ảnh Postman Swagger collection tổng quan API
-![Ảnh Postman/Swagger collection tổng quan API](docs/images/swagger/apis.png)
+Ảnh giao diện Swagger UI — tổng quan API
+![Ảnh giao diện Swagger UI — tổng quan API](docs/images/swagger/apis.png)
 
 ### 2.6. Tích hợp bên thứ ba
 
