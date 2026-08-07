@@ -71,6 +71,15 @@ enum ContactStatus {
   closed
 }
 
+enum NotificationType {
+  order
+  payment
+  promotion
+  stock
+  system
+  review
+}
+
 // ==========================================
 // 1. IDENTITY & ACCESS MANAGEMENT (IAM)
 // ==========================================
@@ -128,14 +137,18 @@ model User {
   createdAt    DateTime?      @default(now()) @map("created_at")
   updatedAt    DateTime?      @updatedAt @map("updated_at")
 
-  role         Role           @relation(fields: [roleId], references: [id])
-  refreshTokens RefreshToken[]
-  addresses    UserAddress[]
-  cart         Cart?
-  orders       Order[]
-  reviews      Review[]
-  otps         Otp[]
-  contacts       Contact[]
+  role                   Role           @relation(fields: [roleId], references: [id])
+  refreshTokens          RefreshToken[]
+  addresses              UserAddress[]
+  cart                   Cart?
+  orders                 Order[]
+  reviews                Review[]
+  otps                   Otp[]
+  contacts               Contact[]
+  notifications          Notification[]
+  conversationsAsUserOne Conversation[] @relation("ConversationUserOne")
+  conversationsAsUserTwo Conversation[] @relation("ConversationUserTwo")
+  messages               Message[]
 
   @@index([provider, providerId])
   @@map("users")
@@ -453,7 +466,71 @@ model Contact {
   @@map("contacts")
 }
 
+// ==========================================
+// 6. NOTIFICATIONS
+// ==========================================
+
 model Notification {
-  id Int @id @default(autoincrement())
-  userId Int? @map("user_id")
+  id          Int              @id @default(autoincrement())
+  userId      Int              @map("user_id")
+
+  type        NotificationType // Phân loại: Đơn hàng, Thanh toán, Khuyến mãi, Tồn kho, Hệ thống, Đánh giá
+
+  title       String           @db.VarChar(255) // Tiêu đề thông báo hiển thị cho user (Vd: Đặt hàng thành công)
+  message     String           @db.Text         // Nội dung chi tiết (Vd: Đơn hàng ORD-2026-X đã được xác nhận)
+
+  isRead      Boolean          @default(false) @map("is_read")
+
+  actionUrl   String?          @map("action_url") @db.VarChar(255)   // Đường dẫn fallback điều hướng khi user click vào thông báo
+  referenceId String?          @map("reference_id") @db.VarChar(50)  // ID gốc (vd: mã đơn hàng, ID sản phẩm) để xử lý logic hoặc ráp URL động
+  imageUrl    String?          @map("image_url") @db.VarChar(255)    // Link ảnh thu nhỏ hiển thị ở chuông thông báo (ảnh sản phẩm/banner)
+
+  createdAt   DateTime?        @default(now()) @map("created_at")
+  readAt      DateTime?        @map("read_at")
+
+  user        User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])    // Tối ưu đếm số lượng thông báo chưa đọc hiển thị trên chuông (badge)
+  @@index([userId, createdAt]) // Tối ưu tải danh sách thông báo xếp từ mới nhất xuống cũ nhất
+  @@index([type])              // Hỗ trợ lọc thông báo theo từng danh mục riêng trên giao diện
+  @@index([referenceId])       // Tối ưu khi Backend cần cập nhật hoặc xóa thông báo theo mã đơn/mã sản phẩm
+  @@map("notifications")
+}
+
+// ==========================================
+// 7. CHAT 1-1 SYSTEM
+// ==========================================
+
+model Conversation {
+  id          Int       @id @default(autoincrement())
+  userOneId   Int       @map("user_one_id")
+  userTwoId   Int       @map("user_two_id")
+
+  createdAt   DateTime? @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at") // Cập nhật khi có tin nhắn mới (để xếp phòng chat lên đầu)
+
+  userOne     User      @relation("ConversationUserOne", fields: [userOneId], references: [id])
+  userTwo     User      @relation("ConversationUserTwo", fields: [userTwoId], references: [id])
+  messages    Message[]
+
+  @@unique([userOneId, userTwoId]) // Đảm bảo giữa 2 người chỉ có duy nhất 1 phòng chat 1-1
+  @@map("conversations")
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int          @map("conversation_id")
+  senderId       Int          @map("sender_id")
+
+  content        String       @db.Text
+  isRead         Boolean      @default(false) @map("is_read") // Quản lý trạng thái đã đọc/chưa đọc
+
+  createdAt      DateTime?    @default(now()) @map("created_at")
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([conversationId, createdAt]) // Tối ưu truy vấn load lịch sử chat theo thời gian
+  @@map("messages")
 }

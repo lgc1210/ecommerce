@@ -66,10 +66,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { idToken, cartItems } = req.body;
-		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle(
-			idToken,
-			cartItems,
-		);
+		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle(idToken, cartItems);
 
 		res.cookie(TOKENS.accessToken, accessToken, getAccessTokenCookieOptions());
 		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
@@ -88,13 +85,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 export const facebookLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { accessToken, cartItems } = req.body;
-		const {
-			user,
-			accessToken: newAccessToken,
-			refreshToken,
-			cart,
-			skippedItems,
-		} = await authService.loginWithFacebook(accessToken, cartItems);
+		const { user, accessToken: newAccessToken, refreshToken, cart, skippedItems } = await authService.loginWithFacebook(accessToken, cartItems);
 
 		res.cookie(TOKENS.accessToken, newAccessToken, getAccessTokenCookieOptions());
 		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());

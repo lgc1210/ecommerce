@@ -4,19 +4,10 @@ import prisma from "../../config/prisma.js";
 import transporter from "../../config/email.js";
 import { env } from "../../config/dotenv.js";
 import pkg from "../../generated/prisma/index.js";
-import type { Prisma } from "../../generated/prisma/index.js";
+import { Prisma } from "../../generated/prisma/index.js";
 import type { TokenPayload } from "../../middlewares/authenticate.js";
 import cartService from "../carts/cart.service.js";
-import {
-	generateOtpCode,
-	getOtpExpiryDate,
-	signAccessToken,
-	signRefreshToken,
-	verifyRefreshToken,
-	sanitizeUser,
-	OTP_MAX_ATTEMPTS,
-	REFRESH_TOKEN_MAX_AGE_MS,
-} from "./auth.utils.js";
+import { generateOtpCode, getOtpExpiryDate, signAccessToken, signRefreshToken, verifyRefreshToken, sanitizeUser, OTP_MAX_ATTEMPTS, REFRESH_TOKEN_MAX_AGE_MS } from "./auth.utils.js";
 
 /** 1 dòng giỏ hàng cục bộ (localStorage) gửi kèm payload đăng nhập, xem auth.validation.ts#cartItemsSchema. */
 interface PendingCartItem {
@@ -122,7 +113,7 @@ class AuthService {
 		if (!user) {
 			throw new Error("NotFound: Không tìm thấy tài khoản với email này.");
 		}
-		if (type === "registration" && user.isVerified) {
+		if (type === OtpType.registration && user.isVerified) {
 			throw new Error("Conflict: Tài khoản đã được xác thực trước đó.");
 		}
 
@@ -188,7 +179,6 @@ class AuthService {
 	// KHÔNG tự ý decode JWT bằng tay vì như vậy sẽ không xác thực được ai là người
 	// thực sự phát hành token.
 	async loginWithGoogle(idToken: string, pendingCartItems: PendingCartItem[] = []) {
-		console.log("PENDING CART ITEMS: ", pendingCartItems);
 		const ticket = await googleOAuthClient
 			.verifyIdToken({
 				idToken,
@@ -283,10 +273,7 @@ class AuthService {
 		// vì nếu không, bất kỳ accessToken hợp lệ nào (kể cả cấp cho app Facebook khác) đều
 		// có thể được dùng để đăng nhập vào hệ thống của mình.
 		const appAccessToken = `${env.FACEBOOK_APP_ID}|${env.FACEBOOK_APP_SECRET}`;
-		const debugTokenUrl =
-			`${FACEBOOK_GRAPH_API_BASE}/debug_token` +
-			`?input_token=${encodeURIComponent(accessToken)}` +
-			`&access_token=${encodeURIComponent(appAccessToken)}`;
+		const debugTokenUrl = `${FACEBOOK_GRAPH_API_BASE}/debug_token` + `?input_token=${encodeURIComponent(accessToken)}` + `&access_token=${encodeURIComponent(appAccessToken)}`;
 
 		const debugResult: any = await fetch(debugTokenUrl)
 			.then((res) => res.json())
@@ -300,9 +287,7 @@ class AuthService {
 		}
 
 		// Bước 2: dùng chính accessToken của user để lấy thông tin hồ sơ (id, tên, email).
-		const profileUrl =
-			`${FACEBOOK_GRAPH_API_BASE}/${FACEBOOK_GRAPH_API_VERSION}/me` +
-			`?fields=id,name,email&access_token=${encodeURIComponent(accessToken)}`;
+		const profileUrl = `${FACEBOOK_GRAPH_API_BASE}/${FACEBOOK_GRAPH_API_VERSION}/me` + `?fields=id,name,email&access_token=${encodeURIComponent(accessToken)}`;
 
 		const facebookProfile: any = await fetch(profileUrl)
 			.then((res) => res.json())
@@ -318,9 +303,7 @@ class AuthService {
 		// của mình bắt buộc phải có email (unique) nên nếu thiếu, không thể tạo/liên kết
 		// tài khoản được -> yêu cầu user cấp lại quyền hoặc dùng phương thức đăng nhập khác.
 		if (!facebookProfile.email) {
-			throw new Error(
-				"BadRequest: Không lấy được email từ tài khoản Facebook. Vui lòng cấp quyền chia sẻ email khi đăng nhập hoặc sử dụng phương thức đăng nhập khác.",
-			);
+			throw new Error("BadRequest: Không lấy được email từ tài khoản Facebook. Vui lòng cấp quyền chia sẻ email khi đăng nhập hoặc sử dụng phương thức đăng nhập khác.");
 		}
 
 		const email = (facebookProfile.email as string).toLowerCase();
@@ -513,9 +496,7 @@ class AuthService {
 	// (frontend) tự kiểm tra quyền mà không cần biết cấu trúc bảng role_permissions.
 	private toAuthUser(user: UserWithRole) {
 		const { role, ...rest } = user;
-		const permissions = role.permissions.map(
-			(rolePermission) => `${rolePermission.permission.resource}:${rolePermission.permission.name}`,
-		);
+		const permissions = role.permissions.map((rolePermission) => `${rolePermission.permission.resource}:${rolePermission.permission.name}`);
 
 		return {
 			...sanitizeUser(rest),
@@ -531,9 +512,7 @@ class AuthService {
 
 		if (!customerRole) {
 			// Đây là lỗi cấu hình hệ thống (thiếu seed data), không phải lỗi do người dùng nhập sai.
-			throw new Error(
-				`Config: Role mặc định '${DEFAULT_CUSTOMER_ROLE_NAME}' chưa tồn tại. Vui lòng tạo role này trước (POST /api/rbac/roles).`,
-			);
+			throw new Error(`Config: Role mặc định '${DEFAULT_CUSTOMER_ROLE_NAME}' chưa tồn tại. Vui lòng tạo role này trước (POST /api/rbac/roles).`);
 		}
 
 		return customerRole;

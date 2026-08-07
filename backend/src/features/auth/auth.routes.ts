@@ -1,28 +1,7 @@
 import { Router } from "express";
-import {
-	register,
-	verifyOtp,
-	resendOtp,
-	login,
-	googleLogin,
-	refreshToken,
-	logout,
-	forgotPassword,
-	resetPassword,
-	getMe,
-	facebookLogin,
-} from "./auth.controller.js";
+import { register, verifyOtp, resendOtp, login, googleLogin, refreshToken, logout, forgotPassword, resetPassword, getMe, facebookLogin } from "./auth.controller.js";
 import { validate } from "../../middlewares/validate.js";
-import {
-	RegisterSchema,
-	LoginSchema,
-	GoogleLoginSchema,
-	VerifyOtpSchema,
-	ResendOtpSchema,
-	ForgotPasswordSchema,
-	ResetPasswordSchema,
-	FacebookLoginSchema,
-} from "./auth.validation.js";
+import { RegisterSchema, LoginSchema, GoogleLoginSchema, VerifyOtpSchema, ResendOtpSchema, ForgotPasswordSchema, ResetPasswordSchema, FacebookLoginSchema } from "./auth.validation.js";
 import { authenticateJWT } from "../../middlewares/authenticate.js";
 
 const router = Router();

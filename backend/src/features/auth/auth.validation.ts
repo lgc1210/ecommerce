@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OtpType } from "../../generated/prisma/index.js";
 
 // Số điện thoại Việt Nam: bắt đầu bằng 0 hoặc +84, theo sau 9-10 chữ số
 const vietnamesePhoneRegex = /^(0|\+84)[0-9]{9,10}$/;
@@ -62,7 +63,7 @@ export const VerifyOtpSchema = z.object({
 export const ResendOtpSchema = z.object({
 	body: z.object({
 		email: z.email().toLowerCase().trim(),
-		type: z.enum(["registration", "password_reset"], {
+		type: z.enum([OtpType.registration, OtpType.password_reset], {
 			message: "Loại OTP không hợp lệ.",
 		}),
 	}),
