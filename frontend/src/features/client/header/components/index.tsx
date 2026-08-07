@@ -19,27 +19,17 @@ const Header = () => {
 	const navigate = useNavigate();
 	const { totalQuantity } = useCart();
 
-	const linkClass = ({ isActive }: { isActive: boolean }) =>
-		`text-sm font-semibold transition-colors ${isActive ? "text-primary-dark" : "text-ink/80 hover:text-primary-dark"}`;
+	const linkClass = ({ isActive }: { isActive: boolean }) => `text-sm font-semibold transition-colors ${isActive ? "text-primary-dark" : "text-ink/80 hover:text-primary-dark"}`;
 
 	return (
 		<header className='sticky top-0 z-30 border-b border-border bg-surface/95'>
 			<div className='mx-auto flex h-18 max-w-7xl items-center lg:justify-between gap-4 px-4 sm:px-6 lg:px-8'>
 				{/* Mobile menu toggle */}
-				<Button
-					type='button'
-					variant='outline'
-					onClick={() => setMobileOpen(true)}
-					aria-label='Mở menu'
-					className='size-10! p-0! rounded-full lg:hidden'
-					icon={<MenuIcon className='h-5 w-5' />}
-				/>
+				<Button type='button' variant='outline' onClick={() => setMobileOpen(true)} aria-label='Mở menu' className='size-10! p-0! rounded-full lg:hidden' icon={<MenuIcon className='h-5 w-5' />} />
 
 				{/* Logo */}
 				<Link to={paths.client.home} className='flex shrink-0 items-center gap-2'>
-					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>
-						E
-					</span>
+					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 					<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
 				</Link>
 
@@ -64,10 +54,7 @@ const Header = () => {
 						]}
 					/>
 
-					<Link
-						to={paths.client.cart}
-						aria-label='Giỏ hàng'
-						className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'>
+					<Link to={paths.client.cart} aria-label='Giỏ hàng' className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'>
 						<CartIcon className='h-5 w-5' />
 						{totalQuantity > 0 && (
 							<span className='absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-bold text-white'>
@@ -80,22 +67,13 @@ const Header = () => {
 
 			{/* Mobile nav drawer */}
 			<Overlay open={mobileOpen} onClose={() => setMobileOpen(false)} />
-			<div
-				className={`fixed inset-y-0 left-0 z-50! w-72 transform bg-surface transition-transform duration-500 ease-out lg:hidden ${
-					mobileOpen ? "translate-x-0" : "-translate-x-full"
-				}`}>
+			<div className={`fixed inset-y-0 left-0 z-50! w-72 transform bg-surface transition-transform duration-500 ease-out lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
 				<div className='flex h-16 items-center justify-between border-b border-border px-5'>
 					<Link to={paths.client.home} className='flex shrink-0 items-center gap-2'>
-						<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>
-							E
-						</span>
+						<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 						<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
 					</Link>{" "}
-					<button
-						type='button'
-						onClick={() => setMobileOpen(false)}
-						aria-label='Đóng menu'
-						className='flex h-9 w-9 items-center justify-center rounded-lg text-ink hover:bg-cream-soft'>
+					<button type='button' onClick={() => setMobileOpen(false)} aria-label='Đóng menu' className='flex h-9 w-9 items-center justify-center rounded-lg text-ink hover:bg-cream-soft'>
 						<CloseIcon className='h-5 w-5' />
 					</button>
 				</div>
@@ -106,11 +84,7 @@ const Header = () => {
 							to={item.to}
 							end={item.end}
 							onClick={() => setMobileOpen(false)}
-							className={({ isActive }) =>
-								`rounded-lg px-3 py-2.5 text-sm font-semibold ${
-									isActive ? "bg-primary-light text-primary-dark" : "text-ink hover:bg-cream-soft"
-								}`
-							}>
+							className={({ isActive }) => `rounded-lg px-3 py-2.5 text-sm font-semibold cursor-default ${isActive ? "bg-primary-light text-primary-dark" : "text-ink hover:bg-cream-soft"}`}>
 							{item.label}
 						</NavLink>
 					))}
