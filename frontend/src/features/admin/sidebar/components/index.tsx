@@ -1,17 +1,5 @@
 import { NavLink } from "react-router-dom";
-import {
-	BoxIcon,
-	CartIcon,
-	ChevronsLeftIcon,
-	CloseIcon,
-	CouponIcon,
-	CreditCardIcon,
-	DashboardIcon,
-	MailIcon,
-	ShieldIcon,
-	TagIcon,
-	UsersIcon,
-} from "../../../../components/icons";
+import { BoxIcon, CartIcon, ChevronsLeftIcon, CloseIcon, CouponIcon, CreditCardIcon, DashboardIcon, MailIcon, ShieldIcon, TagIcon, UsersIcon } from "../../../../components/icons";
 import paths from "../../../../configs/constants/paths";
 import Overlay from "../../../../components/overlay";
 import { useAuth } from "../../../auth/hooks/useAuth";
@@ -60,14 +48,9 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 				} ${collapsed ? "lg:w-20" : "lg:w-64"}`}>
 				<div className='sticky top-0 z-20'>
 					{/* Brand */}
-					<div
-						className={`flex h-16 items-center border-b border-white/10 px-5 ${
-							collapsed ? "lg:justify-center lg:px-0" : "justify-between gap-2"
-						}`}>
+					<div className={`flex h-16 items-center border-b border-white/10 px-5 ${collapsed ? "lg:justify-center lg:px-0" : "justify-between gap-2"}`}>
 						<div className='flex items-center gap-2.5 lg:flex-0 flex-1'>
-							<span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary font-extrabold text-white'>
-								E
-							</span>
+							<span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary font-extrabold text-white'>E</span>
 							<span className={`text-lg font-bold tracking-tight text-white ${collapsed ? "lg:hidden" : ""}`}>
 								<span className='font-medium text-primary'>Admin</span>
 							</span>
@@ -86,12 +69,7 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 
 					{/* Nav */}
 					<nav className='flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-5'>
-						<p
-							className={`px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-cream/35 ${
-								collapsed ? "lg:hidden" : ""
-							}`}>
-							Quản lý
-						</p>
+						<p className={`px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-cream/35 ${collapsed ? "lg:hidden" : ""}`}>Quản lý</p>
 						{visibleNavItems.map(({ to, label, icon: Icon, end }) => (
 							<NavLink
 								key={to}
@@ -100,12 +78,8 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 								title={label}
 								onClick={onClose}
 								className={({ isActive }) =>
-									`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-										collapsed ? "lg:justify-center lg:px-0" : ""
-									} ${
-										isActive
-											? "bg-primary text-white shadow-sm shadow-primary/30"
-											: "text-cream/70 hover:bg-white/5 hover:text-white"
+									`group relative flex items-center gap-3 rounded-lg p-2 text-sm font-medium transition-colors cursor-default ${collapsed ? "lg:justify-center lg:px-0" : ""} ${
+										isActive ? "bg-primary text-white shadow-sm shadow-primary/30" : "text-cream/70 hover:bg-white/5 hover:text-white"
 									}`
 								}>
 								<Icon className='h-4.5 w-4.5 shrink-0' />
@@ -126,12 +100,10 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 							onClick={onToggleCollapse}
 							type='button'
 							aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-							className={`hidden w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-cream/70 hover:bg-white/5 hover:text-white lg:flex cursor-pointer ${
+							className={`hidden w-full items-center gap-2.5 rounded-lg p-2 text-sm font-medium text-cream/70 hover:bg-white/5 hover:text-white lg:flex cursor-default ${
 								collapsed ? "lg:justify-center" : ""
 							} ${collapsed ? "" : "mt-3"}`}>
-							<ChevronsLeftIcon
-								className={`h-4.5 w-4.5 shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`}
-							/>
+							<ChevronsLeftIcon className={`h-4.5 w-4.5 shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`} />
 							<span className={collapsed ? "lg:hidden" : ""}>Thu gọn</span>
 						</button>
 					</div>

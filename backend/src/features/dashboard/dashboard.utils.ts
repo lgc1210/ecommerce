@@ -1,4 +1,6 @@
-export type RevenuePeriod = "7d" | "30d" | "12m";
+import { REVENUE_PERRIOD } from "./dashboard.constant.js";
+
+export type RevenuePeriod = (typeof REVENUE_PERRIOD)[keyof typeof REVENUE_PERRIOD];
 
 export interface PeriodRange {
 	from: Date;
@@ -8,13 +10,13 @@ export interface PeriodRange {
 
 /** Tính khoảng thời gian + độ chia nhóm (theo ngày hay theo tháng) dựa trên period được chọn cho biểu đồ doanh thu */
 export function getPeriodRange(period: RevenuePeriod, now: Date = new Date()): PeriodRange {
-	if (period === "12m") {
+	if (period === REVENUE_PERRIOD.year) {
 		const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 		const from = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 		return { from, to, bucket: "month" };
 	}
 
-	const days = period === "7d" ? 7 : 30;
+	const days = period === REVENUE_PERRIOD.week ? 7 : 30;
 	const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 	const from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
 	return { from, to, bucket: "day" };
