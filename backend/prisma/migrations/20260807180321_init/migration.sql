@@ -110,6 +110,7 @@ CREATE TABLE `products` (
     `description` TEXT NULL,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
     `is_featured` BOOLEAN NOT NULL DEFAULT false,
+    `warranty_policy_id` INTEGER NULL,
     `thumbnail_url` VARCHAR(500) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
@@ -343,6 +344,20 @@ CREATE TABLE `messages` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `warranty_policies` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `duration_value` INTEGER NOT NULL,
+    `duration_unit` ENUM('day', 'month', 'year') NOT NULL,
+    `warranty_type` ENUM('manufacturer', 'store') NOT NULL,
+    `description` TEXT NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `role_permissions` ADD CONSTRAINT `role_permissions_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -363,6 +378,9 @@ ALTER TABLE `categories` ADD CONSTRAINT `categories_parent_id_fkey` FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE `products` ADD CONSTRAINT `products_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `products` ADD CONSTRAINT `products_warranty_policy_id_fkey` FOREIGN KEY (`warranty_policy_id`) REFERENCES `warranty_policies`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `product_sku` ADD CONSTRAINT `product_sku_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

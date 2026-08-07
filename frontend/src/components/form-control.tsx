@@ -1,12 +1,4 @@
-import {
-	forwardRef,
-	useId,
-	useState,
-	type InputHTMLAttributes,
-	type ReactNode,
-	type Ref,
-	type TextareaHTMLAttributes,
-} from "react";
+import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
 
 type FormControlVariant = "cream" | "surface";
 
@@ -39,31 +31,15 @@ const variantClasses: Record<FormControlVariant, string> = {
 const baseFieldClasses =
 	"w-full rounded-xl border border-border text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary-light disabled:cursor-not-allowed disabled:opacity-60";
 
-const FormControl = forwardRef<
-	HTMLInputElement | HTMLTextAreaElement,
-	FormControlProps
->((props, ref) => {
-	const {
-		label,
-		error,
-		hint,
-		variant = "cream",
-		wrapperClassName = "",
-		rightElement,
-		id,
-		className = "",
-		required,
-		...rest
-	} = props;
+const FormControl = forwardRef<HTMLInputElement | HTMLTextAreaElement, FormControlProps>((props, ref) => {
+	const { label, error, hint, variant = "cream", wrapperClassName = "", rightElement, id, className = "", required, ...rest } = props;
 
 	const generatedId = useId();
 	const fieldId = id ?? generatedId;
 	const [showPassword, setShowPassword] = useState(false);
 
 	const isTextarea = props.as === "textarea";
-	const isPasswordField =
-		!isTextarea &&
-		(rest as InputHTMLAttributes<HTMLInputElement>).type === "password";
+	const isPasswordField = !isTextarea && (rest as InputHTMLAttributes<HTMLInputElement>).type === "password";
 
 	const fieldClasses = [
 		baseFieldClasses,
@@ -80,9 +56,7 @@ const FormControl = forwardRef<
 	return (
 		<div className={wrapperClassName}>
 			{label && (
-				<label
-					htmlFor={fieldId}
-					className='mb-1.5 block text-sm font-medium text-ink'>
+				<label htmlFor={fieldId} className='mb-1.5 block text-sm font-medium text-ink'>
 					{label}
 					{required && <span className='ml-0.5 text-red-500'>*</span>}
 				</label>
@@ -90,13 +64,7 @@ const FormControl = forwardRef<
 
 			<div className='relative'>
 				{isTextarea ? (
-					<textarea
-						id={fieldId}
-						ref={ref as Ref<HTMLTextAreaElement>}
-						required={required}
-						className={fieldClasses}
-						{...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)}
-					/>
+					<textarea id={fieldId} ref={ref as Ref<HTMLTextAreaElement>} required={required} className={fieldClasses} {...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)} />
 				) : (
 					<input
 						id={fieldId}
@@ -104,13 +72,7 @@ const FormControl = forwardRef<
 						required={required}
 						className={fieldClasses}
 						{...(rest as InputHTMLAttributes<HTMLInputElement>)}
-						type={
-							isPasswordField
-								? showPassword
-									? "text"
-									: "password"
-								: (rest as InputHTMLAttributes<HTMLInputElement>).type
-						}
+						type={isPasswordField ? (showPassword ? "text" : "password") : (rest as InputHTMLAttributes<HTMLInputElement>).type}
 					/>
 				)}
 
@@ -119,23 +81,15 @@ const FormControl = forwardRef<
 						type='button'
 						tabIndex={-1}
 						onClick={() => setShowPassword((prev) => !prev)}
-						className='absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-primary-dark cursor-pointer'>
+						className='absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-primary-dark cursor-default'>
 						{showPassword ? "Ẩn" : "Hiện"}
 					</button>
 				)}
 
-				{!isPasswordField && rightElement && (
-					<div className='absolute right-4 top-1/2 -translate-y-1/2'>
-						{rightElement}
-					</div>
-				)}
+				{!isPasswordField && rightElement && <div className='absolute right-4 top-1/2 -translate-y-1/2'>{rightElement}</div>}
 			</div>
 
-			{error ? (
-				<p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>
-			) : hint ? (
-				<p className='mt-1.5 text-xs text-muted'>{hint}</p>
-			) : null}
+			{error ? <p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p> : hint ? <p className='mt-1.5 text-xs text-muted'>{hint}</p> : null}
 		</div>
 	);
 });

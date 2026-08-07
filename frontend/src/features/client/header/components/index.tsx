@@ -28,7 +28,7 @@ const Header = () => {
 				<Button type='button' variant='outline' onClick={() => setMobileOpen(true)} aria-label='Mở menu' className='size-10! p-0! rounded-full lg:hidden' icon={<MenuIcon className='h-5 w-5' />} />
 
 				{/* Logo */}
-				<Link to={paths.client.home} className='flex shrink-0 items-center gap-2'>
+				<Link to={paths.client.home} className='flex shrink-0 items-center gap-2 cursor-default!'>
 					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 					<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
 				</Link>

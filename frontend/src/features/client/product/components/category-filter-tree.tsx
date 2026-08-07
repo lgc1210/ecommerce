@@ -10,8 +10,7 @@ interface CategoryFilterTreeProps {
 }
 
 /** True nếu `node` chính là `id`, hoặc `id` nằm ở bất kỳ cấp con nào bên dưới `node`. */
-const containsCategory = (node: PublicCategoryTreeNode, id: number): boolean =>
-	node.id === id || node.subcategories.some((child) => containsCategory(child, id));
+const containsCategory = (node: PublicCategoryTreeNode, id: number): boolean => node.id === id || node.subcategories.some((child) => containsCategory(child, id));
 
 /**
  * Bộ lọc danh mục dạng cây: danh mục gốc render trước, danh mục có cấp con hiển thị nút mở/thu
@@ -20,13 +19,7 @@ const containsCategory = (node: PublicCategoryTreeNode, id: number): boolean =>
 const CategoryFilterTree = ({ categories, selectedCategoryId, onToggleCategory }: CategoryFilterTreeProps) => (
 	<ul className='space-y-1'>
 		{categories.map((node) => (
-			<CategoryFilterNode
-				key={node.id}
-				node={node}
-				depth={0}
-				selectedCategoryId={selectedCategoryId}
-				onToggleCategory={onToggleCategory}
-			/>
+			<CategoryFilterNode key={node.id} node={node} depth={0} selectedCategoryId={selectedCategoryId} onToggleCategory={onToggleCategory} />
 		))}
 	</ul>
 );
@@ -69,21 +62,14 @@ const CategoryFilterNode = ({ node, depth, selectedCategoryId, onToggleCategory 
 						aria-expanded={expanded}
 						aria-label={expanded ? `Thu gọn ${node.name}` : `Mở rộng ${node.name}`}
 						className='flex h-5 w-5 shrink-0 items-center justify-center bg-transparent! p-0!'>
-						<ChevronDownIcon
-							className={`h-3.5 w-3.5 transition-transform text-muted! hover:text-ink! ${expanded ? "" : "-rotate-90"}`}
-						/>
+						<ChevronDownIcon className={`h-3.5 w-3.5 transition-transform text-muted! hover:text-ink! ${expanded ? "" : "-rotate-90"}`} />
 					</Button>
 				) : (
 					<span className='h-5 w-5 shrink-0' aria-hidden='true' />
 				)}
 
-				<label className='flex flex-1 cursor-pointer items-center gap-2.5 text-sm text-ink/80'>
-					<input
-						type='checkbox'
-						checked={selectedCategoryId === node.id}
-						onChange={() => onToggleCategory(node.id)}
-						className='h-4 w-4 rounded border-border text-primary focus:ring-primary-light'
-					/>
+				<label className='flex flex-1 cursor-default items-center gap-2.5 text-sm text-ink/80'>
+					<input type='checkbox' checked={selectedCategoryId === node.id} onChange={() => onToggleCategory(node.id)} className='h-4 w-4 rounded border-border text-primary focus:ring-primary-light' />
 					{node.name}
 					<span className='ml-auto text-xs text-muted'>{node._count.products}</span>
 				</label>
@@ -92,13 +78,7 @@ const CategoryFilterNode = ({ node, depth, selectedCategoryId, onToggleCategory 
 			{hasChildren && expanded && (
 				<ul className='mt-1 space-y-1'>
 					{node.subcategories.map((child) => (
-						<CategoryFilterNode
-							key={child.id}
-							node={child}
-							depth={depth + 1}
-							selectedCategoryId={selectedCategoryId}
-							onToggleCategory={onToggleCategory}
-						/>
+						<CategoryFilterNode key={child.id} node={child} depth={depth + 1} selectedCategoryId={selectedCategoryId} onToggleCategory={onToggleCategory} />
 					))}
 				</ul>
 			)}

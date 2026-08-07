@@ -80,6 +80,17 @@ enum NotificationType {
   review
 }
 
+enum DurationUnit {
+  day   // Đơn vị: ngày
+  month // Đơn vị: tháng
+  year  // Đơn vị: năm
+}
+
+enum WarrantyProviderType {
+  manufacturer // Bảo hành từ nhà sản xuất
+  store        // Bảo hành từ cửa hàng
+}
+
 // ==========================================
 // 1. IDENTITY & ACCESS MANAGEMENT (IAM)
 // ==========================================
@@ -227,6 +238,7 @@ model Product {
   isActive    Boolean      @default(true) @map("is_active")
   // Admin đánh dấu để hiển thị ở carousel "Sản phẩm nổi bật" trên trang chủ (xem ProductService.getFeaturedProducts)
   isFeatured  Boolean      @default(false) @map("is_featured")
+  warrantyPolicyId Int?            @map("warranty_policy_id") // NULL nếu sản phẩm không có bảo hành
   thumbnailUrl   String?      @map("thumbnail_url") @db.VarChar(500)
   createdAt   DateTime?    @default(now()) @map("created_at")
   updatedAt   DateTime?    @updatedAt @map("updated_at")
@@ -234,6 +246,8 @@ model Product {
   category    Category?    @relation(fields: [categoryId], references: [id])
   skus        ProductSku[]
   reviews     Review[]
+  warrantyPolicy   WarrantyPolicy? @relation(fields: [warrantyPolicyId], references: [id])
+
 
   @@map("products")
 
@@ -533,4 +547,22 @@ model Message {
   @@index([conversationId])
   @@index([conversationId, createdAt]) // Tối ưu truy vấn load lịch sử chat theo thời gian
   @@map("messages")
+}
+
+/// Lưu các gói/chính sách bảo hành để gán cho sản phẩm (vd: "Bảo hành 12 tháng chính hãng")
+model WarrantyPolicy {
+  id            Int                  @id @default(autoincrement())
+  name          String               @db.VarChar(255)
+  durationValue Int                  @map("duration_value") // Giá trị thời hạn bảo hành (vd: 12)
+
+  durationUnit  DurationUnit         @map("duration_unit") // Đơn vị đi kèm duration_value (vd: month)
+  warrantyType  WarrantyProviderType @map("warranty_type") // Bên chịu trách nhiệm bảo hành
+
+  description   String?              @db.Text
+  createdAt     DateTime?            @default(now()) @map("created_at")
+  updatedAt     DateTime?            @updatedAt @map("updated_at")
+
+  products      Product[] // Danh sách sản phẩm đang áp dụng chính sách bảo hành này
+
+  @@map("warranty_policies")
 }

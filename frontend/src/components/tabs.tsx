@@ -58,7 +58,7 @@ function TabItem<T extends string>({ value, icon, children }: TabItemProps<T>) {
 		<button
 			type='button'
 			onClick={() => context.onChange(value)}
-			className={`flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-semibold transition-colors cursor-default ${
+			className={`flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ring-0 outline-0 cursor-default ${
 				isActive ? "border-primary text-primary-dark" : "border-transparent text-muted hover:text-ink"
 			}`}>
 			{icon}

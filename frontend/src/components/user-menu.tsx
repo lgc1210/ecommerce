@@ -71,7 +71,7 @@ const UserMenu = ({ actions = defaultActions, redirectAfterLogout = paths.auth.l
 
 	if (!isAuthenticated) {
 		return (
-			<Link to={paths.auth.login} aria-label='Tài khoản' className='flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'>
+			<Link to={paths.auth.login} aria-label='Tài khoản' className='flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default!'>
 				<UserIcon className='h-5 w-5' />
 			</Link>
 		);

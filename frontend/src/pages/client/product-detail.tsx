@@ -8,17 +8,11 @@ import { formatCurrency } from "../../utils/currency";
 import { CartIcon, MinusIcon, PlusIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../components/icons";
 import VariationSelector from "../../features/client/product/components/variation-selector";
 import { useProductBySlugQuery } from "../../features/client/product/hooks";
-import {
-	collectVariationAttributes,
-	findMatchingSku,
-	getProductThumbnail,
-	getSkuImages,
-	pickDefaultSku,
-	toProductCardItem,
-} from "../../features/client/product/utils";
+import { collectVariationAttributes, findMatchingSku, getProductThumbnail, getSkuImages, pickDefaultSku, toProductCardItem } from "../../features/client/product/utils";
 import type { VariationDetails } from "../../features/client/product/types";
 import { useCart } from "../../features/client/cart/hooks";
 import ProductCard from "../../features/client/product/components/product-card";
+import { TabItem, Tabs } from "../../components/tabs";
 
 const tabs = [
 	{ id: "description", label: "Mô tả" },
@@ -50,9 +44,7 @@ const ProductDetailPage = () => {
 	}
 
 	if (isLoading) {
-		return (
-			<div className='mx-auto max-w-7xl px-4 py-24 text-center text-muted sm:px-6 lg:px-8'>Đang tải sản phẩm...</div>
-		);
+		return <div className='mx-auto max-w-7xl px-4 py-24 text-center text-muted sm:px-6 lg:px-8'>Đang tải sản phẩm...</div>;
 	}
 
 	if (isError || !product) {
@@ -119,9 +111,7 @@ const ProductDetailPage = () => {
 										key={img + index}
 										type='button'
 										onClick={() => setActiveImage(index)}
-										className={`aspect-square overflow-hidden rounded-xl border-2 ${
-											activeImage === index ? "border-primary" : "border-transparent"
-										}`}>
+										className={`aspect-square overflow-hidden rounded-xl border-2 ${activeImage === index ? "border-primary" : "border-transparent"}`}>
 										<img src={img} alt={`${product.name} ${index + 1}`} className='h-full w-full object-cover' />
 									</button>
 								))}
@@ -134,10 +124,7 @@ const ProductDetailPage = () => {
 						{product.averageRating !== null && (
 							<div className='flex items-center gap-1 text-primary'>
 								{Array.from({ length: 5 }).map((_, i) => (
-									<StarIcon
-										key={i}
-										className={`h-4 w-4 ${i < Math.round(product.averageRating!) ? "text-primary" : "text-border"}`}
-									/>
+									<StarIcon key={i} className={`h-4 w-4 ${i < Math.round(product.averageRating!) ? "text-primary" : "text-border"}`} />
 								))}
 								<span className='ml-2 text-sm text-muted'>
 									{product.averageRating!.toFixed(1)} ({reviewCount} đánh giá)
@@ -155,24 +142,14 @@ const ProductDetailPage = () => {
 
 						<div className='mt-6 flex items-center gap-2 text-sm'>
 							<span className={`h-2 w-2 rounded-full ${inStock ? "bg-green-600" : "bg-red-500"}`} />
-							{inStock ? (
-								<span className='text-ink'>Còn hàng{selectedSku ? ` (${selectedSku.stockQuantity})` : ""}</span>
-							) : (
-								<span className='text-red-600'>Tạm hết hàng</span>
-							)}
+							{inStock ? <span className='text-ink'>Còn hàng{selectedSku ? ` (${selectedSku.stockQuantity})` : ""}</span> : <span className='text-red-600'>Tạm hết hàng</span>}
 						</div>
 
 						{/* Chọn biến thể (màu/size...) */}
 						{attributes.length > 0 && (
 							<div className='mt-6 space-y-5'>
 								{attributes.map((attribute) => (
-									<VariationSelector
-										key={attribute}
-										attribute={attribute}
-										skus={product.skus}
-										selected={selected}
-										onSelect={handleSelect}
-									/>
+									<VariationSelector key={attribute} attribute={attribute} skus={product.skus} selected={selected} onSelect={handleSelect} />
 								))}
 							</div>
 						)}
@@ -199,11 +176,7 @@ const ProductDetailPage = () => {
 									icon={<PlusIcon className='h-4 w-4' />}
 								/>
 							</div>
-							<Button
-								disabled={!inStock}
-								onClick={handleAddToCart}
-								icon={<CartIcon className='h-4 w-4' />}
-								iconPosition='left'>
+							<Button disabled={!inStock} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
 								Thêm vào giỏ
 							</Button>
 						</div>
@@ -223,22 +196,13 @@ const ProductDetailPage = () => {
 
 				{/* Tabs */}
 				<div className='mt-16'>
-					<div className='flex gap-8 border-b border-border'>
+					<Tabs value={activeTab} onChange={setActiveTab}>
 						{tabs.map((tab) => (
-							<button
-								key={tab.id}
-								type='button'
-								onClick={() => setActiveTab(tab.id)}
-								className={`relative pb-4 text-sm font-semibold transition-colors ${
-									activeTab === tab.id ? "text-primary-dark" : "text-muted hover:text-ink"
-								}`}>
+							<TabItem key={tab.id} value={tab.id}>
 								{tab.label}
-								{activeTab === tab.id && (
-									<span className='absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary' />
-								)}
-							</button>
+							</TabItem>
 						))}
-					</div>
+					</Tabs>
 
 					<div className='max-w-3xl py-8 text-sm leading-relaxed text-ink/80'>
 						{activeTab === "description" && <p>{product.description || "Chưa có mô tả cho sản phẩm này."}</p>}
@@ -269,10 +233,7 @@ const ProductDetailPage = () => {
 										<li key={review.id} className='border-b border-border pb-6 last:border-0'>
 											<div className='flex items-center gap-1 text-primary'>
 												{Array.from({ length: 5 }).map((_, i) => (
-													<StarIcon
-														key={i}
-														className={`h-3.5 w-3.5 ${i < review.rating ? "text-primary" : "text-border"}`}
-													/>
+													<StarIcon key={i} className={`h-3.5 w-3.5 ${i < review.rating ? "text-primary" : "text-border"}`} />
 												))}
 											</div>
 											<p className='mt-2 font-semibold text-ink'>{review.user?.name ?? "Khách hàng"}</p>

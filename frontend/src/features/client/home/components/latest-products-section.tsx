@@ -18,7 +18,7 @@ const LatestProductsSection = () => {
 			<div className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
 				<div className='flex items-center justify-between'>
 					<h2 className='text-2xl font-extrabold tracking-tight text-ink sm:text-3xl'>Sản phẩm mới nhất</h2>
-					<Link to={paths.client.shop} className='hidden items-center gap-1 text-sm font-semibold text-primary-dark hover:underline sm:flex'>
+					<Link to={paths.client.shop} className='hidden items-center gap-1 text-sm font-semibold text-primary-dark hover:underline sm:flex cursor-default!'>
 						Xem tất cả <ChevronRightIcon className='h-4 w-4' />
 					</Link>
 				</div>
