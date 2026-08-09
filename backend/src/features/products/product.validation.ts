@@ -1,7 +1,5 @@
 import { z } from "zod";
-
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
-const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+import { numericIdString, slugRegex } from "../../shared/validation.js";
 
 // ==========================================
 // SKU (biến thể) - dùng chung cho tạo/sửa

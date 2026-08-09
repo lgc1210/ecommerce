@@ -1,5 +1,5 @@
-import type { OrderStatus } from "../types";
-import { BoxIcon, CheckIcon, ClockIcon, TruckIcon, XIcon } from "../../../../components/icons";
+import type { OrderStatus } from "../../../order/types";
+import { BoxIcon, CheckIcon, ClockIcon, TruckIcon, XIcon } from "../../../../../components/icons";
 
 const STEPS: { status: OrderStatus; label: string; icon: typeof ClockIcon }[] = [
 	{ status: "pending", label: "Chờ xử lý", icon: ClockIcon },
@@ -47,15 +47,9 @@ const OrderTracking = ({ status }: OrderTrackingProps) => {
 								}`}>
 								<Icon className='h-4 w-4' />
 							</div>
-							{index < STEPS.length - 1 && (
-								<div
-									className={`mx-1 h-0.5 flex-1 transition-colors ${index < currentIndex ? "bg-primary" : "bg-border"}`}
-								/>
-							)}
+							{index < STEPS.length - 1 && <div className={`mx-1 h-0.5 flex-1 transition-colors ${index < currentIndex ? "bg-primary" : "bg-border"}`} />}
 						</div>
-						<span className={`mt-2 text-center text-xs font-semibold ${isActive ? "text-ink" : "text-muted"}`}>
-							{step.label}
-						</span>
+						<span className={`mt-2 text-center text-xs font-semibold ${isActive ? "text-ink" : "text-muted"}`}>{step.label}</span>
 					</div>
 				);
 			})}

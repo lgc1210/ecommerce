@@ -1,10 +1,6 @@
 import prisma from "../../config/prisma.js";
 import { computeCartTotals } from "./cart.utils.js";
-
-interface AddCartItemInput {
-	productSkuId: number;
-	quantity: number;
-}
+import type { AddCartItemInput } from "./cart.validation.js";
 
 const cartItemInclude = {
 	productSku: {
@@ -44,9 +40,7 @@ class CartService {
 		const desiredQuantity = (existing?.quantity ?? 0) + data.quantity;
 
 		if (desiredQuantity > sku.stockQuantity) {
-			throw new Error(
-				`BadRequest: Chỉ còn ${sku.stockQuantity} sản phẩm trong kho, không thể thêm ${desiredQuantity} vào giỏ hàng.`,
-			);
+			throw new Error(`BadRequest: Chỉ còn ${sku.stockQuantity} sản phẩm trong kho, không thể thêm ${desiredQuantity} vào giỏ hàng.`);
 		}
 
 		if (existing) {
@@ -95,13 +89,7 @@ class CartService {
 		// Phòng thủ: lọc bỏ item thiếu/sai kiểu productSkuId hoặc quantity (vd. dữ liệu giỏ hàng
 		// cục bộ cũ/hỏng còn sót lại ở localStorage phía client) — tránh đưa `undefined`/NaN vào
 		// query Prisma bên dưới, dù validate() ở tầng route có bỏ sót thì hàm này vẫn an toàn.
-		const validPendingItems = pendingCartItems.filter(
-			(item) =>
-				Number.isInteger(item?.productSkuId) &&
-				item.productSkuId > 0 &&
-				Number.isInteger(item?.quantity) &&
-				item.quantity > 0,
-		);
+		const validPendingItems = pendingCartItems.filter((item) => Number.isInteger(item?.productSkuId) && item.productSkuId > 0 && Number.isInteger(item?.quantity) && item.quantity > 0);
 
 		if (validPendingItems.length === 0) {
 			return { cart: await this.getCart(userId), skippedItems };

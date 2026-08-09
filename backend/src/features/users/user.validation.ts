@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { AddressTag } from "../../generated/prisma/index.js";
-
-const vietnamesePhoneRegex = /^(0|\+84)[0-9]{9,10}$/;
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
+import { numericIdString, vietnamesePhoneRegex } from "../../shared/validation.js";
 
 // ==========================================
 // Self-service: profile

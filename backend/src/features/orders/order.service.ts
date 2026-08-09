@@ -4,6 +4,7 @@ import { normalizeCouponCode, checkCouponUsability, checkCouponEmailOwnership, c
 import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
 import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus } from "./order.utils.js";
 import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
+import notificationService from "../notifications/notification.service.js";
 
 interface CreateOrderInput {
 	shippingAddressId: number;
@@ -202,6 +203,10 @@ class OrderService {
 			{ timeout: 15_000 }, // Mặc định Prisma là 5s — nới ra vì transaction này có thêm 1 lượt gọi API GHN
 		);
 
+		if (order.userId) {
+			await notificationService.notifyOrderPlaced(order.userId, order.id, order.orderNumber);
+		}
+
 		return order;
 	}
 
@@ -245,11 +250,11 @@ class OrderService {
 		if (order.userId !== userId) {
 			throw new Error("NotFound: Đơn hàng không tồn tại.");
 		}
-		if (order.orderStatus !== "pending") {
+		if (order.orderStatus !== OrderStatus.pending) {
 			throw new Error('BadRequest: Chỉ có thể hủy đơn hàng khi đơn đang ở trạng thái "pending".');
 		}
 
-		return this.transitionOrderStatus(order, "cancelled");
+		return this.transitionOrderStatus(order, OrderStatus.cancelled);
 	}
 
 	// ==========================================
@@ -502,7 +507,7 @@ class OrderService {
 			await cancelShippingOrder(order.ghnOrderCode);
 		}
 
-		return prisma.$transaction(async (tx) => {
+		const updatedOrder = await prisma.$transaction(async (tx) => {
 			if (isCancellation(currentStatus, nextStatus)) {
 				const items = await tx.orderItem.findMany({ where: { orderId: order.id } });
 				for (const item of items) {
@@ -538,6 +543,12 @@ class OrderService {
 				include: orderDetailInclude,
 			});
 		});
+
+		if (updatedOrder.userId) {
+			await notificationService.notifyOrderStatusChanged(updatedOrder.userId, updatedOrder.id, updatedOrder.orderNumber, nextStatus);
+		}
+
+		return updatedOrder;
 	}
 
 	private async getOrderOrThrow(orderId: number, include?: Record<string, unknown>) {

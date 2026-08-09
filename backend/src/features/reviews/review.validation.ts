@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
+import { numericIdString } from "../../shared/validation.js";
 
 // ==========================================
 // Public

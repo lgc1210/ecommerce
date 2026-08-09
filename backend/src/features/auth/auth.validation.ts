@@ -85,6 +85,8 @@ export const ResetPasswordSchema = z.object({
 
 export type RegisterInput = z.infer<typeof RegisterSchema>["body"];
 export type LoginInput = z.infer<typeof LoginSchema>["body"];
+export type GoogleLoginInput = z.infer<typeof GoogleLoginSchema>["body"];
+export type FacebookLoginInput = z.infer<typeof FacebookLoginSchema>["body"];
 export type VerifyOtpInput = z.infer<typeof VerifyOtpSchema>["body"];
 export type ResendOtpInput = z.infer<typeof ResendOtpSchema>["body"];
 export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>["body"];

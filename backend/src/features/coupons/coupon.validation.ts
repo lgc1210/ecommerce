@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DiscountType } from "../../generated/prisma/index.js";
+import { numericIdString } from "../../shared/validation.js";
 
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
 const couponCodeRegex = /^[A-Za-z0-9_-]+$/;
 
 // Chuỗi ngày giờ dạng ISO 8601, vd: "2026-08-01T00:00:00.000Z"

@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
+import { numericIdString } from "../../shared/validation.js";
 
 // ==========================================
 // Self-service: cart items
@@ -22,3 +21,7 @@ export const UpdateCartItemSchema = z.object({
 export const CartItemParamSchema = z.object({
 	params: z.object({ itemId: numericIdString }),
 });
+
+export type AddCartItemInput = z.infer<typeof AddCartItemSchema>["body"];
+export type UpdateCartItemInput = z.infer<typeof UpdateCartItemSchema>["body"];
+export type CartItemParam = z.infer<typeof CartItemParamSchema>["params"];

@@ -1,6 +1,6 @@
-import type { PAYMENT_METHOD } from "../payment.constant.js";
+import type { PaymentMethod } from "../../../generated/prisma/index.js";
 
-export type OnlineGatewayMethod = Exclude<(typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD], "cod">;
+export type OnlineGatewayMethod = Exclude<(typeof PaymentMethod)[keyof typeof PaymentMethod], "cod">;
 
 export interface CreatePaymentUrlInput {
 	orderId: number;

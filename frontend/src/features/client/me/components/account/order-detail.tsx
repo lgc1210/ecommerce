@@ -1,16 +1,16 @@
-import Button from "../../../../components/button";
-import { ChevronRightIcon, MapPinIcon } from "../../../../components/icons";
-import { formatCurrency } from "../../../../utils/currency";
-import { useCancelMyOrder, useMyOrderDetailQuery } from "../hooks";
-import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../admin/order/utils";
-import OrderStatusBadge from "../../../admin/order/components/order-status-badge";
-import PaymentStatusBadge from "../../../admin/order/components/payment-status-badge";
+import Button from "../../../../../components/button";
+import { ChevronRightIcon, MapPinIcon } from "../../../../../components/icons";
+import { formatCurrency } from "../../../../../utils/currency";
+import { useCancelMyOrder, useMyOrderDetailQuery } from "../../../order/hooks";
+import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../../admin/order/utils";
+import OrderStatusBadge from "../../../../admin/order/components/order-status-badge";
+import PaymentStatusBadge from "../../../../admin/order/components/payment-status-badge";
 import OrderTracking from "./order-tracking";
 import { Link } from "react-router-dom";
-import paths from "../../../../configs/constants/paths";
-import { ONLINE_GATEWAY_METHODS } from "../../payment/constants";
-import { useCreatePaymentUrlMutation } from "../../payment/hooks";
-import { formatDate } from "../../../../utils";
+import paths from "../../../../../configs/constants/paths";
+import { ONLINE_GATEWAY_METHODS } from "../../../payment/constants";
+import { useCreatePaymentUrlMutation } from "../../../payment/hooks";
+import { formatDate } from "../../../../../utils";
 
 /** "Đen / M" — trả về null nếu sản phẩm không có snapshot biến thể. */
 const formatVariationSnapshot = (snapshot: Record<string, string> | null): string | null => {

@@ -8,12 +8,7 @@ import { Prisma } from "../../generated/prisma/index.js";
 import type { TokenPayload } from "../../middlewares/authenticate.js";
 import cartService from "../carts/cart.service.js";
 import { generateOtpCode, getOtpExpiryDate, signAccessToken, signRefreshToken, verifyRefreshToken, sanitizeUser, OTP_MAX_ATTEMPTS, REFRESH_TOKEN_MAX_AGE_MS } from "./auth.utils.js";
-
-/** 1 dòng giỏ hàng cục bộ (localStorage) gửi kèm payload đăng nhập, xem auth.validation.ts#cartItemsSchema. */
-interface PendingCartItem {
-	productSkuId: number;
-	quantity: number;
-}
+import type { FacebookLoginInput, ForgotPasswordInput, GoogleLoginInput, LoginInput, RegisterInput, ResendOtpInput, ResetPasswordInput, VerifyOtpInput } from "./auth.validation.js";
 
 const { OtpType, OtpStatus, Provider } = pkg;
 
@@ -51,25 +46,21 @@ class AuthService {
 	// ==========================================
 	// Đăng ký tài khoản local (email + password)
 	// ==========================================
-	async register(input: { name: string; email: string; phone: string; password: string }) {
+	async register({ name, email, phone, password }: RegisterInput) {
 		const existingUser = await prisma.user.findFirst({
-			where: { OR: [{ email: input.email }, { phone: input.phone }] },
+			where: { OR: [{ email: email }, { phone: phone }] },
 		});
-
 		if (existingUser) {
-			const field = existingUser.email === input.email ? "Email" : "Số điện thoại";
+			const field = existingUser.email === email ? "Email" : "Số điện thoại";
 			throw new Error(`Conflict: ${field} này đã được sử dụng.`);
 		}
-
 		const customerRole = await this.getDefaultCustomerRole();
-
-		const passwordHash = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
-
+		const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 		const user = await prisma.user.create({
 			data: {
-				name: input.name,
-				email: input.email,
-				phone: input.phone,
+				name: name,
+				email: email,
+				phone: phone,
 				passwordHash,
 				roleId: customerRole.id,
 				provider: Provider.local,
@@ -79,14 +70,13 @@ class AuthService {
 		});
 
 		await this.issueOtp(user.id, user.email, OtpType.registration);
-
 		return sanitizeUser(user);
 	}
 
 	// ==========================================
 	// Xác thực OTP đăng ký -> kích hoạt tài khoản
 	// ==========================================
-	async verifyRegistrationOtp(email: string, otpCode: string) {
+	async verifyRegistrationOtp({ email, otpCode }: VerifyOtpInput) {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) {
 			throw new Error("NotFound: Không tìm thấy tài khoản với email này.");
@@ -94,7 +84,6 @@ class AuthService {
 		if (user.isVerified) {
 			throw new Error("Conflict: Tài khoản đã được xác thực trước đó.");
 		}
-
 		await this.validateAndConsumeOtp(email, otpCode, OtpType.registration);
 
 		const verifiedUser = await prisma.user.update({
@@ -108,7 +97,7 @@ class AuthService {
 	// ==========================================
 	// Gửi lại OTP (đăng ký hoặc quên mật khẩu)
 	// ==========================================
-	async resendOtp(email: string, type: "registration" | "password_reset") {
+	async resendOtp({ email, type }: ResendOtpInput) {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) {
 			throw new Error("NotFound: Không tìm thấy tài khoản với email này.");
@@ -116,20 +105,18 @@ class AuthService {
 		if (type === OtpType.registration && user.isVerified) {
 			throw new Error("Conflict: Tài khoản đã được xác thực trước đó.");
 		}
-
 		// Vô hiệu hóa các OTP cũ còn hiệu lực cùng loại để tránh chồng chéo mã hợp lệ
 		await prisma.otp.updateMany({
 			where: { target: email, type: type as any, status: OtpStatus.pending },
 			data: { status: OtpStatus.expired },
 		});
-
 		await this.issueOtp(user.id, email, type as any);
 	}
 
 	// ==========================================
 	// Đăng nhập
 	// ==========================================
-	async login(email: string, password: string, pendingCartItems: PendingCartItem[] = []) {
+	async login({ email, password, cartItems: pendingCartItems }: LoginInput) {
 		const user = await prisma.user.findUnique({ where: { email }, include: userWithRoleInclude });
 
 		// if (!user || user.provider !== Provider.local || !user.passwordHash) {
@@ -178,7 +165,7 @@ class AuthService {
 	// (verify chữ ký RS256 bằng public key của Google + kiểm tra audience/issuer),
 	// KHÔNG tự ý decode JWT bằng tay vì như vậy sẽ không xác thực được ai là người
 	// thực sự phát hành token.
-	async loginWithGoogle(idToken: string, pendingCartItems: PendingCartItem[] = []) {
+	async loginWithGoogle({ idToken, cartItems: pendingCartItems = [] }: GoogleLoginInput) {
 		const ticket = await googleOAuthClient
 			.verifyIdToken({
 				idToken,
@@ -266,7 +253,7 @@ class AuthService {
 	// Frontend dùng Facebook JavaScript SDK (FB.login) để lấy accessToken ngay trên
 	// trang login/register, không điều hướng qua Facebook rồi redirect về (đó là
 	// OAuth redirect flow, không dùng ở đây).
-	async loginWithFacebook(accessToken: string, pendingCartItems: PendingCartItem[] = []) {
+	async loginWithFacebook({ accessToken, cartItems: pendingCartItems = [] }: FacebookLoginInput) {
 		// Bước 1: xác minh accessToken thực sự hợp lệ và thuộc về đúng app này, bằng cách
 		// gọi Graph API "debug_token" với App Access Token (APP_ID|APP_SECRET). Đây là bước
 		// tương đương việc verifyIdToken() kiểm tra audience ở luồng Google, KHÔNG được bỏ qua
@@ -442,7 +429,7 @@ class AuthService {
 	// ==========================================
 	// Quên mật khẩu: gửi OTP đặt lại mật khẩu
 	// ==========================================
-	async forgotPassword(email: string) {
+	async forgotPassword({ email }: ForgotPasswordInput) {
 		const user = await prisma.user.findUnique({ where: { email } });
 		// Không throw lỗi "NotFound" ở đây để tránh lộ thông tin email nào đã tồn tại
 		// trong hệ thống (user enumeration). Controller luôn trả về message chung chung.
@@ -460,7 +447,7 @@ class AuthService {
 	// ==========================================
 	// Đặt lại mật khẩu bằng OTP
 	// ==========================================
-	async resetPassword(email: string, otpCode: string, newPassword: string) {
+	async resetPassword({ email, otpCode, newPassword }: ResetPasswordInput) {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) {
 			throw new Error("BadRequest: Mã OTP không hợp lệ.");
@@ -540,26 +527,21 @@ class AuthService {
 			where: { target, type, status: OtpStatus.pending },
 			orderBy: { createdAt: "desc" },
 		});
-
 		if (!otp) {
 			throw new Error("BadRequest: Mã OTP không tồn tại hoặc đã được sử dụng, vui lòng gửi lại mã mới.");
 		}
-
 		if (otp.expiresAt < new Date()) {
 			await prisma.otp.update({ where: { id: otp.id }, data: { status: OtpStatus.expired } });
 			throw new Error("BadRequest: Mã OTP đã hết hạn, vui lòng gửi lại mã mới.");
 		}
-
 		if (otp.attempts >= OTP_MAX_ATTEMPTS) {
 			await prisma.otp.update({ where: { id: otp.id }, data: { status: OtpStatus.failed_max_attempts } });
 			throw new Error("BadRequest: Bạn đã nhập sai mã OTP quá nhiều lần, vui lòng gửi lại mã mới.");
 		}
-
 		if (otp.otpCode !== otpCode) {
 			await prisma.otp.update({ where: { id: otp.id }, data: { attempts: { increment: 1 } } });
 			throw new Error("BadRequest: Mã OTP không chính xác.");
 		}
-
 		await prisma.otp.update({ where: { id: otp.id }, data: { status: OtpStatus.verified } });
 		return otp;
 	}

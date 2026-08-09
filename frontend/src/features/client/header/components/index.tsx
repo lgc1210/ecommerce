@@ -6,6 +6,7 @@ import { CartIcon, CloseIcon, MenuIcon, SettingsIcon } from "../../../../compone
 import UserMenu from "../../../../components/user-menu";
 import { useCart } from "../../cart/hooks";
 import Button from "../../../../components/button";
+import NotificationBell from "../../notification/components/notification-bell";
 
 const navItems = [
 	{ to: paths.client.home, label: "Trang chủ", end: true },
@@ -30,7 +31,7 @@ const Header = () => {
 				{/* Logo */}
 				<Link to={paths.client.home} className='flex shrink-0 items-center gap-2 cursor-default!'>
 					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
-					<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
+					<span className='text-xl font-extrabold tracking-tight text-ink hidden sm:block'>Commerce</span>
 				</Link>
 
 				{/* Desktop nav */}
@@ -53,6 +54,8 @@ const Header = () => {
 							},
 						]}
 					/>
+
+					<NotificationBell />
 
 					<Link to={paths.client.cart} aria-label='Giỏ hàng' className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'>
 						<CartIcon className='h-5 w-5' />

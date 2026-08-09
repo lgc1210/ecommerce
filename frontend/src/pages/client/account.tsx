@@ -1,63 +1,70 @@
 import { useState } from "react";
+import { BellIcon, BoxIcon, MailIcon, MapPinIcon, UserIcon } from "../../components/icons";
+import { TabItem, Tabs } from "../../components/tabs";
 import { useLocation } from "react-router-dom";
-import BreadCrumb from "../../components/breadcrumb";
-import { Tabs, TabItem } from "../../components/tabs";
-import { BoxIcon, MailIcon, MapPinIcon, UserIcon } from "../../components/icons";
 
-import ProfileTab from "../../features/client/me/components/account/profile-tab";
+import BreadCrumb from "../../components/breadcrumb";
 import AddressesTab from "../../features/client/me/components/account/addresses-tab";
 import MyContactsTab from "../../features/client/me/components/account/my-contacts-tab";
-import OrdersTab from "../../features/client/order/components/order-tab";
+import NotificationsTab from "../../features/client/me/components/account/notifications-tab";
+import OrdersTab from "../../features/client/me/components/account/order-tab";
+import ProfileTab from "../../features/client/me/components/account/profile-tab";
 
-const TABS = Object.freeze({
-	profile: "profile",
-	addresses: "addresses",
-	orders: "orders",
-	contacts: "contacts",
-} as const);
+const TABS = [
+	{
+		name: "profile",
+		icon: <UserIcon className='h-4 w-4' />,
+		label: "Thông tin tài khoản",
+	},
+	{
+		name: "addresses",
+		icon: <MapPinIcon className='h-4 w-4' />,
+		label: "Sổ địa chỉ",
+	},
+	{
+		name: "orders",
+		icon: <BoxIcon className='h-4 w-4' />,
+		label: "Đơn hàng",
+	},
+	{
+		name: "contacts",
+		icon: <MailIcon className='h-4 w-4' />,
+		label: "Lịch sử liên hệ",
+	},
+	{
+		name: "notifications",
+		icon: <BellIcon className='h-4 w-4' />,
+		label: "Quản lý thông báo",
+	},
+] as const;
 
-type Tab = (typeof TABS)[keyof typeof TABS];
+type Tab = (typeof TABS)[number]["name"];
 
-/**
- * Trang "Tài khoản của tôi": 4 tab tương ứng đúng các nhóm route self-service ở
- * backend:
- * - "profile": PATCH /users/me (đổi tên/SĐT)
- * - "addresses": GET/POST/PATCH/DELETE /users/me/addresses (sổ địa chỉ)
- * - "orders": GET /orders/me, GET /orders/me/:id (đơn hàng + chi tiết + tracking)
- * - "contacts": GET /contacts/me (lịch sử liên hệ đã gửi, chỉ đọc)
- *
- * Route "/account" được bảo vệ bởi requireAuthLoader (chỉ cần đăng nhập, không
- * yêu cầu permission đặc biệt — riêng tab "orders" cần thêm permission
- * "order:read", backend đã cấp sẵn cho role "customer" nên không cần thêm
- * loader riêng ở route này).
- *
- * Tab khởi tạo có thể được chỉ định qua `location.state.tab` (vd. sau khi đặt hàng thành công ở
- * trang /payment, điều hướng thẳng sang đây kèm state để mở sẵn tab "Đơn hàng").
- */
 const AccountPage = () => {
 	const location = useLocation();
-	const initialTab = (location.state as { tab?: Tab } | null)?.tab ?? TABS.profile;
+
+	const initialTab = (location.state as { tab?: Tab } | null)?.tab ?? TABS[0].name;
+
 	const [tab, setTab] = useState<Tab>(initialTab);
 
 	return (
 		<div>
 			<BreadCrumb title='Tài khoản của tôi' description='Quản lý thông tin cá nhân và sổ địa chỉ giao hàng.' />
+
 			<div className='mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8'>
 				<Tabs value={tab} onChange={setTab} className='mb-6'>
-					<TabItem value={TABS.profile} icon={<UserIcon className='h-4 w-4' />}>
-						Thông tin tài khoản
-					</TabItem>
-					<TabItem value={TABS.addresses} icon={<MapPinIcon className='h-4 w-4' />}>
-						Sổ địa chỉ
-					</TabItem>
-					<TabItem value={TABS.orders} icon={<BoxIcon className='h-4 w-4' />}>
-						Đơn hàng
-					</TabItem>
-					<TabItem value={TABS.contacts} icon={<MailIcon className='h-4 w-4' />}>
-						Liên hệ của tôi
-					</TabItem>
+					{TABS.map((item) => (
+						<TabItem key={item.name} value={item.name} icon={item.icon}>
+							{item.label}
+						</TabItem>
+					))}
 				</Tabs>
-				{tab === TABS.profile ? <ProfileTab /> : tab === TABS.addresses ? <AddressesTab /> : tab === TABS.orders ? <OrdersTab /> : <MyContactsTab />}
+
+				{tab === "profile" && <ProfileTab />}
+				{tab === "addresses" && <AddressesTab />}
+				{tab === "orders" && <OrdersTab />}
+				{tab === "contacts" && <MyContactsTab />}
+				{tab === "notifications" && <NotificationsTab />}
 			</div>
 		</div>
 	);

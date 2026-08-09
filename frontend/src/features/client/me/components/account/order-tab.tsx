@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useMyOrdersQuery } from "../hooks";
+import { useMyOrdersQuery } from "../../../order/hooks";
 import OrderDetail from "./order-detail";
-import { formatCurrency } from "../../../../utils/currency";
-import OrderStatusBadge from "../../../admin/order/components/order-status-badge";
-import Pagination from "../../../../components/pagination";
-import { BoxIcon } from "../../../../components/icons";
-import { formatDate } from "../../../../utils";
+import { formatCurrency } from "../../../../../utils/currency";
+import OrderStatusBadge from "../../../../admin/order/components/order-status-badge";
+import Pagination from "../../../../../components/pagination";
+import { BoxIcon } from "../../../../../components/icons";
+import { formatDate } from "../../../../../utils";
 
 const PAGE_SIZE = 10;
 

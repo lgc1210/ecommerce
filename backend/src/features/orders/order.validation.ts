@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { OrderStatus, PaymentMethod } from "../../generated/prisma/index.js";
+import { numericIdString } from "../../shared/validation.js";
 
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
 const orderStatusEnum = z.enum([OrderStatus.pending, OrderStatus.processing, OrderStatus.shipped, OrderStatus.delivered, OrderStatus.cancelled]);
 const paymentMethodEnum = z.enum([PaymentMethod.cod, PaymentMethod.vnpay, PaymentMethod.zalopay, PaymentMethod.momo, PaymentMethod.stripe, PaymentMethod.paypal]);
 

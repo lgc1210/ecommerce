@@ -57,10 +57,7 @@ const MyContactsTab = () => {
 							<p className='font-semibold text-ink'>{contact.subject || "(Không có chủ đề)"}</p>
 							<p className='mt-0.5 text-xs text-muted'>{formatDate(contact.createdAt)}</p>
 						</div>
-						<span
-							className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_CLASSNAME[contact.status]}`}>
-							{STATUS_LABEL[contact.status]}
-						</span>
+						<span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_CLASSNAME[contact.status]}`}>{STATUS_LABEL[contact.status]}</span>
 					</div>
 					<p className='mt-3 whitespace-pre-line text-sm text-ink/80'>{contact.message}</p>
 				</div>

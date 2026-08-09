@@ -9,7 +9,6 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 	try {
 		const { name, email, phone, password } = req.body;
 		const user = await authService.register({ name, email, phone, password });
-
 		res.status(201).json({
 			message: "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực tài khoản.",
 			data: user,
@@ -22,7 +21,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 export const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { email, otpCode } = req.body;
-		const user = await authService.verifyRegistrationOtp(email, otpCode);
+		const user = await authService.verifyRegistrationOtp({ email, otpCode });
 
 		res.status(200).json({
 			message: "Xác thực tài khoản thành công. Bạn có thể đăng nhập ngay bây giờ.",
@@ -36,7 +35,7 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
 export const resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { email, type } = req.body;
-		await authService.resendOtp(email, type);
+		await authService.resendOtp({ email, type });
 
 		res.status(200).json({ message: "Mã OTP mới đã được gửi tới email của bạn." });
 	} catch (error) {
@@ -47,7 +46,7 @@ export const resendOtp = async (req: Request, res: Response, next: NextFunction)
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { email, password, cartItems } = req.body;
-		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.login(email, password, cartItems);
+		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.login({ email, password, cartItems });
 
 		res.cookie(TOKENS.accessToken, accessToken, getAccessTokenCookieOptions());
 		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
@@ -66,7 +65,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { idToken, cartItems } = req.body;
-		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle(idToken, cartItems);
+		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle({ idToken, cartItems });
 
 		res.cookie(TOKENS.accessToken, accessToken, getAccessTokenCookieOptions());
 		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
@@ -85,7 +84,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 export const facebookLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { accessToken, cartItems } = req.body;
-		const { user, accessToken: newAccessToken, refreshToken, cart, skippedItems } = await authService.loginWithFacebook(accessToken, cartItems);
+		const { user, accessToken: newAccessToken, refreshToken, cart, skippedItems } = await authService.loginWithFacebook({ accessToken, cartItems });
 
 		res.cookie(TOKENS.accessToken, newAccessToken, getAccessTokenCookieOptions());
 		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
@@ -140,7 +139,7 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
 export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { email } = req.body;
-		await authService.forgotPassword(email);
+		await authService.forgotPassword({ email });
 
 		// Luôn trả về message chung chung dù email có tồn tại hay không (chống user enumeration)
 		res.status(200).json({
@@ -154,7 +153,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
 export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const { email, otpCode, newPassword } = req.body;
-		await authService.resetPassword(email, otpCode, newPassword);
+		await authService.resetPassword({ email, otpCode, newPassword });
 
 		res.status(200).json({ message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." });
 	} catch (error) {

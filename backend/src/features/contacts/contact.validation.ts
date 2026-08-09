@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { ContactStatus } from "../../generated/prisma/index.js";
+import { numericIdString } from "../../shared/validation.js";
 
-const numericIdString = z.string().regex(/^\d+$/, { message: "Must be a positive integer." });
-const contactStatusEnum = z.enum(["new", "in_progress", "resolved", "closed"]);
+const contactStatusEnum = z.enum([ContactStatus.new, ContactStatus.in_progress, ContactStatus.resolved, ContactStatus.closed]);
 
 // ==========================================
 // Public

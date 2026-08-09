@@ -20,6 +20,7 @@ import orderRouter from "./features/orders/order.routes.js";
 import paymentRouter from "./features/payments/payment.routes.js";
 import uploadRouter from "./features/uploads/upload.routes.js";
 import dashboardRouter from "./features/dashboard/dashboard.routes.js";
+import notificationRouter from "./features/notifications/notification.routes.js";
 
 import ghnRouter from "./external/ghn/ghn.routes.js";
 
@@ -66,6 +67,7 @@ app.use("/api/contacts", contactRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/notifications", notificationRouter);
 app.use("/api/uploads", uploadRouter); //
 
 app.use("/api/external/ghn", ghnRouter);
