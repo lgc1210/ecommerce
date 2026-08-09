@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { NotificationType } from "../../generated/prisma/index.js";
 import { numericIdString } from "../../shared/validation.js";
+import { NotificationType } from "../../generated/prisma/index.js";
 
 // ==========================================
 // Payload nội bộ — dùng bởi notification.utils.ts (build*) và notification.service.ts (dispatch).
@@ -36,11 +36,11 @@ export const NotificationIdParamSchema = z.object({
 });
 
 // ==========================================
-// Admin: broadcast thông báo hệ thống/khuyến mãi tới nhiều user
+// Admin: broadcast thông báo hệ thống/khuyến mãi tới TOÀN BỘ customer đang hoạt động
+// (không nhận danh sách userIds — xem notification.service.ts broadcastToAllCustomers)
 // ==========================================
 export const BroadcastNotificationSchema = z.object({
 	body: z.object({
-		userIds: z.array(z.number().int().positive()).min(1, { message: "Cần ít nhất 1 người nhận." }),
 		type: z.enum([NotificationType.promotion, NotificationType.system], { message: "Chỉ hỗ trợ broadcast loại 'promotion' hoặc 'system'." }),
 		title: z.string().min(1).max(255),
 		message: z.string().min(1),
@@ -48,5 +48,3 @@ export const BroadcastNotificationSchema = z.object({
 		imageUrl: z.string().max(255).optional(),
 	}),
 });
-
-export type BroadcastNotification = z.infer<typeof BroadcastNotificationSchema>["body"];

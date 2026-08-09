@@ -145,6 +145,11 @@
     <text x="740" y="443" text-anchor="middle" font-weight="700" fill="#1c1815">uploads/</text>
     <text x="740" y="459" text-anchor="middle" fill="#2c2620">Upload ảnh</text>
     <text x="740" y="472" text-anchor="middle" fill="#2c2620">sản phẩm</text>
+
+    <rect x="840" y="424" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+    <text x="925" y="443" text-anchor="middle" font-weight="700" fill="#1c1815">notifications/</text>
+    <text x="925" y="459" text-anchor="middle" fill="#2c2620">Thông báo của user,</text>
+    <text x="925" y="472" text-anchor="middle" fill="#2c2620">admin phát thông báo</text>
   </g>
 
   <!-- Convention box -->

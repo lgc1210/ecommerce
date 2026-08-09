@@ -53,30 +53,31 @@ Sơ đồ kiến trúc tổng thể
 
 ```
 backend/src/
-├── app.ts                  # Khởi tạo Express app, mount toàn bộ router
-├── server.ts                # Bootstrap: kết nối DB, seed dữ liệu, start server, graceful shutdown
-├── config/                  # env (zod-validated), Prisma client, axios instance, SMTP
-├── middlewares/              # authenticateJWT, requirePermission (RBAC), validate (Zod)
-├── cronjob/                  # Job dọn đơn "pending" quá hạn thanh toán online
-├── external/ghn/              # Tích hợp Giao Hàng Nhanh (tỉnh/huyện/xã, phí ship, tạo đơn)
+├── app.ts                      # Khởi tạo Express app, mount toàn bộ router
+├── server.ts                   # Bootstrap: kết nối DB, seed dữ liệu, start server, graceful shutdown
+├── config/                     # env (zod-validated), Prisma client, axios instance, SMTP
+├── middlewares/                # authenticateJWT, requirePermission (RBAC), validate (Zod)
+├── cronjob/                    # Job dọn đơn "pending" quá hạn thanh toán online
+├── external/ghn/               # Tích hợp Giao Hàng Nhanh (tỉnh/huyện/xã, phí ship, tạo đơn)
 ├── generated/prisma/           # Prisma Client được generate (không sửa tay)
-├── shared/                   # Xử lý lỗi service dùng chung
+├── shared/                     # Xử lý lỗi service dùng chung
 ├── utils/
 └── features/
-    ├── auth/                  # Đăng ký, OTP, đăng nhập (local/Google/Facebook), refresh, quên/đổi mật khẩu
+    ├── auth/                   # Đăng ký, OTP, đăng nhập (local/Google/Facebook), refresh, quên/đổi mật khẩu
     ├── users/                  # Quản lý user, self-service profile + địa chỉ của chính mình
-    ├── user_addresses/          # Quản trị địa chỉ của MỌI người dùng (admin)
+    ├── user_addresses/         # Quản trị địa chỉ của MỌI người dùng (admin)
     ├── rbac/                   # Role & Permission (tạo role, gán/thu hồi quyền)
-    ├── categories/               # Danh mục sản phẩm (cây phân cấp, slug tiếng Việt)
-    ├── products/                # Sản phẩm + biến thể (SKU) + ảnh theo từng SKU
-    ├── carts/                   # Giỏ hàng
-    ├── coupons/                 # Mã giảm giá (cố định / phần trăm, coupon chào mừng theo email)
-    ├── orders/                  # Đặt hàng, tính phí ship GHN, hủy đơn, webhook GHN
-    ├── payments/                 # Trạng thái thanh toán + cổng thanh toán (gateways/)
-    ├── reviews/                  # Đánh giá sản phẩm
-    ├── contacts/                 # Form liên hệ
-    ├── dashboard/                # Thống kê tổng quan cho admin
-    └── uploads/                  # Upload ảnh sản phẩm
+    ├── categories/             # Danh mục sản phẩm (cây phân cấp, slug tiếng Việt)
+    ├── products/               # Sản phẩm + biến thể (SKU) + ảnh theo từng SKU
+    ├── carts/                  # Giỏ hàng
+    ├── coupons/                # Mã giảm giá (cố định / phần trăm, coupon chào mừng theo email)
+    ├── orders/                 # Đặt hàng, tính phí ship GHN, hủy đơn, webhook GHN
+    ├── payments/               # Trạng thái thanh toán + cổng thanh toán (gateways/)
+    ├── reviews/                # Đánh giá sản phẩm
+    ├── contacts/               # Form liên hệ
+    ├── notifications/          # Thông báo in-app (tự bắn khi đơn hàng/thanh toán đổi trạng thái + admin broadcast hàng loạt)
+    ├── dashboard/              # Thống kê tổng quan cho admin
+    └── uploads/                # Upload ảnh sản phẩm
 ```
 
 Mỗi feature theo cùng một khuôn mẫu: `*.routes.ts` (định tuyến + khai báo quyền), `*.controller.ts`, `*.service.ts` (nghiệp vụ + Prisma), `*.validation.ts` (Zod schema), `*.utils.ts`, và `*.seed.ts` (dữ liệu mẫu khi khởi động).
@@ -118,6 +119,7 @@ Sơ đồ ERD Database
 | Coupons           | `/coupons/request-welcome`, `/coupons/validate`, `/coupons` (admin CRUD)                                                                                    |                                                   |
 | Reviews           | `/reviews/product/:id`, `/reviews` (CRUD của chính khách), `/reviews/admin`                                                                                 |                                                   |
 | Contacts          | `/contacts` (public gửi), `/contacts/me`, `/contacts` (admin)                                                                                               |                                                   |
+| Notifications     | `/notifications` (self-service: xem/đánh dấu đã đọc/xóa), `/notifications/broadcast` (admin)                                                                | Broadcast gửi TOÀN BỘ customer đang hoạt động     |
 | Orders            | `/orders` (checkout), `/orders/shipping-fee`, `/orders/me`, `/orders/admin`, `/orders/webhooks/ghn`                                                         | Webhook GHN không cần auth                        |
 | Payments          | `/payments/me/:orderId`, `/payments/me/:orderId/pay`, `/payments/vnpay/return`, `/payments/vnpay/ipn`, `/payments/zalopay/callback`, `/payments/admin`      | Return/IPN không cần auth (gateway gọi trực tiếp) |
 | Dashboard         | `/dashboard/overview`, `/revenue`, `/top-products`, `/recent-orders`, `/low-stock`                                                                          | Admin                                             |
@@ -183,8 +185,8 @@ frontend/src/
 └── features/
     ├── auth/               # Zustand store, useAuth hook, service gọi /api/auth, route loader
     ├── external/location/    # Gọi API GHN (tỉnh/huyện/xã) cho form địa chỉ
-    ├── client/              # home, shop, product, cart, order, payment, contact, about, me (tài khoản)
-    └── admin/               # dashboard, product, category, coupon, order, payment, user, rbac, contact, header, sidebar
+    ├── client/              # home, shop, product, cart, order, payment, contact, notification, about, me (tài khoản)
+    └── admin/               # dashboard, product, category, coupon, order, payment, user, rbac, contact, notification, header, sidebar
 ```
 
 Mỗi feature con thường có: `components/`, `hooks/`, `services/` (gọi API), `types/`, `utils/`, đúng khuôn mẫu với backend để hai bên "nói cùng ngôn ngữ".
@@ -230,9 +232,12 @@ Trang đơn hàng của tôi
 Trang chi tiết đơn hàng của tôi
 ![Ảnh giao diện trang chi tiết đơn hàng của tôi](docs/images/client/order-detail-me.png)
 
+Trang quản lý thông báo của tôi
+![Ảnh giao diện quản lý thông báo của tôi](docs/images/client/notifications.png)
+
 ### 3.4. Giao diện Admin
 
-Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Thanh toán**, **Liên hệ**.
+Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Thanh toán**, **Liên hệ**, **Thông báo** (gửi hàng loạt).
 
 Trang dashboard admin
 ![Ảnh giao diện Dashboard Admin](docs/images/admin/dashboard.png)
@@ -249,16 +254,46 @@ Trang quản lý sản phẩm
 Trang quản lý biến thể của sản phẩm
 ![Ảnh giao diện quản lý biến thể của sản phẩm](docs/images/admin/product-variation.png)
 
-### 3.5. Xác thực phía frontend
+Trang quản lý mã giảm giá
+![Ảnh giao diện quản lý mã giảm giá](docs/images/admin/coupons.png)
+
+Trang quản lý thông báo
+![Ảnh giao diện quản lý thông báo](docs/images/admin/notifications.png)
+
+Trang quản lý thanh toán
+![Ảnh giao diện quản lý thanh toán](docs/images/admin/payments.png)
+
+Trang quản lý đơn hàng
+![Ảnh giao diện quản lý đơn hàng](docs/images/admin/orders.png)
+
+Trang quản lý người dùng
+![Ảnh giao diện quản lý người dùng](docs/images/admin/users.png)
+
+### 3.5. Hệ thống thông báo (Notification)
+
+**Domain Client** (`features/client/notification/`):
+
+- Icon chuông ở header: dropdown xem nhanh 5 thông báo gần nhất, badge số chưa đọc. Poll `GET /notifications` mỗi 30s (backend chưa có kênh real-time) để tự cập nhật không cần F5. Chỉ hiện khi đã đăng nhập.
+- Tab "Quản lý thông báo" trong trang tài khoản: danh sách đầy đủ có phân trang, đánh dấu đã đọc (từng cái/tất cả), xóa (từng cái/toàn bộ thông báo đã đọc — có xác nhận trước khi xóa hàng loạt).
+- Click 1 thông báo (loại đơn hàng/thanh toán) điều hướng thẳng tới đúng đơn hàng đó trong tab "Đơn hàng".
+
+**Domain Admin** (`features/admin/notification/`, `pages/admin/notification/`):
+
+- Trang gửi thông báo hàng loạt (`/admin/notification`, quyền `notification:broadcast`): chọn loại (khuyến mãi/hệ thống), nhập tiêu đề + nội dung, gửi tới **toàn bộ customer đang hoạt động** (không hỗ trợ chọn tay từng người) — có bước xác nhận trước khi gửi vì không thể thu hồi.
+- Backend xử lý theo batch (500 user/lần, cursor pagination) thay vì 1 câu query duy nhất, tránh nghẽn server khi lượng khách hàng lớn.
+
+Kiến trúc kênh gửi ở backend theo Strategy Pattern (`features/notifications/channels/`) — hiện chỉ có kênh in-app/DB, thiết kế sẵn để mở rộng thêm email/push sau này mà không cần sửa lại phần điều phối (`notification.service.ts`).
+
+### 3.6. Xác thực phía frontend
 
 - `apiClient` dùng cookie `httpOnly` (`withCredentials: true`), có interceptor: khi gặp `401` sẽ tự gọi `/auth/refresh-token`, gom các request đang chờ (tránh gọi refresh nhiều lần cùng lúc), và tự redirect về trang đăng nhập nếu refresh thất bại (trừ chính request `/auth/me` — vì `401` ở đó là trạng thái hợp lệ khi khách chưa đăng nhập ghé trang public).
 - `guestOnlyLoader` chặn user đã đăng nhập vào lại trang login/register; `requireAuthLoader` bắt đăng nhập; `requirePermissionLoader(permission)` bắt đúng quyền cho từng route admin.
 
-### 3.6. Biến môi trường
+### 3.7. Biến môi trường
 
 Xem `frontend/.env.example`: `VITE_API_BASE_URL` (backend), `VITE_STRAPI_BASE_URL` (CMS), `VITE_GOOGLE_CLIENT_ID`, cấu hình Facebook SDK (`VITE_FACEBOOK_APP_ID`, script id, script src, version).
 
-### 3.7. Chạy frontend
+### 3.8. Chạy frontend
 
 ```bash
 cd frontend
@@ -325,12 +360,13 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **RBAC linh hoạt** (resource:action), seed mặc định 3 role nhưng có thể tùy biến qua UI/API mà không bị seed ghi đè.
 - **Tích hợp vận chuyển & thanh toán thực tế cho thị trường Việt Nam**: GHN tính phí ship theo kích thước/khối lượng từng biến thể sản phẩm, VNPay & ZaloPay, cơ chế tự hủy đơn "pending" quá hạn.
 - **Tách CMS khỏi hệ thống giao dịch**: nội dung marketing (Home/About/Contact/Shop banner) quản lý độc lập qua Strapi, không cần deploy lại frontend khi đổi nội dung.
+- **Hệ thống thông báo in-app**: tự động bắn khi đơn hàng/thanh toán đổi trạng thái, admin gửi hàng loạt tới toàn bộ khách hàng (xử lý theo batch), kiến trúc kênh gửi (Strategy Pattern) sẵn sàng mở rộng thêm email/push.
 - Giao diện Client lấy cảm hứng từ **Etonal** (tông màu kem – cam cháy), giao diện Admin có dashboard trực quan bằng ECharts.
 
 ## 7. Định hướng phát triển tiếp theo
 
 - **Thanh toán**: Tích hợp thêm các cổng thanh toán online phổ biến khác như MoMo, PayPal, Stripe.
 - **Trải nghiệm người dùng**: Tiếp tục tinh chỉnh UI/UX cho cả giao diện Client và Admin.
-- **Thông báo**: Xây dựng hệ thống thông báo (đơn hàng, khuyến mãi, cập nhật vận chuyển...).
+- **Thông báo real-time**: Hiện thông báo mới cập nhật qua polling (30s) — nâng cấp lên WebSocket để đẩy tức thời, và bổ sung thêm kênh gửi email/push (đã có sẵn interface `NotificationChannel`, chỉ cần thêm implementation mới).
 - **Chat trực tuyến**: Bổ sung tính năng hỗ trợ khách hàng realtime.
 - **AI**: Nghiên cứu và tích hợp AI vào các luồng nghiệp vụ của dự án (gợi ý sản phẩm, chatbot hỗ trợ...).

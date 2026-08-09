@@ -39,6 +39,9 @@ const permissions = Object.freeze({
 	dashboard: {
 		read: "dashboard:read",
 	},
+	notification: {
+		broadcast: "notification:broadcast",
+	},
 } as const);
 
 export default permissions;

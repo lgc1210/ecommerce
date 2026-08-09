@@ -63,8 +63,8 @@ export const deleteAllReadNotifications = async (req: AuthenticatedRequest, res:
 // ==========================================
 export const broadcastNotification = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
-		await notificationService.broadcast(req.body);
-		res.status(201).json({ message: "Đã gửi thông báo." });
+		const { sentCount } = await notificationService.broadcastToAllCustomers(req.body);
+		res.status(201).json({ message: `Đã gửi thông báo tới ${sentCount} khách hàng.`, sentCount });
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}

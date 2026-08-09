@@ -19,13 +19,15 @@ interface ListOwnNotificationsParams {
 }
 
 interface BroadcastInput {
-	userIds: number[];
 	type: NotificationType;
 	title: string;
 	message: string;
 	actionUrl?: string;
 	imageUrl?: string;
 }
+
+/** Số user xử lý mỗi vòng lặp khi broadcast — vừa đủ nhỏ để 1 câu INSERT không phình to bất thường, vừa đủ lớn để không tốn quá nhiều round-trip DB. */
+const BROADCAST_BATCH_SIZE = 500;
 
 class NotificationService {
 	// ==========================================
@@ -123,19 +125,58 @@ class NotificationService {
 	}
 
 	// ==========================================
-	// Admin: broadcast thông báo hệ thống/khuyến mãi tới nhiều user cùng lúc
+	// Admin: broadcast thông báo hệ thống/khuyến mãi tới TOÀN BỘ customer đang hoạt động
 	// ==========================================
-	async broadcast(data: BroadcastInput): Promise<void> {
-		const payloads: NotificationPayload[] = data.userIds.map((userId) => ({
-			userId,
-			type: data.type,
-			title: data.title,
-			message: data.message,
-			actionUrl: data.actionUrl,
-			imageUrl: data.imageUrl,
-		}));
+	/**
+	 * Gửi 1 thông báo tới mọi user có role "customer" và isActive=true (loại admin/manager/staff
+	 * ra — nội bộ không cần nhận thông báo khuyến mãi/hệ thống dành cho khách).
+	 *
+	 * Xử lý theo BATCH (cursor pagination trên id, đọc + ghi từng lô BROADCAST_BATCH_SIZE user)
+	 * thay vì 1 lệnh duy nhất:
+	 *  - Không load TOÀN BỘ user vào bộ nhớ cùng lúc (shop có 100k customer vẫn chỉ giữ 500
+	 *    bản ghi trong RAM ở bất kỳ thời điểm nào).
+	 *  - Không tạo 1 câu INSERT khổng lồ khoá bảng notifications trong thời gian dài — mỗi
+	 *    createMany chỉ chứa tối đa 500 dòng, các request khác (đọc/tạo thông báo khác) vẫn
+	 *    chen vào xử lý được giữa các batch, tránh nghẽn cả server vì 1 request broadcast.
+	 *  - Đây là xử lý ĐỒNG BỘ trong request HTTP (không phải background job) — phù hợp với quy
+	 *    mô hiện tại (dự án chưa có hạ tầng queue như BullMQ/Redis, chỉ có node-cron cho tác vụ
+	 *    định kỳ). Nếu lượng customer tăng tới mức 1 lần broadcast mất nhiều giây/phút, nên
+	 *    chuyển sang xử lý nền (queue + trả response ngay, cập nhật tiến độ riêng) — CHƯA cần
+	 *    thiết ở quy mô hiện tại nên không dựng thêm hạ tầng đó bây giờ.
+	 */
+	async broadcastToAllCustomers(data: BroadcastInput): Promise<{ sentCount: number }> {
+		let sentCount = 0;
+		let cursorId: number | undefined;
 
-		await this.dispatch(payloads);
+		while (true) {
+			const customers = await prisma.user.findMany({
+				where: { role: { name: "customer" }, isActive: true },
+				select: { id: true },
+				orderBy: { id: "asc" },
+				take: BROADCAST_BATCH_SIZE,
+				...(cursorId !== undefined ? { skip: 1, cursor: { id: cursorId } } : {}),
+			});
+
+			if (customers.length === 0) break;
+
+			await this.dispatch(
+				customers.map((c) => ({
+					userId: c.id,
+					type: data.type,
+					title: data.title,
+					message: data.message,
+					actionUrl: data.actionUrl,
+					imageUrl: data.imageUrl,
+				})),
+			);
+
+			sentCount += customers.length;
+			cursorId = customers[customers.length - 1]!.id; // an toàn: vòng lặp đã return sớm ở check "customers.length === 0" phía trên nếu rỗng
+
+			if (customers.length < BROADCAST_BATCH_SIZE) break;
+		}
+
+		return { sentCount };
 	}
 
 	// ==========================================

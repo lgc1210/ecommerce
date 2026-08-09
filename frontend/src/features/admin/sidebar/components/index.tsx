@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BoxIcon, CartIcon, ChevronsLeftIcon, CloseIcon, CouponIcon, CreditCardIcon, DashboardIcon, MailIcon, ShieldIcon, TagIcon, UsersIcon } from "../../../../components/icons";
+import { BellIcon, BoxIcon, CartIcon, ChevronsLeftIcon, CloseIcon, CouponIcon, CreditCardIcon, DashboardIcon, MailIcon, ShieldIcon, TagIcon, UsersIcon } from "../../../../components/icons";
 import paths from "../../../../configs/constants/paths";
 import Overlay from "../../../../components/overlay";
 import { useAuth } from "../../../auth/hooks/useAuth";
@@ -31,6 +31,7 @@ const navItems = [
 	{ to: paths.admin.user, label: "Users", icon: UsersIcon, permission: permissions.user.read },
 	{ to: paths.admin.role, label: "Roles", icon: ShieldIcon, permission: permissions.rbac.manage },
 	{ to: paths.admin.contact, label: "Contacts", icon: MailIcon, permission: permissions.contact.manage },
+	{ to: paths.admin.notification, label: "Notifications", icon: BellIcon, permission: permissions.notification.broadcast },
 ];
 
 const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) => {

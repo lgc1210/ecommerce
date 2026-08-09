@@ -30,6 +30,7 @@ import AdminCouponPage from "../../pages/admin/coupon";
 import AdminOrderPage from "../../pages/admin/order";
 import AdminPaymentPage from "../../pages/admin/payment";
 import AdminContactPage from "../../pages/admin/contact";
+import AdminNotificationPage from "../../pages/admin/notification";
 
 // Layouts
 import ClientLayout from "../../layouts/client";
@@ -164,13 +165,13 @@ const router = createBrowserRouter([
 				handle: { title: "Dashboard", crumb: () => "Dashboard" },
 			},
 			{
-				path: "dashboard",
+				path: paths.admin.dashboard,
 				loader: requirePermissionLoader(permissions.dashboard.read),
 				Component: AdminDashboardPage,
 				handle: { title: "Dashboard", crumb: () => "Dashboard" },
 			},
 			{
-				path: "product",
+				path: paths.admin.product,
 				loader: requirePermissionLoader(permissions.catalog.read),
 				Component: AdminProductPage,
 				handle: { title: "Product", crumb: () => "Product" },
@@ -182,60 +183,66 @@ const router = createBrowserRouter([
 				handle: { title: "Chi tiết sản phẩm", crumb: () => "Chi tiết sản phẩm" },
 			},
 			{
-				path: "user",
+				path: paths.admin.user,
 				loader: requirePermissionLoader(permissions.user.read),
 				Component: AdminUserPage,
 				handle: { title: "User", crumb: () => "User" },
 			},
 			{
-				path: "role",
+				path: paths.admin.role,
 				loader: requirePermissionLoader(permissions.rbac.manage),
 				Component: AdminRbacPage,
 				handle: { title: "Role", crumb: () => "Role" },
 			},
 			{
-				path: "category",
+				path: paths.admin.category,
 				loader: requirePermissionLoader(permissions.catalog.read),
 				Component: AdminCategoryPage,
 				handle: { title: "Category", crumb: () => "Category" },
 			},
 			{
-				path: "coupon",
+				path: paths.admin.coupon,
 				loader: requirePermissionLoader(permissions.coupon.manage),
 				Component: AdminCouponPage,
 				handle: { title: "Coupon", crumb: () => "Coupon" },
 			},
 			{
-				path: "order",
+				path: paths.admin.order,
 				loader: requirePermissionLoader(permissions.order.update),
 				Component: AdminOrderPage,
 				handle: { title: "Order", crumb: () => "Order" },
 			},
 			{
-				path: "payment",
+				path: paths.admin.payment,
 				loader: requirePermissionLoader(permissions.payment.read),
 				Component: AdminPaymentPage,
 				handle: { title: "Payment", crumb: () => "Payment" },
 			},
 			{
-				path: "contact",
+				path: paths.admin.contact,
 				loader: requirePermissionLoader(permissions.contact.manage),
 				Component: AdminContactPage,
 				handle: { title: "Contact", crumb: () => "Contact" },
+			},
+			{
+				path: paths.admin.notification,
+				loader: requirePermissionLoader(permissions.notification.broadcast),
+				Component: AdminNotificationPage,
+				handle: { title: "Notification", crumb: () => "Notification" },
 			},
 		],
 	},
 
 	// Forbidden (đã đăng nhập nhưng thiếu permission)
 	{
-		path: "403",
+		path: paths.errors.forbidden,
 		Component: ForbiddenPage,
 		handle: { title: "Forbidden", crumb: () => "403" },
 	},
 
 	// Not found page
 	{
-		path: "*",
+		path: paths.errors.notFound,
 		Component: NotFoundPage,
 		handle: { title: "Not found", crumb: () => "404" },
 	},

@@ -28,9 +28,11 @@ const paths = Object.freeze({
 		user: "/admin/user",
 		role: "/admin/role",
 		contact: "/admin/contact",
+		notification: "/admin/notifications",
 	},
 	errors: {
 		forbidden: "/403",
+		notFound: "*",
 	},
 } as const);
 

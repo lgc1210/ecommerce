@@ -1,11 +1,11 @@
-<svg viewBox="0 0 1040 820" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+<svg viewBox="0 0 1040 844" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
   <defs>
     <marker id="arrowF" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#948a7c" />
     </marker>
   </defs>
 
-  <rect x="0" y="0" width="1040" height="820" fill="#faf6f0" />
+  <rect x="0" y="0" width="1040" height="844" fill="#faf6f0" />
 
   <text x="520" y="42" text-anchor="middle" font-size="22" font-weight="700" fill="#1c1815">Sơ đồ thư mục frontend</text>
   <text x="520" y="66" text-anchor="middle" font-size="13" fill="#948a7c">frontend/src — tách Client / Admin theo feature</text>
@@ -76,15 +76,16 @@
     <text x="925" y="224" text-anchor="middle" fill="#2c2620">xã cho form địa chỉ</text>
   </g>
 
-  <!-- client/ big box -->
-  <rect x="650" y="240" width="360" height="170" rx="10" fill="#fff7ee" stroke="#d9641f" stroke-width="1.8" />
+  <!-- client/ big box (đã thêm "notification" -> 9 nhóm -> 10 nhóm, box cao thêm 24px để chứa dòng mới) -->
+  <rect x="650" y="240" width="360" height="194" rx="10" fill="#fff7ee" stroke="#d9641f" stroke-width="1.8" />
   <text x="830" y="262" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">client/</text>
-  <text x="830" y="278" text-anchor="middle" font-size="10.5" fill="#948a7c">9 nhóm trang khách hàng</text>
+  <text x="830" y="278" text-anchor="middle" font-size="10.5" fill="#948a7c">10 nhóm trang khách hàng</text>
 
   <g font-size="10.5" fill="#2c2620">
     <text x="690" y="300">• home</text>
     <text x="690" y="318">• shop</text>
     <text x="690" y="336">• product</text>
+    <text x="690" y="354">• notification</text>
     <text x="825" y="300">• cart</text>
     <text x="825" y="318">• order</text>
     <text x="825" y="336">• payment</text>
@@ -92,48 +93,49 @@
     <text x="930" y="318">• about</text>
     <text x="930" y="336">• me (tài khoản)</text>
   </g>
-  <text x="830" y="368" text-anchor="middle" font-size="10" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· utils/)</text>
-  <text x="830" y="388" text-anchor="middle" font-size="10" fill="#948a7c">footer/, header/ dùng chung cho layout Client</text>
+  <text x="830" y="380" text-anchor="middle" font-size="10" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· utils/)</text>
+  <text x="830" y="400" text-anchor="middle" font-size="10" fill="#948a7c">footer/, header/ dùng chung cho layout Client</text>
 
-  <!-- admin/ big box -->
-  <rect x="650" y="422" width="360" height="200" rx="10" fill="#ffffff" stroke="#1c1815" stroke-width="1.6" />
-  <text x="830" y="444" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">admin/</text>
-  <text x="830" y="460" text-anchor="middle" font-size="10.5" fill="#948a7c">11 nhóm trang quản trị</text>
+  <!-- admin/ big box (đã thêm "notification" -> 11 nhóm -> 12 nhóm, dịch xuống 24px để cách đều client/ mới) -->
+  <rect x="650" y="446" width="360" height="200" rx="10" fill="#ffffff" stroke="#1c1815" stroke-width="1.6" />
+  <text x="830" y="468" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">admin/</text>
+  <text x="830" y="484" text-anchor="middle" font-size="10.5" fill="#948a7c">12 nhóm trang quản trị</text>
 
   <g font-size="10.5" fill="#2c2620">
-    <text x="680" y="482">• dashboard</text>
-    <text x="680" y="500">• product</text>
-    <text x="680" y="518">• category</text>
-    <text x="680" y="536">• coupon</text>
-    <text x="835" y="482">• order</text>
-    <text x="835" y="500">• payment</text>
-    <text x="835" y="518">• user</text>
-    <text x="835" y="536">• rbac</text>
-    <text x="950" y="482">• contact</text>
-    <text x="950" y="500">• header</text>
-    <text x="950" y="518">• sidebar</text>
+    <text x="680" y="506">• dashboard</text>
+    <text x="680" y="524">• product</text>
+    <text x="680" y="542">• category</text>
+    <text x="680" y="560">• coupon</text>
+    <text x="835" y="506">• order</text>
+    <text x="835" y="524">• payment</text>
+    <text x="835" y="542">• user</text>
+    <text x="835" y="560">• rbac</text>
+    <text x="920" y="506">• contact</text>
+    <text x="920" y="524">• header</text>
+    <text x="920" y="542">• sidebar</text>
+    <text x="920" y="560">• notification</text>
   </g>
-  <text x="830" y="562" text-anchor="middle" font-size="10" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· utils/)</text>
-  <text x="830" y="582" text-anchor="middle" font-size="10" fill="#948a7c">rbac/ có thêm loader/ riêng (ma trận quyền)</text>
-  <text x="830" y="602" text-anchor="middle" font-size="10" fill="#948a7c">mọi route đều qua requirePermissionLoader</text>
+  <text x="830" y="586" text-anchor="middle" font-size="10" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· utils/)</text>
+  <text x="830" y="606" text-anchor="middle" font-size="10" fill="#948a7c">rbac/ có thêm loader/ riêng (ma trận quyền)</text>
+  <text x="830" y="626" text-anchor="middle" font-size="10" fill="#948a7c">mọi route đều qua requirePermissionLoader</text>
 
   <!-- Convention box -->
   <rect x="40" y="470" width="580" height="60" rx="12" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.5" />
   <text x="330" y="493" text-anchor="middle" font-size="12" font-weight="700" fill="#1c1815">pages/ — 1 file .tsx / route, import Component từ features/</text>
   <text x="330" y="514" text-anchor="middle" font-size="11" fill="#2c2620">pages/client, pages/admin, pages/auth, pages/403, pages/404</text>
 
-  <!-- Convention note full width bottom -->
-  <rect x="40" y="646" width="970" height="110" rx="12" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" />
-  <text x="525" y="672" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">Khuôn mẫu chung của mỗi feature con</text>
-  <text x="525" y="698" text-anchor="middle" font-size="12" fill="#2c2620">components/ — UI riêng của feature &#160;·&#160; hooks/ — custom hook (thường bọc TanStack Query)</text>
-  <text x="525" y="720" text-anchor="middle" font-size="12" fill="#2c2620">services/ — hàm gọi apiClient/strapiClient &#160;·&#160; types/ — kiểu dữ liệu &#160;·&#160; utils/, constants/ (nếu có)</text>
-  <text x="525" y="742" text-anchor="middle" font-size="12" fill="#2c2620">Cùng khuôn mẫu với backend/features/&lt;tên&gt;/ để hai bên dễ tra cứu song song</text>
+  <!-- Convention note full width bottom (dịch xuống 24px theo admin/) -->
+  <rect x="40" y="670" width="970" height="110" rx="12" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" />
+  <text x="525" y="696" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">Khuôn mẫu chung của mỗi feature con</text>
+  <text x="525" y="722" text-anchor="middle" font-size="12" fill="#2c2620">components/ — UI riêng của feature &#160;·&#160; hooks/ — custom hook (thường bọc TanStack Query)</text>
+  <text x="525" y="744" text-anchor="middle" font-size="12" fill="#2c2620">services/ — hàm gọi apiClient/strapiClient &#160;·&#160; types/ — kiểu dữ liệu &#160;·&#160; utils/, constants/ (nếu có)</text>
+  <text x="525" y="766" text-anchor="middle" font-size="12" fill="#2c2620">Cùng khuôn mẫu với backend/features/&lt;tên&gt;/ để hai bên dễ tra cứu song song</text>
 
-  <!-- Legend -->
-  <rect x="40" y="774" width="14" height="14" rx="3" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-  <text x="62" y="786" font-size="11" fill="#2c2620">Cấu hình / hạ tầng dùng chung</text>
-  <rect x="280" y="774" width="14" height="14" rx="3" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-  <text x="302" y="786" font-size="11" fill="#2c2620">Module nghiệp vụ (features/, admin/)</text>
-  <rect x="560" y="774" width="14" height="14" rx="3" fill="#fff7ee" stroke="#d9641f" stroke-width="1.6" />
-  <text x="582" y="786" font-size="11" fill="#2c2620">Nhóm chính / file quan trọng</text>
+  <!-- Legend (dịch xuống 24px) -->
+  <rect x="40" y="798" width="14" height="14" rx="3" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+  <text x="62" y="810" font-size="11" fill="#2c2620">Cấu hình / hạ tầng dùng chung</text>
+  <rect x="280" y="798" width="14" height="14" rx="3" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+  <text x="302" y="810" font-size="11" fill="#2c2620">Module nghiệp vụ (features/, admin/)</text>
+  <rect x="560" y="798" width="14" height="14" rx="3" fill="#fff7ee" stroke="#d9641f" stroke-width="1.6" />
+  <text x="582" y="810" font-size="11" fill="#2c2620">Nhóm chính / file quan trọng</text>
 </svg>
