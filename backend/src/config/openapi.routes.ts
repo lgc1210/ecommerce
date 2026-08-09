@@ -52,6 +52,7 @@ import {
 } from "../features/orders/order.validation.js";
 import { OwnPaymentParamSchema, ConfirmOwnPaymentSchema, ListPaymentsAdminQuerySchema, PaymentIdParamSchema, UpdatePaymentStatusSchema } from "../features/payments/payment.validation.js";
 import { RevenueSeriesQuerySchema, TopProductsQuerySchema, RecentOrdersQuerySchema, LowStockQuerySchema } from "../features/dashboard/dashboard.validation.js";
+import { ListOwnNotificationsQuerySchema, NotificationIdParamSchema, BroadcastNotificationSchema } from "../features/notifications/notification.validation.js";
 import { DistrictSchema, WardSchema } from "../external/ghn/ghn.validation.js";
 
 export interface RouteMeta {
@@ -198,6 +199,14 @@ export const routeManifest: RouteMeta[] = [
 	{ method: "get", path: "/dashboard/top-products", tag: "Dashboard", summary: "[Admin] Top sản phẩm bán chạy", auth: true, permission: "dashboard:read", schema: TopProductsQuerySchema },
 	{ method: "get", path: "/dashboard/recent-orders", tag: "Dashboard", summary: "[Admin] Đơn hàng gần đây", auth: true, permission: "dashboard:read", schema: RecentOrdersQuerySchema },
 	{ method: "get", path: "/dashboard/low-stock", tag: "Dashboard", summary: "[Admin] Sản phẩm sắp hết hàng", auth: true, permission: "dashboard:read", schema: LowStockQuerySchema },
+
+	// ── Notifications ────────────────────────────────────────────────────
+	{ method: "get", path: "/notifications", tag: "Notifications", summary: "Danh sách thông báo của chính mình", auth: true, schema: ListOwnNotificationsQuerySchema },
+	{ method: "patch", path: "/notifications/read-all", tag: "Notifications", summary: "Đánh dấu đã đọc toàn bộ thông báo của mình", auth: true },
+	{ method: "patch", path: "/notifications/:id/read", tag: "Notifications", summary: "Đánh dấu đã đọc 1 thông báo", auth: true, schema: NotificationIdParamSchema },
+	{ method: "delete", path: "/notifications/read", tag: "Notifications", summary: "Xoá toàn bộ thông báo đã đọc của mình", auth: true },
+	{ method: "delete", path: "/notifications/:id", tag: "Notifications", summary: "Xoá 1 thông báo của mình", auth: true, schema: NotificationIdParamSchema },
+	{ method: "post", path: "/notifications/broadcast", tag: "Notifications", summary: "[Admin] Gửi thông báo hệ thống/khuyến mãi tới toàn bộ khách hàng", auth: true, permission: "notification:broadcast", schema: BroadcastNotificationSchema },
 
 	// ── Uploads ──────────────────────────────────────────────────────────
 	{ method: "post", path: "/uploads/product-image", tag: "Uploads", summary: "[Admin] Upload ảnh sản phẩm (multipart/form-data, field \"image\")", auth: true, permission: "catalog:write" },
