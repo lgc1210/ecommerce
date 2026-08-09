@@ -7,6 +7,7 @@ import Popup from "../../../../../components/popup";
 import { formatDate } from "../../../../../utils";
 import { useDeleteAllReadNotifications, useDeleteNotification, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../notification/hooks";
 import { NOTIFICATION_TYPE_ICON, NOTIFICATION_TYPE_LABEL } from "../../../notification/constants";
+import { resolveNotificationLink } from "../../../notification/utils";
 
 const PAGE_SIZE = 10;
 
@@ -99,14 +100,19 @@ const NotificationsTab = () => {
 								<p className='mt-2 text-sm text-ink/80'>{notification.message}</p>
 
 								<div className='mt-3 flex items-center gap-4'>
-									{notification.actionUrl && (
-										<Link
-											to={notification.actionUrl}
-											onClick={() => !notification.isRead && markAsReadMutation.mutate(notification.id)}
-											className='text-xs font-semibold text-primary-dark hover:underline'>
-											Xem chi tiết
-										</Link>
-									)}
+									{notification.actionUrl &&
+										(() => {
+											const { to, state } = resolveNotificationLink(notification.actionUrl);
+											return (
+												<Link
+													to={to}
+													state={state}
+													onClick={() => !notification.isRead && markAsReadMutation.mutate(notification.id)}
+													className='text-xs font-semibold text-primary-dark hover:underline'>
+													Xem chi tiết
+												</Link>
+											);
+										})()}
 									{!notification.isRead && (
 										<button
 											type='button'

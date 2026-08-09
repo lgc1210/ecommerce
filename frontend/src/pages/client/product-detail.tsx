@@ -102,7 +102,7 @@ const ProductDetailPage = () => {
 					{/* Gallery */}
 					<div>
 						<div className='aspect-square overflow-hidden rounded-2xl bg-cream-soft'>
-							<img src={gallery[activeImage]} alt={product.name} className='h-full w-full object-cover' />
+							<img src={gallery[activeImage]} alt={product.name} className='h-full w-full object-cover' style={{ viewTransitionName: `product-img-${product.slug}` }} />
 						</div>
 						{gallery.length > 1 && (
 							<div className='mt-4 grid grid-cols-3 gap-3'>
@@ -132,7 +132,9 @@ const ProductDetailPage = () => {
 							</div>
 						)}
 
-						<h1 className='mt-3 text-3xl font-extrabold tracking-tight text-ink'>{product.name}</h1>
+						<h1 className='mt-3 text-3xl font-extrabold tracking-tight text-ink' style={{ viewTransitionName: `product-title-${product.name}` }}>
+							{product.name}
+						</h1>
 
 						<div className='mt-4 flex items-center gap-3'>
 							<span className='text-3xl font-bold text-primary-dark'>{formatCurrency(price)}</span>

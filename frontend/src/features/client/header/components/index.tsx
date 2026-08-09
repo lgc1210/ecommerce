@@ -37,7 +37,7 @@ const Header = () => {
 				{/* Desktop nav */}
 				<nav className='ml-4 hidden items-center justify-center gap-7 lg:flex'>
 					{navItems.map((item) => (
-						<NavLink key={item.to} to={item.to} end={item.end} className={linkClass}>
+						<NavLink key={item.to} to={item.to} end={item.end} className={linkClass} viewTransition>
 							{item.label}
 						</NavLink>
 					))}

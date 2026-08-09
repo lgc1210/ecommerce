@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import productService from "../services";
 import type {
 	FeaturedCategoriesResult,
@@ -10,6 +10,7 @@ import type {
 	PublicCategoryTreeNode,
 	PublicProductDetail,
 } from "../types";
+import { useRef } from "react";
 
 export const PUBLIC_PRODUCTS_QUERY_KEY = ["client", "products"] as const;
 export const PUBLIC_CATEGORIES_QUERY_KEY = ["client", "categories"] as const;
@@ -88,4 +89,31 @@ export const useFeaturedCategoriesQuery = (limit?: number) => {
 		},
 		staleTime: 5 * 60 * 1000,
 	});
+};
+
+/** Hook hỗ trợ prefetch dữ liệu chi tiết sản phẩm khi hover */
+export const usePrefetchProductDetail = () => {
+	const queryClient = useQueryClient();
+	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+	const prefetch = async (slug: string | undefined) => {
+		if (!slug) return;
+
+		clearTimeout(timer.current);
+		timer.current = setTimeout(async () => {
+			await queryClient.prefetchQuery({
+				// Đảm bảo trùng khớp 100% với queryKey của useProductBySlugQuery
+				queryKey: [...PUBLIC_PRODUCTS_QUERY_KEY, "detail", slug],
+				// Đảm bảo trùng khớp 100% với cách xử lý dữ liệu của useProductBySlugQuery
+				queryFn: async () => {
+					const res = await productService.getProductBySlug(slug);
+					return res.data.data;
+				},
+				// Cấu hình thời gian dữ liệu được coi là mới để không refetch liên tục khi hover ra/vào nhiều lần
+				staleTime: 5 * 60 * 1000,
+			});
+		}, 100);
+	};
+
+	return prefetch;
 };

@@ -19,6 +19,15 @@
     --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Thêm vào file CSS toàn cục của bạn (ví dụ: index.css) */
+
+::view-transition-old(*),
+::view-transition-new(*) {
+    animation-duration: 500ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
 body {
     background-color: var(--color-cream);
     font-family: var(--font-sans);

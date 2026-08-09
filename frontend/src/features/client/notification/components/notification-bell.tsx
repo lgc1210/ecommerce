@@ -5,8 +5,9 @@ import paths from "../../../../configs/constants/paths";
 import { useAuth } from "../../../auth/hooks/useAuth";
 import { useMarkNotificationAsRead, useMyNotificationsQuery } from "../hooks";
 import { NOTIFICATION_TYPE_ICON } from "../constants";
+import { resolveNotificationLink, timeAgo } from "../utils";
 import type { Notification } from "../types";
-import { timeAgo } from "../utils";
+import Button from "../../../../components/button";
 
 const RECENT_LIMIT = 5;
 
@@ -47,7 +48,10 @@ const NotificationBell = () => {
 	const handleItemClick = (notification: Notification) => {
 		setOpen(false);
 		if (!notification.isRead) markAsReadMutation.mutate(notification.id);
-		if (notification.actionUrl) navigate(notification.actionUrl);
+		if (notification.actionUrl) {
+			const { to, state } = resolveNotificationLink(notification.actionUrl);
+			navigate(to, state ? { state } : undefined);
+		}
 	};
 
 	const handleViewAll = () => {
@@ -104,12 +108,14 @@ const NotificationBell = () => {
 						})}
 					</div>
 
-					<button
+					<Button
 						type='button'
+						variant='ghost'
+						size='sm'
 						onClick={handleViewAll}
-						className='block w-full border-t border-border px-4 py-2.5 text-center text-sm font-semibold text-primary-dark hover:bg-primary-light hover:not-disabled:cursor-default'>
+						className='w-full border-t border-border rounded-none! font-semibold text-primary-dark hover:bg-primary-light hover:not-disabled:cursor-default'>
 						Xem tất cả
-					</button>
+					</Button>
 				</div>
 			)}
 		</div>
