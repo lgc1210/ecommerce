@@ -17,13 +17,7 @@ interface SeedUserInput {
 	roleName: string;
 }
 
-const seedUsers: SeedUserInput[] = [
-	{ name: "Quản Trị Viên", email: "admin@example.com", phone: "0900000001", roleName: "admin" },
-	{ name: "Nhân Viên Quản Lý", email: "manager@example.com", phone: "0900000002", roleName: "manager" },
-	{ name: "Nguyễn Văn A", email: "customer1@example.com", phone: "0900000003", roleName: "customer" },
-	{ name: "Trần Thị B", email: "customer2@example.com", phone: "0900000004", roleName: "customer" },
-	{ name: "Lê Văn C", email: "customer3@example.com", phone: "0900000005", roleName: "customer" },
-];
+const seedUsers: SeedUserInput[] = [{ name: "Quản Trị Viên", email: "admin@example.com", phone: "0900000001", roleName: "admin" }];
 
 /**
  * Seed tài khoản mẫu cho môi trường phát triển/demo.

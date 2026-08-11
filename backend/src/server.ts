@@ -23,19 +23,19 @@ async function bootstrap(): Promise<void> {
 		await permissionSeed();
 		await rolePermissionSeed();
 		await userSeed();
-		await userAddressSeed();
+		// await userAddressSeed();
 		await categorySeed();
 		await productSeed();
-		await orderSeed();
+		// await orderSeed();
 		await couponSeed();
-		await reviewSeed();
-		await contactSeed();
+		// await reviewSeed();
+		// await contactSeed();
 
 		// 2. Instantiate and mount active HTTP port listeners
 		const server = app.listen(process.env.PORT, () => {
 			console.log(`=======================================================`);
 			console.log(`Server execution loop initialized successfully.`);
-			console.log(`Network Listening Port: http://localhost:${process.env.PORT}`);
+			process.env.NODE_ENV === "development" && console.log(`Network Listening Port: http://localhost:${process.env.PORT}`);
 			console.log(`Active App Operating Mode: [${process.env.NODE_ENV}]`);
 			console.log(`=======================================================`);
 		});
