@@ -31,6 +31,7 @@ const adapter = new PrismaMariaDb({
 				},
 			}
 		: {}),
+	connectTimeout: 20000,
 });
 
 // 3. Pass the adapter straight into your primary Prisma Client constructor configuration
