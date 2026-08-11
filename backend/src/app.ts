@@ -40,6 +40,7 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
+app.set("trust proxy", 1);
 
 // File tĩnh (ảnh đã upload) — helmet mặc định set Cross-Origin-Resource-Policy: same-origin,
 // sẽ khiến trình duyệt chặn <img> load ảnh từ frontend (khác origin với backend) nên phải nới
