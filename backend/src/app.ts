@@ -30,7 +30,12 @@ import { buildOpenApiDocument } from "./config/openapi.js";
 
 const app: Application = express();
 
-app.use(helmet()); // by default same-orign
+app.use(
+	helmet({
+		crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+		crossOriginResourcePolicy: { policy: "cross-origin" },
+	}),
+); // by default same-orign
 app.use(
 	cors({
 		origin: env.CLIENT_URL,
