@@ -1,6 +1,6 @@
 [[redirects]]
   from = "/api/*"
-  to = "https://ecommerce-production-d65f.up.railway.app"
+  to = "https://railway.app"
   status = 200
   force = true
 
