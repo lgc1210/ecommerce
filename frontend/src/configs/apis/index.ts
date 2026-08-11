@@ -3,7 +3,7 @@ import authService from "../../features/auth/services";
 import paths from "../constants/paths";
 
 const apiClient = axios.create({
-	baseURL: import.meta.env.VITE_API_BASE_URL,
+	baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
 	timeout: 10000,
 	withCredentials: true,
 	headers: {
@@ -15,14 +15,7 @@ const apiClient = axios.create({
 // Các endpoint tự thân liên quan tới vòng đời phiên đăng nhập -> không được
 // phép trigger cơ chế tự làm mới access token (tránh vòng lặp vô hạn hoặc
 // refresh nhầm khi chính request đăng nhập/đăng xuất bị 401).
-const AUTH_ENDPOINTS_SKIP_REFRESH = [
-	"/auth/login",
-	"/auth/google",
-	"/auth/facebook",
-	"/auth/register",
-	"/auth/refresh-token",
-	"/auth/logout",
-];
+const AUTH_ENDPOINTS_SKIP_REFRESH = ["/auth/login", "/auth/google", "/auth/facebook", "/auth/register", "/auth/refresh-token", "/auth/logout"];
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
