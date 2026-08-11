@@ -1,11 +1,9 @@
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from "url";
 import { z } from "zod";
 
 // Handle ES module directory paths safely
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 // Fix: Read the variable directly from process.env (injected by cross-env)
 const envFileTarget = `.env.${process.env.NODE_ENV}`;
@@ -15,15 +13,18 @@ dotenv.config({ path: path.resolve(__dirname, `../../${envFileTarget}`) });
 
 // 2. Define a strict structural schema for your environment variables
 const envSchema = z.object({
-	PORT: z
-		.string()
-		.default("5000") // Fix: Must be a string template default before transformation
-		.transform((val) => parseInt(val, 10)),
-	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 	CLIENT_URL: z.url({ message: "CLIENT_URL must be a valid connection string format." }),
 
 	// Database
+	// Bật SSL khi kết nối MySQL (bắt buộc với Aiven ở production). Không bắt buộc khai
+	// báo — mặc định "false" nên MySQL local (dev) không cần cấu hình gì thêm. Đặt
+	// "true" trong .env.production (hoặc biến môi trường trên Railway) để bật.
 	DATABASE_URL: z.url({ message: "DATABASE_URL must be a valid connection string format." }),
+	DATABASE_SSL: z
+		.string()
+		.optional()
+		.default("false")
+		.transform((val) => val === "true"),
 
 	// Google OAuth Client ID (Web application), dùng để xác thực idToken gửi lên từ
 	// frontend qua google-auth-library. Phải trùng với client ID cấu hình ở frontend

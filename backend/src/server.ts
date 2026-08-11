@@ -32,11 +32,11 @@ async function bootstrap(): Promise<void> {
 		await contactSeed();
 
 		// 2. Instantiate and mount active HTTP port listeners
-		const server = app.listen(env.PORT, () => {
+		const server = app.listen(process.env.PORT, () => {
 			console.log(`=======================================================`);
 			console.log(`Server execution loop initialized successfully.`);
-			console.log(`Network Listening Port: http://localhost:${env.PORT}`);
-			console.log(`Active App Operating Mode: [${env.NODE_ENV.toUpperCase()}]`);
+			console.log(`Network Listening Port: http://localhost:${process.env.PORT}`);
+			console.log(`Active App Operating Mode: [${process.env.NODE_ENV}]`);
 			console.log(`=======================================================`);
 		});
 

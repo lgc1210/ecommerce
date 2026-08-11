@@ -58,8 +58,8 @@ export function verifyRefreshToken(token: string): TokenPayload {
 // sameSite: "lax" đủ an toàn cho CSRF trong khi vẫn cho phép redirect từ OAuth provider
 const baseCookieOptions: CookieOptions = {
 	httpOnly: true,
-	secure: env.NODE_ENV === "production",
-	sameSite: "lax",
+	secure: process.env.NODE_ENV === "production",
+	sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
 	path: "/",
 };
 

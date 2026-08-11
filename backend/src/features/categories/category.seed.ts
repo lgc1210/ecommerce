@@ -147,6 +147,9 @@ async function upsertCategoryNode(node: CategorySeedNode, parentId: number | nul
  * (vd: product.seed.ts) có thể tra cứu categoryId theo tên khi gán sản phẩm vào danh mục.
  */
 export const categorySeed = async (): Promise<Map<string, number>> => {
+	const existingCategories = await prisma.category.count();
+	if (existingCategories > 0) return new Map();
+
 	const categoryIdByName = new Map<string, number>();
 
 	for (const root of categoryTree) {
