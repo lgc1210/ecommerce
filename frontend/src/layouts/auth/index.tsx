@@ -86,11 +86,12 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 										fullWidth
 										icon={<GoogleIcon className='h-5 w-5' />}
 										iconPosition='left'
-										className='pointer-events-none group-hover:border-ink/30'>
+										className='pointer-events-none group-hover:border-ink/30'
+										aria-hidden>
 										Tiếp tục với Google
 									</Button>
 
-									<div aria-hidden className='absolute inset-0 overflow-hidden rounded-xl opacity-0 [&>div]:h-full! [&>div]:w-full! [&_iframe]:h-full! [&_iframe]:w-full!'>
+									<div className='absolute inset-0 overflow-hidden rounded-xl opacity-0 [&>div]:h-full! [&>div]:w-full! [&_iframe]:h-full! [&_iframe]:w-full!'>
 										<GoogleLogin
 											onSuccess={(credentialResponse) => {
 												if (!credentialResponse.credential) {
