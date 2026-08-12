@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
 import Button from "../../components/button";
-import { FacebookIcon, GoogleIcon } from "../../components/icons";
+import { FacebookIcon } from "../../components/icons";
 import paths from "../../configs/constants/paths";
 import { useFacebookLogin } from "../../features/auth/hooks/useFacebookSdk";
 
@@ -49,7 +49,7 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 	return (
 		<div className='flex min-h-screen items-center justify-center bg-cream-soft px-4 py-16'>
 			<div className='w-full max-w-md rounded-3xl border border-border bg-surface p-8 shadow-sm shadow-ink/5'>
-				<Link to={paths.client.home} className='flex items-center justify-center gap-2 cursor-default!' viewTransition>
+				<Link to={paths.client.home} className='flex items-center justify-center gap-2 cursor-default!'>
 					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 					<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
 				</Link>
@@ -71,41 +71,26 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 
 						<div className='mt-4 flex flex-col items-center justify-center gap-3'>
 							{onGoogleSuccess && (
-								// Google Identity Services không cho tuỳ biến text/style của nút (chỉ có vài
-								// preset text/theme/shape có sẵn), nên để vừa có idToken thật vừa dùng đúng
-								// <Button> style của mình, ta "chồng" (overlay) nút Google THẬT nhưng làm cho
-								// nó trong suốt (opacity-0) và phủ kín lên trên nút <Button> hiển thị bên dưới.
-								// Người dùng THẤY nút custom, nhưng click thật sự rơi vào iframe của Google
-								// (không thể dùng ref.click() để "giả lập" click vì nút Google nằm trong iframe
-								// cross-origin — trình duyệt chặn synthetic click xuyên iframe khác origin).
-								<div className='group relative w-full'>
-									<Button
-										type='button'
-										title='Đăng nhập bằng Google'
-										variant='outline'
-										fullWidth
-										icon={<GoogleIcon className='h-5 w-5' />}
-										iconPosition='left'
-										className='pointer-events-none group-hover:border-ink/30'
-										aria-hidden>
-										Tiếp tục với Google
-									</Button>
-
-									<div className='absolute inset-0 overflow-hidden rounded-xl opacity-0 [&>div]:h-full! [&>div]:w-full! [&_iframe]:h-full! [&_iframe]:w-full!'>
-										<GoogleLogin
-											onSuccess={(credentialResponse) => {
-												if (!credentialResponse.credential) {
-													toast.error("Không nhận được thông tin xác thực từ Google.");
-													return;
-												}
-												onGoogleSuccess(credentialResponse.credential);
-											}}
-											onError={() => toast.error("Đăng nhập bằng Google thất bại.")}
-											shape='rectangular'
-											size='large'
-											width='384'
-										/>
-									</div>
+								// Trước đây "chồng" (overlay) 1 nút custom lên trên GoogleLogin bằng CSS
+								// opacity-0, nhưng bản thân <GoogleLogin> cũng tự dựng 1 lớp iframe vô hình
+								// phủ lên nút nó vẽ ra (cơ chế nội bộ của chính Google) — 2 lớp vô hình chồng
+								// nhau gây click sai lớp, để lại overlay "ma" chặn các lần bấm sau. Nên bỏ
+								// hẳn overlay tự chế, dùng thẳng nút Google tự render, chỉ chỉnh qua props.
+								<div className='w-full'>
+									<GoogleLogin
+										onSuccess={(credentialResponse) => {
+											if (!credentialResponse.credential) {
+												toast.error("Không nhận được thông tin xác thực từ Google.");
+												return;
+											}
+											onGoogleSuccess(credentialResponse.credential);
+										}}
+										onError={() => toast.error("Đăng nhập bằng Google thất bại.")}
+										theme='outline'
+										shape='rectangular'
+										size='large'
+										logo_alignment='center'
+									/>
 								</div>
 							)}
 							{onFacebookSuccess && (
@@ -113,12 +98,13 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 									type='button'
 									title='Đăng nhập bằng Facebook'
 									variant='outline'
+									size='sm'
 									fullWidth
-									icon={<FacebookIcon className='h-5 w-5' />}
+									icon={<FacebookIcon className='h-6 w-6' />}
 									iconPosition='left'
 									onClick={handleFacebookClick}
-									className='cursor-pointer!'>
-									Tiếp tục với Facebook
+									className='gap-1! cursor-pointer! rounded-sm! py-4.5! text-[13.5px]! font-normal! tracking-normal! hover:bg-primary/5! hover:text-ink! hover:border-primary/30!'>
+									Sign in with Facebook
 								</Button>
 							)}
 						</div>
@@ -127,7 +113,7 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 
 				<p className='mt-6 text-center text-sm text-muted'>
 					{footerText}{" "}
-					<Link to={footerLinkTo} className='font-semibold text-primary-dark hover:underline cursor-default!' viewTransition>
+					<Link to={footerLinkTo} className='font-semibold text-primary-dark hover:underline cursor-default!'>
 						{footerLinkText}
 					</Link>
 				</p>
