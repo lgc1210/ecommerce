@@ -8,6 +8,7 @@ import type { TokenPayload } from "../../middlewares/authenticate.js";
 import cartService from "../carts/cart.service.js";
 import { generateOtpCode, getOtpExpiryDate, signAccessToken, signRefreshToken, verifyRefreshToken, sanitizeUser, OTP_MAX_ATTEMPTS, REFRESH_TOKEN_MAX_AGE_MS } from "./auth.utils.js";
 import type { FacebookLoginInput, ForgotPasswordInput, GoogleLoginInput, LoginInput, RegisterInput, ResendOtpInput, ResetPasswordInput, VerifyOtpInput } from "./auth.validation.js";
+import axios from "axios";
 
 const { OtpType, OtpStatus, Provider } = pkg;
 
@@ -170,15 +171,12 @@ class AuthService {
 	// còn 1 accessToken khác — JWT nội bộ hệ thống tự ký cấp cho user (signAccessToken),
 	// hoàn toàn khác với accessToken do Google phát hành.
 	async loginWithGoogle({ accessToken: googleAccessToken, cartItems: pendingCartItems = [] }: GoogleLoginInput) {
-		// Bước 1: xác minh accessToken thực sự hợp lệ và thuộc về đúng app này, bằng cách
-		// gọi endpoint "tokeninfo" của Google rồi so khớp audience (aud) với client ID cấu
-		// hình ở backend. Đây là bước tương đương việc verifyIdToken() kiểm tra audience
-		// ở luồng idToken cũ, KHÔNG được bỏ qua vì nếu không, bất kỳ accessToken hợp lệ nào
-		// (kể cả cấp cho app Google khác) đều có thể được dùng để đăng nhập vào hệ thống.
-		const tokenInfoUrl = `${GOOGLE_TOKENINFO_URL}?access_token=${encodeURIComponent(googleAccessToken)}`;
-
-		const tokenInfo: any = await fetch(tokenInfoUrl)
-			.then((res) => res.json())
+		// Bước 1: Xác minh accessToken hợp lệ bằng endpoint "tokeninfo" của Google.
+		// Axios tự động encode query parameters thông qua option `params`.
+		const { data: tokenInfo } = await axios
+			.get(GOOGLE_TOKENINFO_URL, {
+				params: { access_token: googleAccessToken },
+			})
 			.catch(() => {
 				throw new Error("Unauthorized: Không thể xác minh accessToken của Google.");
 			});
@@ -187,18 +185,21 @@ class AuthService {
 			throw new Error("Unauthorized: accessToken của Google không hợp lệ hoặc đã hết hạn.");
 		}
 
-		// Bước 2: dùng chính accessToken của user để lấy thông tin hồ sơ (id, tên, email).
-		const googleProfile: any = await fetch(GOOGLE_USERINFO_URL, {
-			headers: { Authorization: `Bearer ${googleAccessToken}` },
-		})
-			.then((res) => res.json())
+		// Bước 2: Lấy thông tin hồ sơ (id, tên, email) thông qua Authorization Header.
+		const { data: googleProfile } = await axios
+			.get(GOOGLE_USERINFO_URL, {
+				headers: { Authorization: `Bearer ${googleAccessToken}` },
+			})
 			.catch(() => {
 				throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Google.");
 			});
 
+		console.log("GOOGLE PROFILE: ", googleProfile);
+
 		if (!googleProfile || googleProfile.error || !googleProfile.email) {
 			throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Google.");
 		}
+
 		// userinfo trả về email_verified dạng boolean thật (chuẩn OIDC), không phải chuỗi.
 		if (!googleProfile.email_verified) {
 			throw new Error("Forbidden: Email Google của bạn chưa được xác thực.");
@@ -206,7 +207,7 @@ class AuthService {
 
 		const email = (googleProfile.email as string).toLowerCase();
 		const googleUserId = googleProfile.sub as string;
-		const displayName = googleProfile.name ?? email.split("@")[0] ?? email;
+		const displayName = `${googleProfile.given_name} ${googleProfile.family_name}`;
 
 		let user = await prisma.user.findUnique({ where: { email }, include: userWithRoleInclude });
 
@@ -215,10 +216,6 @@ class AuthService {
 				throw new Error("Forbidden: Tài khoản của bạn đã bị vô hiệu hóa.");
 			}
 
-			// Tài khoản đã tồn tại (vd. đăng ký trước đó bằng email/password) và giờ
-			// đăng nhập bằng Google lần đầu -> liên kết thêm providerId, đồng thời coi
-			// như email đã được xác thực (Google đã xác thực hộ), KHÔNG đổi mật khẩu
-			// hay xoá provider "local" hiện có để user vẫn có thể đăng nhập bằng password.
 			if (!user.providerId || user.providerId !== googleUserId || !user.isVerified) {
 				user = await prisma.user.update({
 					where: { id: user.id },
@@ -242,7 +239,6 @@ class AuthService {
 					provider: Provider.google,
 					providerId: googleUserId,
 					isActive: true,
-					// Google đã xác thực quyền sở hữu email này -> không cần OTP xác thực lại.
 					isVerified: true,
 				},
 				include: userWithRoleInclude,
@@ -261,8 +257,6 @@ class AuthService {
 			},
 		});
 
-		// Đồng bộ giỏ hàng cục bộ (localStorage, gửi kèm ở payload đăng nhập) vào DB — chỉ xảy ra
-		// đúng 1 lần tại đây, ngay khi đăng nhập thành công. Không phải endpoint riêng.
 		const { cart, skippedItems } = await cartService.mergeLocalCartToDb(user.id, pendingCartItems);
 
 		return { user: this.toAuthUser(user), accessToken, refreshToken, cart, skippedItems };
@@ -275,16 +269,16 @@ class AuthService {
 	// trang login/register, không điều hướng qua Facebook rồi redirect về (đó là
 	// OAuth redirect flow, không dùng ở đây).
 	async loginWithFacebook({ accessToken, cartItems: pendingCartItems = [] }: FacebookLoginInput) {
-		// Bước 1: xác minh accessToken thực sự hợp lệ và thuộc về đúng app này, bằng cách
-		// gọi Graph API "debug_token" với App Access Token (APP_ID|APP_SECRET). Đây là bước
-		// tương đương việc verifyIdToken() kiểm tra audience ở luồng Google, KHÔNG được bỏ qua
-		// vì nếu không, bất kỳ accessToken hợp lệ nào (kể cả cấp cho app Facebook khác) đều
-		// có thể được dùng để đăng nhập vào hệ thống của mình.
+		// Bước 1: Xác minh accessToken hợp lệ thông qua endpoint debug_token của Facebook Graph API.
 		const appAccessToken = `${env.FACEBOOK_APP_ID}|${env.FACEBOOK_APP_SECRET}`;
-		const debugTokenUrl = `${FACEBOOK_GRAPH_API_BASE}/debug_token` + `?input_token=${encodeURIComponent(accessToken)}` + `&access_token=${encodeURIComponent(appAccessToken)}`;
 
-		const debugResult: any = await fetch(debugTokenUrl)
-			.then((res) => res.json())
+		const { data: debugResult } = await axios
+			.get(`${FACEBOOK_GRAPH_API_BASE}/debug_token`, {
+				params: {
+					input_token: accessToken,
+					access_token: appAccessToken,
+				},
+			})
 			.catch(() => {
 				throw new Error("Unauthorized: Không thể xác minh accessToken của Facebook.");
 			});
@@ -294,11 +288,14 @@ class AuthService {
 			throw new Error("Unauthorized: accessToken của Facebook không hợp lệ hoặc đã hết hạn.");
 		}
 
-		// Bước 2: dùng chính accessToken của user để lấy thông tin hồ sơ (id, tên, email).
-		const profileUrl = `${FACEBOOK_GRAPH_API_BASE}/${FACEBOOK_GRAPH_API_VERSION}/me` + `?fields=id,name,email&access_token=${encodeURIComponent(accessToken)}`;
-
-		const facebookProfile: any = await fetch(profileUrl)
-			.then((res) => res.json())
+		// Bước 2: Dùng accessToken để lấy thông tin người dùng (id, name, email).
+		const { data: facebookProfile } = await axios
+			.get(`${FACEBOOK_GRAPH_API_BASE}/${FACEBOOK_GRAPH_API_VERSION}/me`, {
+				params: {
+					fields: "id,name,email",
+					access_token: accessToken,
+				},
+			})
 			.catch(() => {
 				throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Facebook.");
 			});
@@ -307,9 +304,6 @@ class AuthService {
 			throw new Error("Unauthorized: accessToken của Facebook không hợp lệ hoặc đã hết hạn.");
 		}
 
-		// Facebook chỉ trả về email nếu user đã cấp quyền "email" lúc đăng nhập. Hệ thống
-		// của mình bắt buộc phải có email (unique) nên nếu thiếu, không thể tạo/liên kết
-		// tài khoản được -> yêu cầu user cấp lại quyền hoặc dùng phương thức đăng nhập khác.
 		if (!facebookProfile.email) {
 			throw new Error("BadRequest: Không lấy được email từ tài khoản Facebook. Vui lòng cấp quyền chia sẻ email khi đăng nhập hoặc sử dụng phương thức đăng nhập khác.");
 		}
@@ -325,10 +319,6 @@ class AuthService {
 				throw new Error("Forbidden: Tài khoản của bạn đã bị vô hiệu hóa.");
 			}
 
-			// Tài khoản đã tồn tại (vd. đăng ký trước đó bằng email/password) và giờ đăng
-			// nhập bằng Facebook lần đầu -> liên kết thêm providerId, đồng thời coi như email
-			// đã được xác thực (Facebook đã xác thực hộ), KHÔNG đổi mật khẩu hay xoá provider
-			// "local" hiện có để user vẫn có thể đăng nhập bằng password.
 			if (!user.providerId || user.providerId !== facebookUserId || !user.isVerified) {
 				user = await prisma.user.update({
 					where: { id: user.id },
@@ -352,7 +342,6 @@ class AuthService {
 					provider: Provider.facebook,
 					providerId: facebookUserId,
 					isActive: true,
-					// Facebook đã xác thực quyền sở hữu email này -> không cần OTP xác thực lại.
 					isVerified: true,
 				},
 				include: userWithRoleInclude,
@@ -371,8 +360,6 @@ class AuthService {
 			},
 		});
 
-		// Đồng bộ giỏ hàng cục bộ (localStorage, gửi kèm ở payload đăng nhập) vào DB — chỉ xảy ra
-		// đúng 1 lần tại đây, ngay khi đăng nhập thành công. Không phải endpoint riêng.
 		const { cart, skippedItems } = await cartService.mergeLocalCartToDb(user.id, pendingCartItems);
 
 		return {

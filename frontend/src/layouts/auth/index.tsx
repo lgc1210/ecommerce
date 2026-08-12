@@ -81,27 +81,27 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 							{onGoogleSuccess && (
 								<Button
 									type='button'
-									title='Đăng nhập bằng Google'
+									title='Đăng nhập với Google'
 									variant='outline'
 									fullWidth
 									icon={<GoogleIcon className='h-5 w-5' />}
 									iconPosition='left'
 									onClick={() => loginWithGoogle()}
 									className='gap-1! cursor-pointer!'>
-									Sign in with Google
+									Đăng nhập với Google
 								</Button>
 							)}
 							{onFacebookSuccess && (
 								<Button
 									type='button'
-									title='Đăng nhập bằng Facebook'
+									title='Đăng nhập với Facebook'
 									variant='outline'
 									fullWidth
 									icon={<FacebookIcon className='h-5 w-5' />}
 									iconPosition='left'
 									onClick={handleFacebookClick}
 									className='gap-1! cursor-pointer!'>
-									Sign in with Facebook
+									Đăng nhập với Facebook
 								</Button>
 							)}
 						</div>
