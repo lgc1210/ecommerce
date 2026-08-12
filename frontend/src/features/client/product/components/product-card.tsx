@@ -27,12 +27,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
 	const media = (
 		<>
-			<img
-				src={product.image}
-				alt={product.name}
-				className={`h-full w-full object-cover transition-transform duration-300 ${isDiscontinued ? "grayscale" : "group-hover:scale-105"}`}
-				style={{ viewTransitionName: `product-img-${product.slug}` }}
-			/>
+			<img src={product.image} alt={product.name} className={`h-full w-full object-cover transition-transform duration-300 ${isDiscontinued ? "grayscale" : "group-hover:scale-105"}`} />
 			{discountPercent && !isDiscontinued && <span className='absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white'>-{discountPercent}%</span>}
 			{isDiscontinued ? (
 				<span className='absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-xs font-semibold text-white'>Ngừng kinh doanh</span>
@@ -76,9 +71,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
 					<span className='line-clamp-1 cursor-not-allowed text-sm font-semibold text-ink/60'>{product.name}</span>
 				) : (
 					<Link to={paths.client.productDetail(product.slug)} viewTransition className='line-clamp-1 text-sm font-semibold text-ink hover:text-primary-dark'>
-						<span style={{ viewTransitionName: `product-title-${product.slug}` }} className='block'>
-							{product.name}
-						</span>
+						<span className='block'>{product.name}</span>
 					</Link>
 				)}
 

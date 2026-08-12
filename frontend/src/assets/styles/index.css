@@ -19,7 +19,17 @@
     --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Thêm vào file CSS toàn cục của bạn (ví dụ: index.css) */
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none
+    }
+}
+
 
 ::view-transition-old(*),
 ::view-transition-new(*) {

@@ -17,24 +17,18 @@ const CartItemRow = ({ line, onQuantityChange, onRemove }: CartItemRowProps) => 
 
 	return (
 		<div className='flex gap-4 border-b border-border py-5 last:border-0'>
-			<Link
-				to={paths.client.productDetail(line.productSlug)}
-				className='h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-cream-soft'>
+			<Link to={paths.client.productDetail(line.productSlug)} className='h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-cream-soft'>
 				<img src={line.image} alt={line.productName} className='h-full w-full object-cover' />
 			</Link>
 
 			<div className='flex flex-1 flex-col'>
 				<div className='flex items-start justify-between gap-3'>
 					<div>
-						<Link
-							to={paths.client.productDetail(line.productSlug)}
-							className='line-clamp-2 text-sm font-semibold text-ink hover:text-primary-dark'>
+						<Link to={paths.client.productDetail(line.productSlug)} className='line-clamp-2 text-sm font-semibold text-ink hover:text-primary-dark' viewTransition>
 							{line.productName}
 						</Link>
 						{variationLabel && <p className='mt-1 text-xs text-muted'>{variationLabel}</p>}
-						{!line.inStock && (
-							<p className='mt-1 text-xs font-semibold text-red-600'>Sản phẩm đã hết hàng hoặc ngừng kinh doanh</p>
-						)}
+						{!line.inStock && <p className='mt-1 text-xs font-semibold text-red-600'>Sản phẩm đã hết hàng hoặc ngừng kinh doanh</p>}
 					</div>
 					<Button
 						type='button'
@@ -46,14 +40,13 @@ const CartItemRow = ({ line, onQuantityChange, onRemove }: CartItemRowProps) => 
 						icon={<TrashIcon className='h-4.5 w-4.5' />}
 					/>
 				</div>
-
-				<div className='mt-auto flex items-center justify-between pt-3'>
+				<div className='mt-auto flex flex-wrap-reverse sm:gap-0 gap-3 items-center justify-between pt-3'>
 					<div className='flex items-center rounded-full border border-border'>
 						<Button
 							type='button'
 							size='sm'
 							variant='ghost'
-							onClick={() => onQuantityChange(line.quantity - 1)}
+							onClick={() => line.quantity > 1 && onQuantityChange(line.quantity - 1)}
 							disabled={!line.inStock}
 							className='p-0! flex h-9 w-9 items-center justify-center text-ink hover:text-primary-dark bg-transparent!'
 							aria-label='Giảm số lượng'

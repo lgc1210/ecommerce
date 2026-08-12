@@ -36,11 +36,7 @@ const CheckoutDeliveryMethodSection = ({ shippingFee, isLoading, isError }: Chec
 					) : null}
 				</div>
 
-				{isError && (
-					<p className='mt-2 text-xs text-red-600'>
-						Địa chỉ này có thể nằm ngoài khu vực phục vụ của GHN, vui lòng thử địa chỉ khác.
-					</p>
-				)}
+				{isError && <p className='mt-2 text-xs text-red-600'>Địa chỉ này có thể nằm ngoài khu vực phục vụ của GHN, vui lòng thử địa chỉ khác.</p>}
 			</div>
 		</section>
 	);

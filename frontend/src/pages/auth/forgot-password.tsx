@@ -140,15 +140,7 @@ const ForgotPasswordPage = () => {
 			footerText='Nhớ ra mật khẩu rồi?'
 			footerLinkText='Đăng nhập'
 			footerLinkTo={paths.auth.login}>
-			<FormControl
-				label='Email'
-				name='email'
-				type='email'
-				value={email}
-				onChange={(e) => setEmail(e.target.value)}
-				placeholder='you@example.com'
-				disabled={forgotPasswordMutation.isPending}
-			/>
+			<FormControl label='Email' name='email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} placeholder='you@example.com' disabled={forgotPasswordMutation.isPending} />
 
 			<Button type='submit' fullWidth disabled={forgotPasswordMutation.isPending}>
 				{forgotPasswordMutation.isPending ? "Đang gửi..." : "Gửi mã xác thực"}

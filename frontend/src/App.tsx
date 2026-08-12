@@ -3,6 +3,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { BellIcon, CloseIcon, ShieldCheckIcon } from "./components/icons";
 import Button from "./components/button";
 import BackToTop from "./shared/components/back-to-top";
+import { useSyncExternalStore } from "react";
 
 const CustomIcon = ({ type }: { type: string }) => {
 	const iconClasses = "w-6 h-6 flex-shrink-0";
@@ -14,12 +15,7 @@ const CustomIcon = ({ type }: { type: string }) => {
 		case "error":
 			// Fallback styling for error alerts using standard semantic red
 			return (
-				<svg
-					className={`${iconClasses} text-rose-600`}
-					fill='none'
-					viewBox='0 0 24 24'
-					stroke='currentColor'
-					strokeWidth={1.75}>
+				<svg className={`${iconClasses} text-rose-600`} fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={1.75}>
 					<circle cx='12' cy='12' r='9' />
 					<path strokeLinecap='round' strokeLinejoin='round' d='M12 8v4m0 4h.01' />
 				</svg>
@@ -42,11 +38,23 @@ const CustomCloseButton = ({ closeToast }: { closeToast: () => void }) => (
 	/>
 );
 
+const subscribe = (callback: () => void) => {
+	const mediaQuery = window.matchMedia("(max-width: 639px)");
+	mediaQuery.addEventListener("change", callback);
+	return () => mediaQuery.removeEventListener("change", callback);
+};
+
+const getSnapshot = () => {
+	const mediaQuery = window.matchMedia("(max-width: 639px)");
+	return mediaQuery.matches;
+};
+
 const App = () => {
+	const isMobile = useSyncExternalStore(subscribe, getSnapshot);
 	return (
 		<>
 			<ToastContainer
-				position='top-right'
+				position={isMobile ? "bottom-center" : "top-right"}
 				autoClose={3000}
 				closeOnClick
 				transition={Zoom}

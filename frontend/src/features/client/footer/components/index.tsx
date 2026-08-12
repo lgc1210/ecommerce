@@ -51,8 +51,8 @@ const Footer = () => {
 		<footer className='border-t border-border bg-ink text-cream'>
 			<div className='mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8'>
 				<div className='grid grid-cols-2 gap-10 md:grid-cols-4'>
-					<div className='col-span-2 md:col-span-1'>
-						<Link to={paths.client.home} className='flex items-center gap-2'>
+					<div className='col-span-1 md:col-span-1'>
+						<Link to={paths.client.home} className='flex items-center gap-2' viewTransition>
 							<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 							<span className='text-xl font-extrabold tracking-tight text-white'>Commerce</span>
 						</Link>
@@ -71,7 +71,7 @@ const Footer = () => {
 						<ul className='mt-4 space-y-2.5 text-sm'>
 							{quickLinks.map((link) => (
 								<li key={link.to + new Date().getTime()}>
-									<Link to={link.to} className='text-cream/70 hover:text-primary cursor-default!'>
+									<Link to={link.to} className='text-cream/70 hover:text-primary cursor-default!' viewTransition>
 										{link.label}
 									</Link>
 								</li>

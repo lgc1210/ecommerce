@@ -88,7 +88,7 @@ const AccountPage = () => {
 			<BreadCrumb title='Tài khoản của tôi' description='Quản lý thông tin cá nhân và sổ địa chỉ giao hàng.' />
 
 			<div className='mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8'>
-				<Tabs value={tab} onChange={handleTabChange} className='mb-6'>
+				<Tabs value={tab} onChange={handleTabChange} className='mb-6 overflow-x-scroll no-scrollbar'>
 					{TABS.map((item) => (
 						<TabItem key={item.name} value={item.name} icon={item.icon}>
 							{item.label}

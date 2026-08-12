@@ -31,10 +31,10 @@ const HeroSection = ({ heroSection }: HeroSectionProps) => {
 						/>
 					</p>
 					<div className='mt-8 flex flex-wrap items-center gap-4'>
-						<Link to={paths.client.shop}>
+						<Link to={paths.client.shop} viewTransition>
 							<Button icon={<ChevronRightIcon className='h-4 w-4' />}>{heroSection.btn_text}</Button>
 						</Link>
-						<Link to={paths.client.about}>
+						<Link to={paths.client.about} viewTransition>
 							<Button variant='outline'>{heroSection.btn_second_text}</Button>
 						</Link>
 					</div>
