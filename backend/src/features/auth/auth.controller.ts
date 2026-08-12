@@ -127,8 +127,8 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
 		const rawRefreshToken = req.cookies?.refreshToken;
 		await authService.logout(rawRefreshToken);
 
-		res.clearCookie(TOKENS.accessToken);
-		res.clearCookie(TOKENS.refreshToken);
+		res.clearCookie(TOKENS.accessToken, getAccessTokenCookieOptions());
+		res.clearCookie(TOKENS.refreshToken, getRefreshTokenCookieOptions());
 
 		res.status(200).json({ message: "Đăng xuất thành công." });
 	} catch (error) {
