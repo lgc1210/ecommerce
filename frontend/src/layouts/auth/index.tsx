@@ -88,10 +88,9 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 										onError={() => toast.error("Đăng nhập bằng Google thất bại.")}
 										theme='outline'
 										shape='rectangular'
-										size='large'
+										size='medium'
 										logo_alignment='center'
-										auto_select={false}
-										useOneTap={false}
+										context='signin'
 									/>
 								</div>
 							)}
@@ -102,10 +101,10 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 									variant='outline'
 									size='sm'
 									fullWidth
-									icon={<FacebookIcon className='h-6 w-6' />}
+									icon={<FacebookIcon className='h-5 w-5' />}
 									iconPosition='left'
 									onClick={handleFacebookClick}
-									className='gap-1! cursor-pointer! rounded-sm! py-4.5! text-[13.5px]! font-normal! tracking-normal! hover:bg-primary/5! hover:text-ink! hover:border-primary/30!'>
+									className='gap-1! cursor-pointer! rounded-sm! py-0! h-7.5! text-[13.5px]! font-normal! tracking-normal! hover:bg-primary/5! hover:text-ink! hover:border-primary/30!'>
 									Sign in with Facebook
 								</Button>
 							)}
