@@ -76,7 +76,7 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 								// phủ lên nút nó vẽ ra (cơ chế nội bộ của chính Google) — 2 lớp vô hình chồng
 								// nhau gây click sai lớp, để lại overlay "ma" chặn các lần bấm sau. Nên bỏ
 								// hẳn overlay tự chế, dùng thẳng nút Google tự render, chỉ chỉnh qua props.
-								<div className='w-full'>
+								<div className='w-full!'>
 									<GoogleLogin
 										onSuccess={(credentialResponse) => {
 											if (!credentialResponse.credential) {
@@ -90,6 +90,8 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 										shape='rectangular'
 										size='large'
 										logo_alignment='center'
+										auto_select={false}
+										useOneTap={false}
 									/>
 								</div>
 							)}
