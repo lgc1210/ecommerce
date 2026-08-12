@@ -147,8 +147,16 @@ async function upsertCategoryNode(node: CategorySeedNode, parentId: number | nul
  * (vd: product.seed.ts) có thể tra cứu categoryId theo tên khi gán sản phẩm vào danh mục.
  */
 export const categorySeed = async (): Promise<Map<string, number>> => {
-	const existingCategories = await prisma.category.count();
-	if (existingCategories > 0) return new Map();
+	// Trước đây nếu categories đã tồn tại thì trả về Map RỖNG — điều này gây lỗi khi hàm bị gọi
+	// 2 lần trong cùng 1 lần khởi động server (server.ts gọi trực tiếp, rồi productSeed() bên
+	// dưới gọi lại lần nữa để tra categoryId theo tên): lần gọi thứ 2 luôn thấy categories đã
+	// tồn tại (do lần 1 vừa tạo xong) nên trả Map rỗng -> mọi sản phẩm bị gán categoryId = null.
+	// Sửa: luôn trả về Map đầy đủ tên -> id lấy từ DB hiện có, để bất kỳ lần gọi nào (kể cả gọi
+	// lại nhiều lần, hoặc DB đã có category từ trước) đều tra cứu categoryId đúng.
+	const existingCategories = await prisma.category.findMany({ select: { id: true, name: true } });
+	if (existingCategories.length > 0) {
+		return new Map(existingCategories.map((category) => [category.name, category.id]));
+	}
 
 	const categoryIdByName = new Map<string, number>();
 

@@ -110,7 +110,7 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 
 				<p className='mt-6 text-center text-sm text-muted'>
 					{footerText}{" "}
-					<Link to={footerLinkTo} className='font-semibold text-primary-dark hover:underline cursor-default!'>
+					<Link to={footerLinkTo} className='font-semibold text-primary-dark hover:underline cursor-default!' viewTransition>
 						{footerLinkText}
 					</Link>
 				</p>

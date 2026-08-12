@@ -25,7 +25,7 @@ interface SeedProductInput {
  */
 const buildPlaceholderImageUrl = (text: string): string => `https://placehold.co/800x800/EDE7DD/3A3226?font=roboto&text=${encodeURIComponent(text)}`;
 
-const seedProducts: SeedProductInput[] = [
+export const seedProducts: SeedProductInput[] = [
 	{
 		name: "iPhone 15",
 		description: "Điện thoại Apple iPhone 15, chip A16 Bionic, camera kép 48MP, màn hình Super Retina XDR 6.1 inch.",
