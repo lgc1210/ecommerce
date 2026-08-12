@@ -5,7 +5,7 @@ import { parseNumberParam, parseEnumParam } from "../../utils/searchParams";
 import { FilterIcon } from "../../components/icons";
 import useListQueryParams from "../../hooks/useListQueryParams";
 import { useState } from "react";
-import { useCategoryTreeQuery, useProductsQuery } from "../../features/client/product/hooks";
+import { useProductsQuery } from "../../features/client/product/hooks";
 import { toProductCardItem } from "../../features/client/product/utils";
 import type { ListProductsParams } from "../../features/client/product/types";
 import ProductCard from "../../features/client/product/components/product-card";
@@ -14,6 +14,7 @@ import FormControl from "../../components/form-control";
 import Button from "../../components/button";
 import FormSelect from "../../components/form-select";
 import { productSort } from "../../features/client/product/constants";
+import { useCategoryTreeQuery } from "../../features/client/category/hooks";
 
 const PAGE_SIZE = 12;
 const MAX_PRICE = 5000000;

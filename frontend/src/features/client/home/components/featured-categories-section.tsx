@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import paths from "../../../../configs/constants/paths";
 import Loading from "../../../../shared/components/loading";
-import { useCategoriesQuery, useFeaturedCategoriesQuery } from "../../product/hooks";
 import type { PublicCategory } from "../../product/types";
+import { useCategoriesQuery, useFeaturedCategoriesQuery } from "../../category/hooks";
 
-const FEATURED_CATEGORIES_LIMIT = 10;
+const FEATURED_CATEGORIES_LIMIT = 5;
 
 /** Ảnh đại diện cho danh mục — Category ở backend không có field ảnh riêng, dùng placeholder theo tên. */
 const getCategoryImage = (name: string) => `https://placehold.co/200x200/f3ede4/1c1815?font=montserrat&text=${encodeURIComponent(name)}`;
