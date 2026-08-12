@@ -37,9 +37,9 @@ export const LoginSchema = z.object({
 
 export const GoogleLoginSchema = z.object({
 	body: z.object({
-		// idToken (credential JWT) do Google Identity Services trả về ở phía client
-		// (One Tap / nút "Sign in with Google"), KHÔNG phải access token hay auth code.
-		idToken: z.string().min(1, { message: "idToken là bắt buộc." }),
+		// accessToken do hook useGoogleLogin() trả về ở phía client (OAuth 2.0 implicit
+		// flow), KHÔNG phải idToken/credential JWT hay authorization code.
+		accessToken: z.string().min(1, { message: "accessToken là bắt buộc." }),
 		cartItems: cartItemsSchema,
 	}),
 });

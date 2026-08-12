@@ -54,9 +54,9 @@ const LoginPage = () => {
 		);
 	};
 
-	const handleGoogleSuccess = (idToken: string) => {
+	const handleGoogleSuccess = (accessToken: string) => {
 		googleLoginMutation.mutate(
-			{ idToken },
+			{ accessToken },
 			{
 				onSuccess: (response) => {
 					goToPostLoginPath(response.data.data as AuthUser);

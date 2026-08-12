@@ -76,7 +76,7 @@ export const routeManifest: RouteMeta[] = [
 	{ method: "post", path: "/auth/verify-otp", tag: "Auth", summary: "Xác thực OTP đăng ký", schema: VerifyOtpSchema },
 	{ method: "post", path: "/auth/resend-otp", tag: "Auth", summary: "Gửi lại mã OTP", schema: ResendOtpSchema },
 	{ method: "post", path: "/auth/login", tag: "Auth", summary: "Đăng nhập bằng email/mật khẩu", schema: LoginSchema },
-	{ method: "post", path: "/auth/google", tag: "Auth", summary: "Đăng nhập bằng Google idToken", schema: GoogleLoginSchema },
+	{ method: "post", path: "/auth/google", tag: "Auth", summary: "Đăng nhập bằng Google accessToken", schema: GoogleLoginSchema },
 	{ method: "post", path: "/auth/facebook", tag: "Auth", summary: "Đăng nhập bằng Facebook accessToken", schema: FacebookLoginSchema },
 	{ method: "post", path: "/auth/refresh-token", tag: "Auth", summary: "Làm mới access token từ refresh token (cookie)" },
 	{ method: "post", path: "/auth/logout", tag: "Auth", summary: "Đăng xuất, xoá cookie phiên đăng nhập" },

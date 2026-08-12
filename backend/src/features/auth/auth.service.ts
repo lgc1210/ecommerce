@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import { OAuth2Client } from "google-auth-library";
 import prisma from "../../config/prisma.js";
 import transporter from "../../config/email.js";
 import { env } from "../../config/dotenv.js";
@@ -14,10 +13,13 @@ const { OtpType, OtpStatus, Provider } = pkg;
 
 const BCRYPT_SALT_ROUNDS = 10;
 
-// Dùng chung 1 OAuth2Client để verify idToken. Không cần client secret vì ta chỉ
-// xác minh chữ ký + audience của idToken (public key của Google), không thực hiện
-// trao đổi authorization code -> access token (đó là OAuth redirect flow, không dùng ở đây).
-const googleOAuthClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+// accessToken (OAuth 2.0 implicit flow, hook useGoogleLogin ở frontend) không tự chứa
+// chữ ký như idToken (JWT) nên không thể verify offline bằng public key của Google.
+// Việc xác minh phải thực hiện bằng cách gọi ngược lên 2 endpoint REST của Google:
+// tokeninfo (kiểm tra token còn hiệu lực + đúng audience) và userinfo (lấy hồ sơ user),
+// cùng cách tiếp cận với việc xác minh accessToken của Facebook bên dưới.
+const GOOGLE_TOKENINFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";
+const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 
 // Facebook không phát hành idToken dạng JWT tự-chứa-chữ-ký như Google, nên việc xác minh
 // accessToken phải thực hiện bằng cách gọi ngược lên Graph API của Facebook (xem loginWithFacebook).
@@ -157,35 +159,54 @@ class AuthService {
 	}
 
 	// ==========================================
-	// Đăng nhập bằng Google (idToken flow, không redirect)
+	// Đăng nhập bằng Google (accessToken flow, OAuth 2.0 implicit, không redirect)
 	// ==========================================
-	// Frontend dùng Google Identity Services (GIS) để lấy idToken (credential JWT)
-	// ngay trên trang login/register, không điều hướng qua Google rồi redirect về.
-	// Ở đây ta xác minh idToken đó bằng chính thư viện chính thức của Google
-	// (verify chữ ký RS256 bằng public key của Google + kiểm tra audience/issuer),
-	// KHÔNG tự ý decode JWT bằng tay vì như vậy sẽ không xác thực được ai là người
-	// thực sự phát hành token.
-	async loginWithGoogle({ idToken, cartItems: pendingCartItems = [] }: GoogleLoginInput) {
-		const ticket = await googleOAuthClient
-			.verifyIdToken({
-				idToken,
-				audience: env.GOOGLE_CLIENT_ID,
-			})
+	// Frontend dùng hook useGoogleLogin() (Google Identity Services, flow mặc định
+	// "implicit") để lấy accessToken ngay trên trang login/register, không điều hướng
+	// qua Google rồi redirect về. accessToken không tự chứa chữ ký như idToken (JWT)
+	// nên phải xác minh bằng cách gọi ngược lên 2 endpoint REST của Google, giống hệt
+	// cơ chế xác minh accessToken của Facebook bên dưới (loginWithFacebook).
+	// Đặt tên tham số là googleAccessToken (thay vì accessToken trùng tên) vì bên dưới
+	// còn 1 accessToken khác — JWT nội bộ hệ thống tự ký cấp cho user (signAccessToken),
+	// hoàn toàn khác với accessToken do Google phát hành.
+	async loginWithGoogle({ accessToken: googleAccessToken, cartItems: pendingCartItems = [] }: GoogleLoginInput) {
+		// Bước 1: xác minh accessToken thực sự hợp lệ và thuộc về đúng app này, bằng cách
+		// gọi endpoint "tokeninfo" của Google rồi so khớp audience (aud) với client ID cấu
+		// hình ở backend. Đây là bước tương đương việc verifyIdToken() kiểm tra audience
+		// ở luồng idToken cũ, KHÔNG được bỏ qua vì nếu không, bất kỳ accessToken hợp lệ nào
+		// (kể cả cấp cho app Google khác) đều có thể được dùng để đăng nhập vào hệ thống.
+		const tokenInfoUrl = `${GOOGLE_TOKENINFO_URL}?access_token=${encodeURIComponent(googleAccessToken)}`;
+
+		const tokenInfo: any = await fetch(tokenInfoUrl)
+			.then((res) => res.json())
 			.catch(() => {
-				throw new Error("Unauthorized: idToken của Google không hợp lệ hoặc đã hết hạn.");
+				throw new Error("Unauthorized: Không thể xác minh accessToken của Google.");
 			});
 
-		const googlePayload = ticket.getPayload();
-		if (!googlePayload || !googlePayload.email) {
+		if (!tokenInfo || tokenInfo.error || tokenInfo.aud !== env.GOOGLE_CLIENT_ID) {
+			throw new Error("Unauthorized: accessToken của Google không hợp lệ hoặc đã hết hạn.");
+		}
+
+		// Bước 2: dùng chính accessToken của user để lấy thông tin hồ sơ (id, tên, email).
+		const googleProfile: any = await fetch(GOOGLE_USERINFO_URL, {
+			headers: { Authorization: `Bearer ${googleAccessToken}` },
+		})
+			.then((res) => res.json())
+			.catch(() => {
+				throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Google.");
+			});
+
+		if (!googleProfile || googleProfile.error || !googleProfile.email) {
 			throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Google.");
 		}
-		if (!googlePayload.email_verified) {
+		// userinfo trả về email_verified dạng boolean thật (chuẩn OIDC), không phải chuỗi.
+		if (!googleProfile.email_verified) {
 			throw new Error("Forbidden: Email Google của bạn chưa được xác thực.");
 		}
 
-		const email = googlePayload.email.toLowerCase();
-		const googleUserId = googlePayload.sub;
-		const displayName = googlePayload.name ?? email.split("@")[0] ?? email;
+		const email = (googleProfile.email as string).toLowerCase();
+		const googleUserId = googleProfile.sub as string;
+		const displayName = googleProfile.name ?? email.split("@")[0] ?? email;
 
 		let user = await prisma.user.findUnique({ where: { email }, include: userWithRoleInclude });
 

@@ -4,16 +4,7 @@ import authService from "../services";
 import { getApiErrorMessage } from "../../../utils/api";
 import { useCartStore } from "../../client/cart/stores";
 import { CART_QUERY_KEY } from "../../client/cart/constants";
-import type {
-	FacebookLoginPayload,
-	ForgotPasswordPayload,
-	GoogleLoginPayload,
-	LoginPayload,
-	RegisterPayload,
-	ResendOtpPayload,
-	ResetPasswordPayload,
-	VerifyOtpPayload,
-} from "../types";
+import type { FacebookLoginPayload, ForgotPasswordPayload, GoogleLoginPayload, LoginPayload, RegisterPayload, ResendOtpPayload, ResetPasswordPayload, VerifyOtpPayload } from "../types";
 
 export interface AuthUser {
 	id: number;
@@ -43,12 +34,8 @@ export const AUTH_ME_QUERY_KEY = ["auth", "me"] as const;
  * AuthService.login/loginWithGoogle/loginWithFacebook. Việc này chỉ xảy ra đúng 1 lần tại thời
  * điểm đăng nhập, không có API /cart/merge riêng.
  */
-function withLocalCartItems<T extends object>(
-	payload: T,
-): T & { cartItems: { productSkuId: number; quantity: number }[] } {
-	const cartItems = useCartStore
-		.getState()
-		.items.map((item) => ({ productSkuId: item.productSkuId, quantity: item.quantity }));
+function withLocalCartItems<T extends object>(payload: T): T & { cartItems: { productSkuId: number; quantity: number }[] } {
+	const cartItems = useCartStore.getState().items.map((item) => ({ productSkuId: item.productSkuId, quantity: item.quantity }));
 	return { ...payload, cartItems };
 }
 
@@ -150,9 +137,9 @@ export const useLogin = () => {
 };
 
 /**
- * Đăng nhập bằng Google, nhận idToken (credential JWT) từ Google Identity Services
+ * Đăng nhập bằng Google, nhận accessToken (OAuth 2.0 implicit flow, hook useGoogleLogin)
  * ở phía component (xem layouts/auth) rồi gửi lên backend để xác minh và đổi lấy
- * accessToken/refreshToken (cookie httpOnly), giống hệt luồng useLogin ở trên.
+ * accessToken/refreshToken nội bộ (cookie httpOnly), giống hệt luồng useLogin ở trên.
  */
 export const useGoogleAuthLogin = () => {
 	const queryClient = useQueryClient();
@@ -195,9 +182,7 @@ export const useRegister = () => {
 	return useMutation({
 		mutationFn: (payload: RegisterPayload) => authService.register(payload),
 		onSuccess: (res) => {
-			toast.success(
-				res.data.message ?? "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực tài khoản.",
-			);
+			toast.success(res.data.message ?? "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực tài khoản.");
 		},
 		onError: (error) => {
 			toast.error(getApiErrorMessage(error, "Đăng ký thất bại."));

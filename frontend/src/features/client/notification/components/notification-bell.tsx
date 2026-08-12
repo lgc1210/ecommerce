@@ -50,13 +50,13 @@ const NotificationBell = () => {
 		if (!notification.isRead) markAsReadMutation.mutate(notification.id);
 		if (notification.actionUrl) {
 			const { to, state } = resolveNotificationLink(notification.actionUrl);
-			navigate(to, state ? { state } : undefined);
+			navigate(to, state ? { state, viewTransition: true } : undefined);
 		}
 	};
 
 	const handleViewAll = () => {
 		setOpen(false);
-		navigate(paths.client.account, { state: { tab: "notifications" } });
+		navigate(paths.client.account, { state: { tab: "notifications" }, viewTransition: true });
 	};
 
 	return (

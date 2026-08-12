@@ -75,9 +75,9 @@ const RegisterPage = () => {
 
 	// Đăng ký/đăng nhập bằng Google bỏ qua bước OTP (Google đã xác thực email hộ),
 	// nên sau khi thành công có thể vào thẳng app theo role, giống hệt sau khi login.
-	const handleGoogleSuccess = (idToken: string) => {
+	const handleGoogleSuccess = (accessToken: string) => {
 		googleLoginMutation.mutate(
-			{ idToken },
+			{ accessToken },
 			{
 				onSuccess: (response) => {
 					const user = response.data.data as AuthUser;

@@ -63,7 +63,7 @@ const CartPage = () => {
 							<p className='mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600'>Một số sản phẩm trong giỏ đã hết hàng hoặc ngừng kinh doanh, vui lòng xóa trước khi thanh toán.</p>
 						)}
 
-						<Link to={paths.client.payment}>
+						<Link to={paths.client.payment} viewTransition>
 							<Button fullWidth className='mt-6' disabled={hasUnavailableItems}>
 								Tiến hành thanh toán
 							</Button>

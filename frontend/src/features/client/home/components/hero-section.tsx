@@ -22,14 +22,14 @@ const HeroSection = ({ heroSection }: HeroSectionProps) => {
 				<div>
 					<span className='inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary-dark'>{heroSection.badge}</span>
 					<h1 className='mt-4 text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl'>{heroSection.title}</h1>
-					<p className='mt-5 max-w-md text-base leading-relaxed text-muted'>
+					<div className='mt-5 max-w-md text-base leading-relaxed text-muted'>
 						<BlocksRenderer
 							content={heroSection.content}
 							blocks={{
 								paragraph: ({ children }) => <p>{children}</p>,
 							}}
 						/>
-					</p>
+					</div>
 					<div className='mt-8 flex flex-wrap items-center gap-4'>
 						<Link to={paths.client.shop} viewTransition>
 							<Button icon={<ChevronRightIcon className='h-4 w-4' />}>{heroSection.btn_text}</Button>

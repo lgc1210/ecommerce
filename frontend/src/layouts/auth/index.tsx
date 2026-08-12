@@ -1,9 +1,9 @@
 import type { ReactNode, SubmitEvent } from "react";
 import { Link } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
 import Button from "../../components/button";
-import { FacebookIcon } from "../../components/icons";
+import { FacebookIcon, GoogleIcon } from "../../components/icons";
 import paths from "../../configs/constants/paths";
 import { useFacebookLogin } from "../../features/auth/hooks/useFacebookSdk";
 
@@ -19,12 +19,12 @@ interface AuthLayoutProps {
 	/** Ẩn nhóm nút đăng nhập mạng xã hội nếu không cần, mặc định hiển thị */
 	showSocialLogin?: boolean;
 	/**
-	 * Nhận idToken (credential JWT) ngay khi Google xác thực xong, KHÔNG redirect
-	 * sang trang Google rồi quay lại (đó là authorization-code/OAuth redirect flow).
-	 * Nút bên dưới do chính Google Identity Services render (script GIS), nên bắt
-	 * buộc phải dùng component <GoogleLogin> thay vì 1 <button> tự custom onClick.
+	 * Nhận accessToken (OAuth 2.0 implicit flow) ngay khi Google xác thực xong, KHÔNG
+	 * redirect sang trang Google rồi quay lại (đó là authorization-code/OAuth redirect
+	 * flow). Lấy được từ hook useGoogleLogin() (mặc định flow: "implicit"), nên có thể
+	 * gọi từ 1 <button> tự custom onClick, giống hệt cách làm của Facebook bên dưới.
 	 */
-	onGoogleSuccess?: (idToken: string) => void;
+	onGoogleSuccess?: (accessToken: string) => void;
 	/**
 	 * Nhận accessToken ngay khi Facebook xác thực xong (FB.login), KHÔNG redirect
 	 * sang trang Facebook rồi quay lại. Khác với Google, Facebook JS SDK không bắt
@@ -36,6 +36,14 @@ interface AuthLayoutProps {
 
 const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLinkText, footerLinkTo, showSocialLogin = true, onGoogleSuccess, onFacebookSuccess }: AuthLayoutProps) => {
 	const { login: loginWithFacebook } = useFacebookLogin();
+
+	// flow mặc định "implicit" trả thẳng về accessToken (không cần đổi code ở backend
+	// như "auth-code"), tương tự cơ chế FB.login() ở dưới — nên có thể tự vẽ nút và gọi
+	// loginWithGoogle() từ 1 onClick bình thường, không còn phụ thuộc <GoogleLogin>.
+	const loginWithGoogle = useGoogleLogin({
+		onSuccess: (tokenResponse) => onGoogleSuccess?.(tokenResponse.access_token),
+		onError: () => toast.error("Đăng nhập bằng Google thất bại."),
+	});
 
 	const handleFacebookClick = async () => {
 		try {
@@ -71,40 +79,28 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 
 						<div className='mt-4 flex flex-col items-center justify-center gap-3'>
 							{onGoogleSuccess && (
-								// Trước đây "chồng" (overlay) 1 nút custom lên trên GoogleLogin bằng CSS
-								// opacity-0, nhưng bản thân <GoogleLogin> cũng tự dựng 1 lớp iframe vô hình
-								// phủ lên nút nó vẽ ra (cơ chế nội bộ của chính Google) — 2 lớp vô hình chồng
-								// nhau gây click sai lớp, để lại overlay "ma" chặn các lần bấm sau. Nên bỏ
-								// hẳn overlay tự chế, dùng thẳng nút Google tự render, chỉ chỉnh qua props.
-								<div className='w-full!'>
-									<GoogleLogin
-										onSuccess={(credentialResponse) => {
-											if (!credentialResponse.credential) {
-												toast.error("Không nhận được thông tin xác thực từ Google.");
-												return;
-											}
-											onGoogleSuccess(credentialResponse.credential);
-										}}
-										onError={() => toast.error("Đăng nhập bằng Google thất bại.")}
-										theme='outline'
-										shape='rectangular'
-										size='medium'
-										logo_alignment='center'
-										context='signin'
-									/>
-								</div>
+								<Button
+									type='button'
+									title='Đăng nhập bằng Google'
+									variant='outline'
+									fullWidth
+									icon={<GoogleIcon className='h-5 w-5' />}
+									iconPosition='left'
+									onClick={() => loginWithGoogle()}
+									className='gap-1! cursor-pointer!'>
+									Sign in with Google
+								</Button>
 							)}
 							{onFacebookSuccess && (
 								<Button
 									type='button'
 									title='Đăng nhập bằng Facebook'
 									variant='outline'
-									size='sm'
 									fullWidth
 									icon={<FacebookIcon className='h-5 w-5' />}
 									iconPosition='left'
 									onClick={handleFacebookClick}
-									className='gap-1! cursor-pointer! rounded-sm! py-0! h-7.5! text-[13.5px]! font-normal! tracking-normal! hover:bg-primary/5! hover:text-ink! hover:border-primary/30!'>
+									className='gap-1! cursor-pointer!'>
 									Sign in with Facebook
 								</Button>
 							)}

@@ -2,16 +2,13 @@
 // tự load Facebook JavaScript SDK (script connect.facebook.net) rồi gọi FB.login()
 // để lấy accessToken NGAY tại client, KHÔNG điều hướng sang trang Facebook rồi redirect
 // về (đó là authorization-code/OAuth redirect flow, không dùng ở đây) — giống hệt cách
-// GoogleLogin lấy idToken (credential JWT) trong layouts/auth/index.tsx.
+// useGoogleLogin lấy accessToken trong layouts/auth/index.tsx.
 
 declare global {
 	interface Window {
 		FB?: {
 			init: (params: { appId: string; cookie?: boolean; xfbml?: boolean; version: string }) => void;
-			login: (
-				callback: (response: { authResponse: { accessToken: string; userID: string } | null; status: string }) => void,
-				options?: { scope?: string },
-			) => void;
+			login: (callback: (response: { authResponse: { accessToken: string; userID: string } | null; status: string }) => void, options?: { scope?: string }) => void;
 		};
 		fbAsyncInit?: () => void;
 	}
@@ -55,7 +52,7 @@ function loadFacebookSdk(appId: string): Promise<void> {
 
 /**
  * Hook cung cấp hàm đăng nhập Facebook, trả về accessToken (short-lived user access
- * token) ngay tại client để gửi lên backend xác minh, giống hệt luồng idToken của Google.
+ * token) ngay tại client để gửi lên backend xác minh, giống hệt luồng accessToken của Google.
  */
 export function useFacebookLogin() {
 	const appId = import.meta.env.VITE_FACEBOOK_APP_ID as string;

@@ -64,10 +64,10 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 
 export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
-		const { idToken, cartItems } = req.body;
-		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle({ idToken, cartItems });
+		const { accessToken, cartItems } = req.body;
+		const { user, accessToken: newAccessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle({ accessToken, cartItems });
 
-		res.cookie(TOKENS.accessToken, accessToken, getAccessTokenCookieOptions());
+		res.cookie(TOKENS.accessToken, newAccessToken, getAccessTokenCookieOptions());
 		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
 
 		res.status(200).json({

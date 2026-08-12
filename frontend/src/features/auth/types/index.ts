@@ -19,8 +19,8 @@ export interface LoginPayload {
 }
 
 export interface GoogleLoginPayload {
-	/** idToken (credential JWT) trả về từ Google Identity Services, không phải access token. */
-	idToken: string;
+	/** accessToken trả về từ hook useGoogleLogin() (OAuth 2.0 implicit flow), không phải idToken/credential JWT. */
+	accessToken: string;
 	cartItems?: PendingCartItem[];
 }
 
