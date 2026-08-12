@@ -12,7 +12,7 @@ import axios from "axios";
  */
 const strapiClient = axios.create({
 	baseURL: `${import.meta.env.VITE_STRAPI_BASE_URL}/api`,
-	timeout: 10000,
+	timeout: 30000,
 	headers: {
 		"Content-Type": "application/json",
 		Accept: "application/json",
