@@ -59,8 +59,9 @@ export function verifyRefreshToken(token: string): TokenPayload {
 const baseCookieOptions: CookieOptions = {
 	httpOnly: true,
 	secure: process.env.NODE_ENV === "production",
-	sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+	sameSite: "lax",
 	path: "/",
+	...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
 };
 
 export function getAccessTokenCookieOptions(): CookieOptions {

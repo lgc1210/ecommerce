@@ -15,6 +15,8 @@ dotenv.config({ path: path.resolve(__dirname, `../../${envFileTarget}`) });
 const envSchema = z.object({
 	CLIENT_URL: z.url({ message: "CLIENT_URL must be a valid connection string format." }),
 
+	COOKIE_DOMAIN: z.string().optional(), // dùng khi mua domain riêng sau này, hiện để trống
+
 	// Database
 	// Bật SSL khi kết nối MySQL (bắt buộc với Aiven ở production). Không bắt buộc khai
 	// báo — mặc định "false" nên MySQL local (dev) không cần cấu hình gì thêm. Đặt
