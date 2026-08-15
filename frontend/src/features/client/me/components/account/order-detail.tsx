@@ -91,23 +91,25 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 								const variation = formatVariationSnapshot(item.variationSnapshot);
 								return (
 									<Link to={`${paths.client.productDetail(`${item.productSku?.product?.slug}`)}`} key={item.id} className='flex items-center justify-between py-3 text-sm'>
-										<div className='flex items-center justify-start gap-4'>
-											<img
-												src={item?.productSku?.images[0]?.imageUrl ?? ""}
-												alt={item?.productSku?.images[0]?.altText ?? ""}
-												width={50}
-												height={50}
-												className='shrink-0 rounded border border-border'
-											/>
-											<div className='min-w-0'>
-												<p className='truncate font-medium text-ink'>{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}</p>
-												<p className='text-xs text-muted'>
-													SL: {item.quantity}
-													{variation ? ` · ${variation}` : ""}
-												</p>
+										<div className='w-full flex flex-wrap items-center justify-between gap-2 sm:gap-4'>
+											<div className='flex items-center justify-start gap-2'>
+												<img
+													src={item?.productSku?.images[0]?.imageUrl ?? ""}
+													alt={item?.productSku?.images[0]?.altText ?? ""}
+													width={50}
+													height={50}
+													className='shrink-0 rounded border border-border'
+												/>
+												<div className='min-w-0'>
+													<p className='line-clamp-1 font-medium text-ink'>{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}</p>
+													<p className='text-xs text-muted'>
+														SL: {item.quantity}
+														{variation ? ` · ${variation}` : ""}
+													</p>
+												</div>
 											</div>
+											<p className='shrink-0 font-semibold text-ink ml-auto'>{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}</p>
 										</div>
-										<p className='shrink-0 font-semibold text-ink'>{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}</p>
 									</Link>
 								);
 							})}
@@ -132,7 +134,7 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 						</div>
 						<div className='flex justify-between border-t border-border pt-2 text-base font-bold text-ink'>
 							<span>Tổng cộng</span>
-							<span>{formatCurrency(Number(order.totalAmount))}</span>
+							<span className='text-primary-dark'>{formatCurrency(Number(order.totalAmount))}</span>
 						</div>
 					</div>
 
