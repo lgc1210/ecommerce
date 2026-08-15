@@ -6,7 +6,6 @@ export interface ProductCategoryRef {
 	slug: string;
 }
 
-/** Thuộc tính biến thể tự do, vd: { color: "Đỏ", size: "M" } — khớp Json field ở backend (Prisma Json, không có shape cố định). */
 export type VariationDetails = Record<string, string>;
 
 export interface ProductImage {
@@ -19,20 +18,15 @@ export interface ProductImage {
 	createdAt?: string;
 }
 
-/**
- * 1 biến thể (SKU) của sản phẩm. Lưu ý: "price" là Prisma Decimal ở backend ->
- * serialize qua JSON thành string, phải Number(...) trước khi tính toán/hiển thị.
- */
 export interface ProductSku {
 	id: number;
 	productId: number | null;
 	sku: string;
 	price: string;
+	oldPrice?: string | null;
 	stockQuantity: number;
 	variationDetails: VariationDetails;
-	/** Khối lượng riêng của biến thể (gram) — dùng để tính phí vận chuyển GHN theo từng đơn hàng. */
 	weightGram: number;
-	/** Kích thước đóng gói riêng của biến thể (cm). */
 	lengthCm: number;
 	widthCm: number;
 	heightCm: number;
@@ -41,16 +35,15 @@ export interface ProductSku {
 	updatedAt?: string;
 }
 
-/** SKU rút gọn dùng cho trang danh sách (không kèm images, khớp productListInclude ở backend). */
 export interface ProductSkuSummary {
 	id: number;
 	sku: string;
 	price: string;
+	oldPrice?: string | null;
 	stockQuantity: number;
 	variationDetails: VariationDetails;
 }
 
-/** 1 sản phẩm nhìn từ trang danh sách admin (GET /products/admin). */
 export interface AdminProductListItem {
 	id: number;
 	categoryId: number | null;
@@ -75,7 +68,6 @@ export interface AdminProductReview {
 	user: { id: number; name: string } | null;
 }
 
-/** 1 sản phẩm đầy đủ (GET /products/id/:id) — kèm SKU (có ảnh) + review gần nhất. */
 export interface AdminProductDetail {
 	id: number;
 	categoryId: number | null;
@@ -93,7 +85,6 @@ export interface AdminProductDetail {
 	averageRating: number | null;
 }
 
-/** Kết quả trả về từ POST /uploads/product-image (chọn ảnh từ máy). */
 export interface UploadImageResult {
 	url: string;
 	filename: string;
@@ -124,9 +115,7 @@ export interface CreateProductPayload {
 	description?: string;
 	categoryId?: number | null;
 	isActive?: boolean;
-	/** Đánh dấu hiển thị ở carousel "Sản phẩm nổi bật" trên trang chủ. */
 	isFeatured?: boolean;
-	/** URL trả về từ POST /uploads/product-image sau khi chọn ảnh từ máy. */
 	thumbnailUrl?: string | null;
 }
 
@@ -137,6 +126,7 @@ export interface UpdateProductPayload extends Partial<CreateProductPayload> {
 export interface SkuPayload {
 	sku?: string;
 	price: number;
+	oldPrice?: number | null;
 	stockQuantity?: number;
 	variationDetails: VariationDetails;
 	weightGram?: number;

@@ -17,13 +17,11 @@ interface SkuCardProps {
 	onDelete: () => void;
 }
 
-/** 1 thẻ biến thể (SKU): thông tin + sửa tồn kho nhanh + quản lý ảnh riêng của SKU đó. */
 const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, onDelete }: SkuCardProps) => {
 	const [stockInput, setStockInput] = useState(String(sku.stockQuantity));
 	const updateStock = useUpdateSkuStock();
 
-	const hasStockChanged =
-		Number(stockInput) !== sku.stockQuantity && stockInput.trim() !== "" && Number(stockInput) >= 0;
+	const hasStockChanged = Number(stockInput) !== sku.stockQuantity && stockInput.trim() !== "" && Number(stockInput) >= 0;
 
 	const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = Number(e.target.value);
@@ -36,7 +34,10 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 				<div>
 					<p className='font-semibold text-ink'>{formatVariationDetails(sku.variationDetails)}</p>
 					<p className='mt-0.5 font-mono text-xs text-muted'>{sku.sku}</p>
-					<p className='mt-1 text-sm text-ink/80'>{formatCurrency(Number(sku.price))}</p>
+					<p className='mt-1 flex items-center gap-2 text-sm text-ink/80'>
+						<span>{formatCurrency(Number(sku.price))}</span>
+						{sku.oldPrice && <span className='text-xs text-muted line-through'>{formatCurrency(Number(sku.oldPrice))}</span>}
+					</p>
 					<p className='mt-1 text-xs text-muted'>
 						{sku.weightGram}g · {sku.lengthCm}×{sku.widthCm}×{sku.heightCm}cm
 					</p>
@@ -64,14 +65,7 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 
 			{canUpdateInventory && (
 				<div className='mt-3 flex items-end gap-2'>
-					<FormControl
-						label='Tồn kho'
-						type='number'
-						step='any'
-						wrapperClassName='w-32'
-						value={stockInput}
-						onChange={handleStockChange}
-					/>
+					<FormControl label='Tồn kho' type='number' step='any' wrapperClassName='w-32' value={stockInput} onChange={handleStockChange} />
 					<Button
 						size='sm'
 						variant='outline'
@@ -92,12 +86,7 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 				) : (
 					<div className='flex flex-wrap gap-3'>
 						{sku.images.map((image) => (
-							<img
-								key={image.id}
-								src={image.imageUrl}
-								alt={image.altText ?? ""}
-								className='h-20 w-20 rounded-xl border border-border object-cover'
-							/>
+							<img key={image.id} src={image.imageUrl} alt={image.altText ?? ""} className='h-20 w-20 rounded-xl border border-border object-cover' />
 						))}
 					</div>
 				)}

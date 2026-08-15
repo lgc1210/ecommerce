@@ -5,7 +5,7 @@ import BreadCrumb from "../../components/breadcrumb";
 import Button from "../../components/button";
 import paths from "../../configs/constants/paths";
 import { formatCurrency } from "../../utils/currency";
-import { CartIcon, MinusIcon, PlusIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../components/icons";
+import { CartIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../components/icons";
 import VariationSelector from "../../features/client/product/components/variation-selector";
 import { useProductBySlugQuery } from "../../features/client/product/hooks";
 import { collectVariationAttributes, findMatchingSku, getProductThumbnail, getSkuImages, pickDefaultSku, toProductCardItem } from "../../features/client/product/utils";
@@ -13,6 +13,7 @@ import type { VariationDetails } from "../../features/client/product/types";
 import { useCart } from "../../features/client/cart/hooks";
 import ProductCard from "../../features/client/product/components/product-card";
 import { TabItem, Tabs } from "../../components/tabs";
+import QuantityStepper from "../../shared/components/quantity-stepper";
 
 const tabs = [
 	{ id: "description", label: "Mô tả" },
@@ -59,11 +60,14 @@ const ProductDetailPage = () => {
 		);
 	}
 
+	console.log("re-render");
+
 	const attributes = collectVariationAttributes(product.skus);
 	const selectedSku = findMatchingSku(product.skus, selected) ?? pickDefaultSku(product.skus);
 	const images = selectedSku ? getSkuImages(selectedSku) : [];
 	const gallery = images.length > 0 ? images : [getProductThumbnail(product)];
 	const price = selectedSku ? Number(selectedSku.price) : 0;
+	const oldPrice = selectedSku ? Number(selectedSku.oldPrice ?? 0) : 0;
 	const inStock = (selectedSku?.stockQuantity ?? 0) > 0;
 	// Chỉ có tối đa 20 review gần nhất được backend trả về (xem productDetailInclude ở product.service.ts),
 	// nên đây là số lượng review đang hiển thị, không hẳn là tổng số review thực tế của sản phẩm.
@@ -85,6 +89,7 @@ const ProductDetailPage = () => {
 			sku: selectedSku.sku,
 			variationDetails: selectedSku.variationDetails,
 			price: Number(selectedSku.price),
+			oldPrice: Number(selectedSku.oldPrice ?? 0),
 			stockQuantity: selectedSku.stockQuantity,
 			quantity,
 		});
@@ -137,6 +142,7 @@ const ProductDetailPage = () => {
 						</h1>
 
 						<div className='mt-4 flex items-center gap-3'>
+							{Boolean(oldPrice) && <span className='text-xl text-muted line-through'>{formatCurrency(oldPrice)}</span>}
 							<span className='text-3xl font-bold text-primary-dark'>{formatCurrency(price)}</span>
 						</div>
 
@@ -156,29 +162,9 @@ const ProductDetailPage = () => {
 							</div>
 						)}
 
-						<div className='mt-8 flex flex-wrap items-center gap-2'>
-							<div className='flex items-center rounded-full border border-border'>
-								<Button
-									type='button'
-									variant='ghost'
-									disabled={quantity <= 1}
-									onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-									className='bg-transparent! hover:text-primary-dark! px-3!'
-									aria-label='Giảm số lượng'
-									icon={<MinusIcon className='h-4 w-4' />}
-								/>
-								<span className='w-8 text-center text-sm font-semibold text-ink'>{quantity}</span>
-								<Button
-									type='button'
-									variant='ghost'
-									onClick={() => setQuantity((q) => Math.min(selectedSku?.stockQuantity ?? q, q + 1))}
-									disabled={!selectedSku || quantity >= selectedSku.stockQuantity}
-									className='bg-transparent! hover:text-primary-dark! px-3!'
-									aria-label='Tăng số lượng'
-									icon={<PlusIcon className='h-4 w-4' />}
-								/>
-							</div>
-							<Button disabled={!inStock} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
+						<div className='mt-8 flex flex-wrap items-center gap-2 select-none'>
+							<QuantityStepper value={quantity} max={selectedSku?.stockQuantity ?? 1} disabled={!selectedSku || !inStock} onChange={setQuantity} />
+							<Button type='button' disabled={!inStock} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
 								Thêm vào giỏ
 							</Button>
 						</div>

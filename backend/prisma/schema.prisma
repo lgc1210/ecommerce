@@ -261,6 +261,7 @@ model ProductSku {
   productId        Int?        @map("product_id")
   sku              String      @unique @db.VarChar(50)
   price            Decimal     @db.Decimal(14, 2)
+  oldPrice         Decimal?     @db.Decimal(14, 2) @map("old_price")
   stockQuantity    Int         @default(0) @map("stock_quantity")
   variationDetails Json        @map("variation_details")
   // Kích thước & khối lượng vật lý của CHÍNH biến thể này — dùng để tính phí vận chuyển thật

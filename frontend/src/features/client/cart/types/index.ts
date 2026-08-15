@@ -18,6 +18,7 @@ export interface LocalCartItem {
 	variationDetails: VariationDetails;
 	/** Giá tại thời điểm thêm vào giỏ (Number, không phải Decimal string). */
 	price: number;
+	oldPrice: number | null;
 	quantity: number;
 	/** Tồn kho tại thời điểm thêm vào giỏ, dùng để giới hạn +/- ở phía client trước khi đăng nhập. */
 	stockQuantity: number;
@@ -38,6 +39,7 @@ export interface ServerCartItem {
 		sku: string;
 		/** Prisma Decimal -> serialize qua JSON thành string. */
 		price: string;
+		oldPrice: string | null;
 		stockQuantity: number;
 		variationDetails: VariationDetails;
 		/** Đã sort isPrimary desc, sortOrder asc ở backend — khớp features/products/product.service.ts. */
@@ -84,6 +86,7 @@ export interface CartLineView {
 	sku: string;
 	variationDetails: VariationDetails;
 	price: number;
+	oldPrice: number | null;
 	quantity: number;
 	stockQuantity: number;
 	/** false khi sản phẩm đã ngừng kinh doanh hoặc hết hàng (chỉ xác định chắc chắn ở server cart). */

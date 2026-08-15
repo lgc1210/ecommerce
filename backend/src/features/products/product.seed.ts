@@ -1,11 +1,12 @@
 import prisma from "../../config/prisma.js";
-import type { Prisma } from "../../generated/prisma/index.js";
-import { slugify } from "../../utils/index.js";
+import { buildPlaceholderImageUrl, slugify } from "../../utils/index.js";
 import { categorySeed } from "../categories/category.seed.js";
 
 interface SeedSkuInput {
 	sku: string;
 	price: number;
+	// Giá trước khuyến mãi — chỉ khai báo cho biến thể muốn demo giao diện giảm giá (gạch giá cũ).
+	oldPrice?: number;
 	stockQuantity: number;
 	variationDetails: Record<string, string>;
 }
@@ -17,13 +18,6 @@ interface SeedProductInput {
 	isActive?: boolean;
 	skus: SeedSkuInput[];
 }
-
-/**
- * Sinh URL ảnh placeholder có hiển thị TRỰC TIẾP tên sản phẩm/biến thể trên ảnh
- * (qua dịch vụ placehold.co), thay vì ảnh ngẫu nhiên không liên quan (picsum.photos trước đây).
- * Nhờ vậy ảnh luôn khớp đúng với tên sản phẩm dù không phải ảnh chụp thật.
- */
-const buildPlaceholderImageUrl = (text: string): string => `https://placehold.co/800x800/EDE7DD/3A3226?font=roboto&text=${encodeURIComponent(text)}`;
 
 export const seedProducts: SeedProductInput[] = [
 	{
@@ -39,13 +33,14 @@ export const seedProducts: SeedProductInput[] = [
 			},
 			{
 				sku: "IPHONE-15-256GB-XAN",
-				price: 21990000,
+				price: 24490000,
+				oldPrice: 25990000,
 				stockQuantity: 31,
 				variationDetails: { "Dung lượng": "256GB", "Màu sắc": "Xanh" },
 			},
 			{
 				sku: "IPHONE-15-128GB-HON",
-				price: 21990000,
+				price: 22499000,
 				stockQuantity: 38,
 				variationDetails: { "Dung lượng": "128GB", "Màu sắc": "Hồng" },
 			},
@@ -64,7 +59,8 @@ export const seedProducts: SeedProductInput[] = [
 			},
 			{
 				sku: "MACBOOK-AIR-M2-512GB-XAM",
-				price: 26990000,
+				price: 29990000,
+				oldPrice: 31990000,
 				stockQuantity: 26,
 				variationDetails: { "Dung lượng": "512GB", "Màu sắc": "Xám" },
 			},
@@ -83,13 +79,14 @@ export const seedProducts: SeedProductInput[] = [
 			},
 			{
 				sku: "IPAD-GEN-10-256GB-HON",
-				price: 11990000,
+				price: 13990000,
+				oldPrice: 15490000,
 				stockQuantity: 23,
 				variationDetails: { "Dung lượng": "256GB", "Màu sắc": "Hồng" },
 			},
 			{
 				sku: "IPAD-GEN-10-64GB-BAC",
-				price: 11990000,
+				price: 12490000,
 				stockQuantity: 30,
 				variationDetails: { "Dung lượng": "64GB", "Màu sắc": "Bạc" },
 			},
@@ -108,13 +105,14 @@ export const seedProducts: SeedProductInput[] = [
 			},
 			{
 				sku: "APPLE-WATCH-SE-45MM-HON",
-				price: 10990000,
+				price: 11990000,
+				oldPrice: 12990000,
 				stockQuantity: 22,
 				variationDetails: { "Dung lượng": "45mm", "Màu sắc": "Hồng" },
 			},
 			{
 				sku: "APPLE-WATCH-SE-41MM-BAC",
-				price: 10990000,
+				price: 11290000,
 				stockQuantity: 29,
 				variationDetails: { "Dung lượng": "41mm", "Màu sắc": "Bạc" },
 			},
@@ -182,7 +180,7 @@ export const seedProducts: SeedProductInput[] = [
 		description: "Ổ cứng SSD Samsung 990 Pro NVMe M.2 PCIe 4.0, tốc độ đọc lên tới 7450MB/s.",
 		categoryName: "Ổ Cứng & Lưu Trữ",
 		skus: [
-			{ sku: "SAMSUNG-SSD-99-1TB-STD", price: 2790000, stockQuantity: 24, variationDetails: { "Phiên bản": "1TB" } },
+			{ sku: "SAMSUNG-SSD-99-1TB-STD", price: 4990000, oldPrice: 5490000, stockQuantity: 24, variationDetails: { "Phiên bản": "1TB" } },
 			{ sku: "SAMSUNG-SSD-99-2TB-STD", price: 2790000, stockQuantity: 31, variationDetails: { "Phiên bản": "2TB" } },
 		],
 	},
@@ -229,8 +227,9 @@ export const productSeed = async () => {
 					create: product.skus.map((s) => ({
 						sku: s.sku,
 						price: s.price,
+						oldPrice: s.oldPrice ?? null,
 						stockQuantity: s.stockQuantity,
-						variationDetails: s.variationDetails as Prisma.InputJsonValue,
+						variationDetails: s.variationDetails,
 					})),
 				},
 			},

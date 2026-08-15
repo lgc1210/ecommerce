@@ -37,7 +37,8 @@ const FeaturedCategoriesSection = () => {
 						<Link
 							key={category.slug}
 							to={`${paths.client.shop}?categoryId=${category.id}`}
-							className='group flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-5 text-center transition-colors hover:border-primary cursor-default!'>
+							className='group flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-5 text-center transition-colors hover:border-primary cursor-default!'
+							viewTransition>
 							<div className='flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-cream-soft'>
 								<img src={getCategoryImage(category.name)} alt={category.name} className='h-full w-full object-cover' />
 							</div>

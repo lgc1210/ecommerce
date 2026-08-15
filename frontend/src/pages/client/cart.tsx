@@ -54,7 +54,7 @@ const CartPage = () => {
 						<h2 className='text-lg font-bold text-ink'>Tóm tắt đơn hàng</h2>
 
 						<div className='mt-4 flex items-center justify-between text-sm'>
-							<span className='text-muted'>Tạm tính</span>
+							<span className='text-muted font-semibold'>Tạm tính</span>
 							<span className='font-semibold text-ink'>{formatCurrency(subtotal)}</span>
 						</div>
 						<p className='mt-1 text-xs text-muted'>Phí vận chuyển và các ưu đãi (nếu có) được tính ở bước thanh toán.</p>

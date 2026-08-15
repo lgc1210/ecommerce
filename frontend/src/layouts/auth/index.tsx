@@ -57,7 +57,7 @@ const AuthLayout = ({ title, subtitle, onSubmit, children, footerText, footerLin
 	return (
 		<div className='flex min-h-screen items-center justify-center bg-cream-soft px-4 py-16'>
 			<div className='w-full max-w-md rounded-3xl border border-border bg-surface p-8 shadow-sm shadow-ink/5'>
-				<Link to={paths.client.home} className='flex items-center justify-center gap-2 cursor-default!'>
+				<Link to={paths.client.home} className='flex items-center justify-center gap-2 cursor-default!' viewTransition>
 					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
 					<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
 				</Link>

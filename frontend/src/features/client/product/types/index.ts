@@ -39,6 +39,7 @@ export interface PublicProductSkuSummary {
 	sku: string;
 	/** Prisma Decimal -> serialize qua JSON thành string, phải Number(...) trước khi tính toán/hiển thị. */
 	price: string;
+	oldPrice: string | null;
 	stockQuantity: number;
 	variationDetails: VariationDetails;
 }
@@ -48,6 +49,7 @@ export interface PublicProductSku {
 	id: number;
 	sku: string;
 	price: string;
+	oldPrice: string | null;
 	stockQuantity: number;
 	variationDetails: VariationDetails;
 	images: PublicProductImage[];

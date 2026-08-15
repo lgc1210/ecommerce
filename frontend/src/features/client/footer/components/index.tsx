@@ -23,7 +23,11 @@ const contactItems = [
 	{
 		id: "address",
 		icon: <MapPinIcon className='mt-0.5 h-4 w-4 shrink-0 text-primary' />,
-		content: <p>Toà nhà Ecommerce, Quận 8, TP. Hồ Chí Minh</p>,
+		content: (
+			<a href={`https://maps.app.goo.gl/MbYgh4LnZHjBVavu6`} target='_blank' rel='noopener noreferrer' className='hover:underline'>
+				Toà nhà Ecommerce, Quận 8, TP. Hồ Chí Minh
+			</a>
+		),
 		className: "items-start",
 	},
 	{
@@ -118,7 +122,7 @@ const Footer = () => {
 			</div>
 
 			<div className='flex items-center justify-center border-t border-white/10'>
-				<div className='mx-auto gap-3 px-4 py-5 text-xs text-cream/50 sm:flex-row sm:justify-between sm:px-6 lg:px-8'>
+				<div className='mx-auto text-center gap-3 px-4 py-5 text-xs text-cream/50 sm:flex-row sm:justify-between sm:px-6 lg:px-8'>
 					<p>© {new Date().getFullYear()} Ecommerce. Thiết kế lấy cảm hứng từ Etonal Webflow Template.</p>
 				</div>
 			</div>

@@ -19,10 +19,13 @@ const VariationSelector = ({ attribute, skus, selected, onSelect }: VariationSel
 
 	const isValueAvailable = (value: string) => {
 		const candidate = { ...selected, [attribute]: value };
-		return skus.some(
-			(sku) =>
-				Object.entries(candidate).every(([key, val]) => sku.variationDetails?.[key] === val) && sku.stockQuantity > 0,
-		);
+		const isAvailable = skus.some((sku) => {
+			const match = Object.entries(candidate).every(([key, val]) => {
+				return sku.variationDetails?.[key] === val;
+			});
+			return match && sku.stockQuantity > 0;
+		});
+		return isAvailable;
 	};
 
 	return (
@@ -35,12 +38,7 @@ const VariationSelector = ({ attribute, skus, selected, onSelect }: VariationSel
 					const isActive = selected[attribute] === value;
 					const available = isValueAvailable(value);
 					return (
-						<Button
-							type='button'
-							variant={isActive ? "primary" : "outline"}
-							key={value}
-							onClick={() => onSelect(attribute, value)}
-							className={!available && !isActive ? "opacity-40!" : ""}>
+						<Button type='button' variant={isActive ? "primary" : "outline"} key={value} onClick={() => onSelect(attribute, value)} className={!available ? "opacity-50!" : ""}>
 							{value}
 						</Button>
 					);

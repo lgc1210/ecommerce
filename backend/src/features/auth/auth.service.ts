@@ -57,8 +57,10 @@ class AuthService {
 			const field = existingUser.email === email ? "Email" : "Số điện thoại";
 			throw new Error(`Conflict: ${field} này đã được sử dụng.`);
 		}
+
 		const customerRole = await this.getDefaultCustomerRole();
 		const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
 		const user = await prisma.user.create({
 			data: {
 				name: name,

@@ -23,3 +23,10 @@ export function slugify(input: string): string {
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/^-+|-+$/g, "");
 }
+
+/**
+ * Sinh URL ảnh placeholder có hiển thị TRỰC TIẾP tên sản phẩm/biến thể trên ảnh
+ * (qua dịch vụ placehold.co), thay vì ảnh ngẫu nhiên không liên quan (picsum.photos trước đây).
+ * Nhờ vậy ảnh luôn khớp đúng với tên sản phẩm dù không phải ảnh chụp thật.
+ */
+export const buildPlaceholderImageUrl = (text: string): string => `https://placehold.co/800x800/EDE7DD/3A3226?font=roboto&text=${encodeURIComponent(text)}`;

@@ -18,7 +18,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
 	const prefetchProductDetail = usePrefetchProductDetail();
 
 	// 3. Hàm xử lý kiểm tra điều kiện trước khi trigger prefetch
-
 	const handleMouseEnter = () => {
 		if (!isDiscontinued && product.slug) {
 			prefetchProductDetail(product.slug);

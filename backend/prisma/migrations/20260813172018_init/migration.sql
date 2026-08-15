@@ -127,6 +127,7 @@ CREATE TABLE `product_sku` (
     `product_id` INTEGER NULL,
     `sku` VARCHAR(50) NOT NULL,
     `price` DECIMAL(14, 2) NOT NULL,
+    `old_price` DECIMAL(14, 2) NULL,
     `stock_quantity` INTEGER NOT NULL DEFAULT 0,
     `variation_details` JSON NOT NULL,
     `weight_gram` INTEGER NOT NULL DEFAULT 500,

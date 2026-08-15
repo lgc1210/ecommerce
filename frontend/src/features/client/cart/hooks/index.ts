@@ -44,8 +44,7 @@ export const useAddCartItemMutation = () => {
 export const useUpdateCartItemMutation = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: ({ itemId, quantity }: { itemId: number; quantity: number }) =>
-			cartService.updateItemQuantity(itemId, quantity),
+		mutationFn: ({ itemId, quantity }: { itemId: number; quantity: number }) => cartService.updateItemQuantity(itemId, quantity),
 		onSuccess: (res) => {
 			queryClient.setQueryData(CART_QUERY_KEY, res.data.data);
 		},
@@ -105,9 +104,7 @@ export function useCart() {
 	const removeServerItem = useRemoveCartItemMutation();
 	const clearServerCart = useClearCartMutation();
 
-	const items: CartLineView[] = isAuthenticated
-		? (cartQuery.data?.items ?? []).map(toServerCartLineView)
-		: localItems.map(toLocalCartLineView);
+	const items: CartLineView[] = isAuthenticated ? (cartQuery.data?.items ?? []).map(toServerCartLineView) : localItems.map(toLocalCartLineView);
 
 	const isLoading = authLoading || (isAuthenticated && cartQuery.isLoading);
 
@@ -156,7 +153,6 @@ export function useCart() {
 		updateQuantity,
 		removeItem,
 		clearCart,
-		isMutating:
-			addServerItem.isPending || updateServerItem.isPending || removeServerItem.isPending || clearServerCart.isPending,
+		isMutating: addServerItem.isPending || updateServerItem.isPending || removeServerItem.isPending || clearServerCart.isPending,
 	};
 }

@@ -20,6 +20,7 @@ export function toServerCartLineView(item: ServerCartItem): CartLineView {
 		sku: item.productSku.sku,
 		variationDetails: item.productSku.variationDetails,
 		price: Number(item.productSku.price),
+		oldPrice: Number(item.productSku.oldPrice ?? null),
 		quantity: item.quantity,
 		stockQuantity: item.productSku.stockQuantity,
 		inStock: Boolean(product?.isActive) && item.productSku.stockQuantity > 0,
@@ -37,6 +38,7 @@ export function toLocalCartLineView(item: LocalCartItem): CartLineView {
 		sku: item.sku,
 		variationDetails: item.variationDetails,
 		price: item.price,
+		oldPrice: item.oldPrice,
 		quantity: item.quantity,
 		stockQuantity: item.stockQuantity,
 		// Giỏ hàng cục bộ chỉ có snapshot tại thời điểm thêm vào giỏ, không có cách nào xác thực lại

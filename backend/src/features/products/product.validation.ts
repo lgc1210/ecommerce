@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { numericIdString, slugRegex } from "../../shared/validation.js";
+import { listProductSort, productSort } from "./product.constant.js";
 
 // ==========================================
 // SKU (biến thể) - dùng chung cho tạo/sửa
@@ -7,6 +8,7 @@ import { numericIdString, slugRegex } from "../../shared/validation.js";
 const SkuInputSchema = z.object({
 	sku: z.string().min(1, { message: "Mã SKU không được để trống." }).max(50).optional(), // Bỏ trống -> hệ thống tự sinh mã SKU từ tên sản phẩm + biến thể
 	price: z.number().positive({ message: "Giá phải lớn hơn 0." }),
+	oldPrice: z.number().positive({ message: "Giá khóa phải lớn hơn 0." }).optional(),
 	stockQuantity: z.number().int().min(0, { message: "Tồn kho không được âm." }).optional(),
 	variationDetails: z.record(z.string(), z.any()).refine((obj) => Object.keys(obj).length > 0, {
 		message: "Cần ít nhất 1 thuộc tính biến thể (vd: color, size).",
@@ -39,7 +41,7 @@ export const ListProductsQuerySchema = z.object({
 		// "popular" = sắp xếp theo số lượng đánh giá (reviews) giảm dần, dùng cho mục "Được yêu thích
 		// nhất" ở trang chủ — xem ProductService.resolveSortOrder. "price_asc"/"price_desc" sắp xếp
 		// theo giá thấp nhất của sản phẩm (min giữa các SKU) — khớp với giá "từ" hiển thị ở ProductCard.
-		sort: z.enum(["newest", "name_asc", "name_desc", "popular", "price_asc", "price_desc"]).optional(),
+		sort: z.enum(listProductSort).optional(),
 		// Áp dụng như nhau cho cả route public lẫn admin: lọc theo isActive nếu có truyền, mặc định
 		// (không truyền) trả về TẤT CẢ sản phẩm (active lẫn inactive) — xem thêm ProductService.listProducts.
 		isActive: z.enum(["true", "false"]).optional(),
@@ -109,6 +111,7 @@ export const UpdateSkuSchema = z.object({
 		.object({
 			sku: SkuInputSchema.shape.sku.optional(),
 			price: SkuInputSchema.shape.price.optional(),
+			oldPrice: SkuInputSchema.shape.oldPrice.optional(),
 			stockQuantity: SkuInputSchema.shape.stockQuantity,
 			variationDetails: SkuInputSchema.shape.variationDetails.optional(),
 			weightGram: SkuInputSchema.shape.weightGram,

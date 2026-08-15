@@ -1,14 +1,9 @@
-import { env } from "./config/dotenv.js";
 import app from "./app.js";
 import prisma from "./config/prisma.js";
 import { permissionSeed, rolePermissionSeed, roleSeed } from "./features/rbac/rbac.seed.js";
-import { userAddressSeed } from "./features/user_addresses/user_address.seed.js";
 import { userSeed } from "./features/users/user.seed.js";
 import { productSeed } from "./features/products/product.seed.js";
 import { couponSeed } from "./features/coupons/coupon.seed.js";
-import { reviewSeed } from "./features/reviews/review.seed.js";
-import { contactSeed } from "./features/contacts/contact.seed.js";
-import { orderSeed } from "./features/orders/order.seed.js";
 import { categorySeed } from "./features/categories/category.seed.js";
 import { startOrderCleanupJob } from "./cronjob/index.js";
 

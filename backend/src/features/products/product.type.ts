@@ -1,6 +1,7 @@
 export interface SkuInput {
 	sku?: string;
 	price: number;
+	oldPrice?: number | null;
 	stockQuantity?: number;
 	variationDetails: Record<string, unknown>;
 	/** Khối lượng (gram) của CHÍNH biến thể này. Bỏ trống -> dùng giá trị mặc định (xem product.utils.ts). */
@@ -35,6 +36,7 @@ export interface UpdateProductInput {
 export interface UpdateSkuInput {
 	sku?: string;
 	price?: number;
+	oldPrice?: number | null;
 	stockQuantity?: number;
 	variationDetails?: Record<string, unknown>;
 	weightGram?: number;

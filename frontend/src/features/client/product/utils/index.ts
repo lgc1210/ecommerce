@@ -1,10 +1,4 @@
-import type {
-	ProductCardItem,
-	PublicProductListItem,
-	PublicProductSku,
-	PublicProductSkuSummary,
-	VariationDetails,
-} from "../types";
+import type { ProductCardItem, PublicProductListItem, PublicProductSku, PublicProductSkuSummary, VariationDetails } from "../types";
 
 /** Tính khoảng giá (min/max) từ danh sách SKU — price là Decimal serialize thành string nên phải Number(...) trước. */
 export function computePriceRange(skus: Array<PublicProductSkuSummary | PublicProductSku>): {
@@ -85,7 +79,5 @@ export function pickDefaultSku(skus: PublicProductSku[]): PublicProductSku | und
 /** Ảnh của 1 SKU, sắp theo isPrimary rồi sortOrder (khớp thứ tự backend trả về), fallback về mảng rỗng. */
 export function getSkuImages(sku: PublicProductSku | undefined): string[] {
 	if (!sku || !sku.images || sku.images.length === 0) return [];
-	return [...sku.images]
-		.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder)
-		.map((image) => image.imageUrl);
+	return [...sku.images].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder).map((image) => image.imageUrl);
 }

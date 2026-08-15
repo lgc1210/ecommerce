@@ -1,12 +1,13 @@
 import prisma from "../../config/prisma.js";
 import type { Prisma } from "../../generated/prisma/index.js";
-import { computeAverageRating, buildSkuBaseCode, DEFAULT_SKU_WEIGHT_GRAM, DEFAULT_SKU_LENGTH_CM, DEFAULT_SKU_WIDTH_CM, DEFAULT_SKU_HEIGHT_CM } from "./product.utils.js";
+import { computeAverageRating, buildSkuBaseCode } from "./product.utils.js";
 import { parsePagination, slugify } from "../../utils/index.js";
 import type { CreateProductInput, ListProductsParams, SkuInput, UpdateProductInput, UpdateSkuInput } from "./product.type.js";
+import { DEFAULT_SKU_HEIGHT_CM, DEFAULT_SKU_LENGTH_CM, DEFAULT_SKU_WEIGHT_GRAM, DEFAULT_SKU_WIDTH_CM, productSort, type productPriceSortType } from "./product.constant.js";
 
 const productListInclude = {
 	category: { select: { id: true, name: true, slug: true } },
-	skus: { select: { id: true, sku: true, price: true, stockQuantity: true, variationDetails: true } },
+	skus: { select: { id: true, sku: true, price: true, oldPrice: true, stockQuantity: true, variationDetails: true } },
 	_count: { select: { reviews: true } },
 	// Ảnh đại diện lấy từ cột `thumbnailUrl` (denormalized, tự đồng bộ khi ảnh SKU thay đổi) -> không cần join images ở đây
 };
@@ -68,7 +69,7 @@ class ProductService {
 		// của quan hệ 1-nhiều ở findMany (relation orderBy chỉ hỗ trợ _count) -> tự xử lý ở tầng ứng
 		// dụng: lấy id sản phẩm khớp `where`, gộp giá thấp nhất theo từng sản phẩm qua productSku.groupBy,
 		// sắp xếp rồi mới phân trang (xem resolvePriceSortedProducts bên dưới).
-		if (params.sort === "price_asc" || params.sort === "price_desc") {
+		if (params.sort === productSort.price_asc || params.sort === productSort.price_desc) {
 			const products = await this.resolvePriceSortedProducts(where, params.sort, skip, limit);
 			return {
 				data: products,
@@ -266,6 +267,7 @@ class ProductService {
 				productId,
 				sku,
 				price: data.price,
+				oldPrice: data.oldPrice ?? null,
 				stockQuantity: data.stockQuantity ?? 0,
 				variationDetails: data.variationDetails as Prisma.InputJsonValue,
 				weightGram: data.weightGram ?? DEFAULT_SKU_WEIGHT_GRAM,
@@ -281,6 +283,7 @@ class ProductService {
 
 		const updateData: Record<string, unknown> = {};
 		if (data.price !== undefined) updateData.price = data.price;
+		if (data.oldPrice !== undefined) updateData.oldPrice = data.oldPrice;
 		if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
 		if (data.variationDetails !== undefined) updateData.variationDetails = data.variationDetails as Prisma.InputJsonValue;
 		if (data.weightGram !== undefined) updateData.weightGram = data.weightGram;
@@ -444,7 +447,7 @@ class ProductService {
 	 * listProducts). Sản phẩm chưa có SKU nào (không có giá) luôn bị xếp CUỐI, bất kể tăng/giảm dần,
 	 * vì không có gì để so sánh.
 	 */
-	private async resolvePriceSortedProducts(where: Record<string, unknown>, sort: "price_asc" | "price_desc", skip: number, take: number) {
+	private async resolvePriceSortedProducts(where: Record<string, unknown>, sort: productPriceSortType, skip: number, take: number) {
 		const candidates = await prisma.product.findMany({ where, select: { id: true } });
 		const candidateIds = candidates.map((product) => product.id);
 		if (candidateIds.length === 0) return [];
@@ -456,7 +459,7 @@ class ProductService {
 		});
 		const minPriceById = new Map(priceGroups.filter((group): group is typeof group & { productId: number } => group.productId !== null).map((group) => [group.productId, Number(group._min.price)]));
 
-		const direction = sort === "price_asc" ? 1 : -1;
+		const direction = sort === productSort.price_asc ? 1 : -1;
 		const sortedIds = [...candidateIds].sort((a, b) => {
 			const priceA = minPriceById.get(a);
 			const priceB = minPriceById.get(b);
