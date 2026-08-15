@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { numericIdString } from "../../shared/validation.js";
+import { reviewSortOptions } from "./review.constant.js";
 
 // ==========================================
 // Public
@@ -13,7 +14,7 @@ export const ListReviewsByProductQuerySchema = z.object({
 			.string()
 			.regex(/^[1-5]$/)
 			.optional(),
-		sort: z.enum(["newest", "oldest", "highest", "lowest"]).optional(),
+		sort: z.enum(reviewSortOptions).optional(),
 	}),
 });
 
@@ -58,3 +59,6 @@ export const ListReviewsAdminQuerySchema = z.object({
 		search: z.string().max(255).optional(),
 	}),
 });
+
+export type CreateReviewInput = z.infer<typeof CreateReviewSchema>["body"];
+export type UpdateReviewInput = z.infer<typeof UpdateReviewSchema>["body"];

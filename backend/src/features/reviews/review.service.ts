@@ -1,17 +1,8 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
+import { reviewSort } from "./review.constant.js";
 import { roundRating } from "./review.utils.js";
-
-interface CreateReviewInput {
-	productId: number;
-	rating: number;
-	comment?: string;
-}
-
-interface UpdateReviewInput {
-	rating?: number;
-	comment?: string | null;
-}
+import type { CreateReviewInput, UpdateReviewInput } from "./review.validation.js";
 
 interface ListReviewsByProductParams {
 	page?: string;
@@ -164,13 +155,13 @@ class ReviewService {
 	// ==========================================
 	private resolveSortOrder(sort?: string) {
 		switch (sort) {
-			case "oldest":
+			case reviewSort.oldest:
 				return { createdAt: "asc" as const };
-			case "highest":
+			case reviewSort.highest:
 				return { rating: "desc" as const };
-			case "lowest":
+			case reviewSort.lowest:
 				return { rating: "asc" as const };
-			case "newest":
+			case reviewSort.newest:
 			default:
 				return { createdAt: "desc" as const };
 		}

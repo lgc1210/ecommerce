@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
 import prisma from "../../config/prisma.js";
 import pkg from "../../generated/prisma/index.js";
+import { BCRYPT_SALT_ROUNDS } from "../auth/auth.constant.js";
 
 const { Provider } = pkg;
-
-const BCRYPT_SALT_ROUNDS = 10;
 
 // Mật khẩu mặc định dùng chung cho toàn bộ tài khoản seed (chỉ dùng cho môi trường dev/demo).
 // Các tài khoản này được tạo sẵn với isVerified: true để có thể đăng nhập ngay, bỏ qua bước xác thực OTP.

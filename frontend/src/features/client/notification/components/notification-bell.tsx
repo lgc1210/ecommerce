@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BellIcon } from "../../../../components/icons";
-import Button from "../../../../components/button";
 import paths from "../../../../configs/constants/paths";
 import { useAuth } from "../../../auth/hooks/useAuth";
 import { useMarkNotificationAsRead, useMyNotificationsQuery } from "../hooks";
@@ -27,24 +26,22 @@ const NotificationBell = () => {
 		if (!notification.isRead) {
 			markAsReadMutation.mutate(notification.id);
 		}
-
 		if (notification.actionUrl) {
 			const { to, state } = resolveNotificationLink(notification.actionUrl);
 			navigate(to, state ? { state, viewTransition: true } : undefined);
 		}
 	};
 
-	const handleViewAll = () => {
-		navigate(paths.client.account, {
-			state: { tab: "notifications" },
-			viewTransition: true,
-		});
-	};
-
 	return (
 		<HoverPreview
 			trigger={
-				<button type='button' aria-label='Thông báo' aria-haspopup='dialog' className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'>
+				<Link
+					to={paths.client.account}
+					state={{ tab: "notifications" }}
+					aria-label='Thông báo gần đây'
+					aria-haspopup='dialog'
+					className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'
+					viewTransition>
 					<BellIcon className='h-5 w-5' />
 
 					{unreadCount > 0 && (
@@ -52,10 +49,10 @@ const NotificationBell = () => {
 							{unreadCount > 99 ? "99+" : unreadCount}
 						</span>
 					)}
-				</button>
+				</Link>
 			}>
 			<div className='flex items-center justify-between border-b border-border px-4 py-2.5'>
-				<span className='text-sm font-semibold text-ink'>Thông báo</span>
+				<span className='text-sm font-semibold text-ink'>Thông báo gần đây</span>
 				{unreadCount > 0 && <span className='text-xs text-muted'>{unreadCount} chưa đọc</span>}
 			</div>
 
@@ -91,14 +88,13 @@ const NotificationBell = () => {
 				})}
 			</div>
 
-			<Button
-				type='button'
-				variant='ghost'
-				size='sm'
-				onClick={handleViewAll}
-				className='w-full rounded-none! border-t border-border font-semibold text-primary-dark hover:bg-primary-light hover:not-disabled:cursor-default'>
+			<Link
+				to={paths.client.account}
+				state={{ tab: "notifications" }}
+				viewTransition
+				className='block text-center py-2 text-sm w-full border-t border-border font-semibold text-primary-dark hover:bg-primary-light hover:not-disabled:cursor-default'>
 				Xem tất cả
-			</Button>
+			</Link>
 		</HoverPreview>
 	);
 };
