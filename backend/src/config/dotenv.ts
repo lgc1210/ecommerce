@@ -71,12 +71,12 @@ const envSchema = z.object({
 	GHN_FROM_DISTRICT_ID: z.string().min(1, { message: "GHN_FROM_DISTRICT_ID is required for Giao Hàng Nhanh." }),
 	GHN_FROM_WARD_CODE: z.string().min(1, { message: "GHN_FROM_WARD_CODE is required for Giao Hàng Nhanh." }),
 
-	// SMTP
-	SMTP_HOST: z.string(),
-	SMTP_PORT: z.string().transform((val) => parseInt(val, 10)),
-	SMTP_SECURE: z.string().transform((val) => val === "true"), // Expects "true" string in .env
-	SMTP_USER: z.email(),
-	SMTP_PASS: z.string(),
+	// Resend (gửi email qua HTTPS API — xem src/config/email.ts). Thay cho SMTP cũ vì nhiều
+	// nền tảng hosting (Railway, Render...) chặn outbound SMTP ở tầng network, gây timeout ở
+	// production dù local dev chạy bình thường.
+	RESEND_API_KEY: z.string().min(1, { message: "RESEND_API_KEY is required to send emails via Resend." }),
+	// Địa chỉ "from" — domain phải được verify trên Resend trước, dạng '"Tên hiển thị" <email@domain.com>'.
+	RESEND_FROM_EMAIL: z.string().min(1, { message: "RESEND_FROM_EMAIL is required to send emails via Resend." }),
 
 	// Dọn đơn "pending" thanh toán online quá hạn (khách bỏ ngang, không bao giờ thanh toán/thử
 	// lại) — tự động hủy + hoàn tồn kho/lượt dùng coupon sau X giờ kể từ lúc đặt hàng. Không áp

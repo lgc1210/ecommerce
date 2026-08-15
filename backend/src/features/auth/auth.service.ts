@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import prisma from "../../config/prisma.js";
-import transporter from "../../config/email.js";
+import { sendEmail } from "../../config/email.js";
 import { env } from "../../config/dotenv.js";
 import pkg from "../../generated/prisma/index.js";
 import { Prisma } from "../../generated/prisma/index.js";
@@ -9,27 +9,9 @@ import cartService from "../carts/cart.service.js";
 import { generateOtpCode, getOtpExpiryDate, signAccessToken, signRefreshToken, verifyRefreshToken, sanitizeUser, OTP_MAX_ATTEMPTS, REFRESH_TOKEN_MAX_AGE_MS } from "./auth.utils.js";
 import type { FacebookLoginInput, ForgotPasswordInput, GoogleLoginInput, LoginInput, RegisterInput, ResendOtpInput, ResetPasswordInput, VerifyOtpInput } from "./auth.validation.js";
 import axios from "axios";
+import { BCRYPT_SALT_ROUNDS, DEFAULT_CUSTOMER_ROLE_NAME, FACEBOOK_GRAPH_API_BASE, FACEBOOK_GRAPH_API_VERSION, GOOGLE_TOKENINFO_URL, GOOGLE_USERINFO_URL } from "./auth.constant.js";
 
 const { OtpType, OtpStatus, Provider } = pkg;
-
-const BCRYPT_SALT_ROUNDS = 10;
-
-// accessToken (OAuth 2.0 implicit flow, hook useGoogleLogin ở frontend) không tự chứa
-// chữ ký như idToken (JWT) nên không thể verify offline bằng public key của Google.
-// Việc xác minh phải thực hiện bằng cách gọi ngược lên 2 endpoint REST của Google:
-// tokeninfo (kiểm tra token còn hiệu lực + đúng audience) và userinfo (lấy hồ sơ user),
-// cùng cách tiếp cận với việc xác minh accessToken của Facebook bên dưới.
-const GOOGLE_TOKENINFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";
-const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
-
-// Facebook không phát hành idToken dạng JWT tự-chứa-chữ-ký như Google, nên việc xác minh
-// accessToken phải thực hiện bằng cách gọi ngược lên Graph API của Facebook (xem loginWithFacebook).
-const FACEBOOK_GRAPH_API_BASE = "https://graph.facebook.com";
-const FACEBOOK_GRAPH_API_VERSION = "v21.0";
-
-// Tên role mặc định gán cho user đăng ký công khai qua form đăng ký.
-// Role này cần được tạo trước (vd. qua POST /api/rbac/roles) trước khi cho phép đăng ký.
-const DEFAULT_CUSTOMER_ROLE_NAME = "customer";
 
 // Include dùng chung để lấy kèm role + permissions của role đó, phục vụ việc
 // trả về "quyền của chính tôi" ở /auth/me (và ngay sau khi login), để frontend
@@ -559,8 +541,7 @@ class AuthService {
 	private async sendOtpEmail(target: string, otpCode: string, type: (typeof OtpType)[keyof typeof OtpType]) {
 		const subject = type === OtpType.registration ? "Xác thực tài khoản của bạn" : "Mã OTP đặt lại mật khẩu";
 
-		await transporter.sendMail({
-			from: `"E-commerce Support" <no-reply@example.com>`,
+		await sendEmail({
 			to: target,
 			subject,
 			html: `

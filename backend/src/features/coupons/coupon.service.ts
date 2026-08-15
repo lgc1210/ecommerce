@@ -1,5 +1,5 @@
 import prisma from "../../config/prisma.js";
-import transporter from "../../config/email.js";
+import { sendEmail } from "../../config/email.js";
 import { parsePagination } from "../../utils/index.js";
 import { WELCOME_COUPON } from "./coupon.constant.js";
 import { normalizeCouponCode, normalizeEmail, generateWelcomeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "./coupon.utils.js";
@@ -235,14 +235,17 @@ class CouponService {
 			throw new Error("Không thể tạo mã giảm giá, vui lòng thử lại.");
 		}
 
-		await this.sendWelcomeCouponEmail(email, coupon.code);
+		// Không await: gửi email chạy nền, không được chặn response trả về cho client.
+		// Nếu SMTP chậm/treo, request vẫn phải trả về thành công vì coupon đã được tạo trong DB.
+		this.sendWelcomeCouponEmail(email, coupon.code).catch((err) => {
+			console.error(`[requestWelcomeCoupon] Gửi email welcome coupon thất bại cho ${email}:`, err);
+		});
 
 		return { email: coupon.email, code: coupon.code, expiresAt: coupon.expiresAt };
 	}
 
 	private async sendWelcomeCouponEmail(email: string, code: string) {
-		await transporter.sendMail({
-			from: `"E-commerce Support" <no-reply@example.com>`,
+		await sendEmail({
 			to: email,
 			subject: "Mã giảm giá chào mừng đơn hàng đầu tiên của bạn",
 			html: `

@@ -2,7 +2,7 @@ import prisma from "../../config/prisma.js";
 import pkg from "../../generated/prisma/index.js";
 import { sanitizeUser } from "./user.utils.js";
 import { parsePagination } from "../../utils/index.js";
-import transporter from "../../config/email.js";
+import { sendEmail } from "../../config/email.js";
 import { env } from "../../config/dotenv.js";
 import type { AddressInput, AddressUpdateInput, ListUsersParams } from "./user.type.js";
 
@@ -154,8 +154,7 @@ class UserService {
 	private async sendWelcomeEmail(name: string, email: string) {
 		const setupPasswordUrl = `${env.CLIENT_URL}/forgot-password?email=${encodeURIComponent(email)}`;
 
-		await transporter.sendMail({
-			from: `"E-commerce Support" <no-reply@example.com>`,
+		await sendEmail({
 			to: email,
 			subject: "Tài khoản của bạn đã được tạo",
 			html: `
