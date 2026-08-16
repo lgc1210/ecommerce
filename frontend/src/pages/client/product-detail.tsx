@@ -8,7 +8,7 @@ import { formatCurrency } from "../../utils/currency";
 import { CartIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../components/icons";
 import VariationSelector from "../../features/client/product/components/variation-selector";
 import { useProductBySlugQuery } from "../../features/client/product/hooks";
-import { collectVariationAttributes, findMatchingSku, getProductThumbnail, getSkuImages, pickDefaultSku, toProductCardItem } from "../../features/client/product/utils";
+import { collectVariationAttributes, findMatchingSku, getProductThumbnail, getSkuImages, toProductCardItem } from "../../features/client/product/utils";
 import type { VariationDetails } from "../../features/client/product/types";
 import { useCart } from "../../features/client/cart/hooks";
 import ProductCard from "../../features/client/product/components/product-card";
@@ -24,7 +24,7 @@ const tabs = [
 const ProductDetailPage = () => {
 	const { slug } = useParams<{ slug: string }>();
 	const { data: product, isLoading, isError } = useProductBySlugQuery(slug);
-	const { addItem, isAuthenticated } = useCart();
+	const { addItem, isAuthenticated, isMutating } = useCart();
 
 	const [selected, setSelected] = useState<VariationDetails>({});
 	const [activeImage, setActiveImage] = useState(0);
@@ -38,8 +38,7 @@ const ProductDetailPage = () => {
 	const [syncedSlug, setSyncedSlug] = useState<string | undefined>(undefined);
 	if (product && product.slug !== syncedSlug) {
 		setSyncedSlug(product.slug);
-		const defaultSku = pickDefaultSku(product.skus);
-		setSelected(defaultSku?.variationDetails ?? {});
+		setSelected({});
 		setActiveImage(0);
 		setQuantity(1);
 	}
@@ -60,8 +59,6 @@ const ProductDetailPage = () => {
 		);
 	}
 
-	console.log("re-render");
-
 	const attributes = collectVariationAttributes(product.skus);
 	// KHÔNG fallback về pickDefaultSku() ở đây — pickDefaultSku chỉ dùng để chọn SKU MẶC ĐỊNH
 	// lúc mới vào trang (xem effect syncedSlug ở trên). Nếu tổ hợp người dùng đang chọn không
@@ -69,6 +66,7 @@ const ProductDetailPage = () => {
 	// là undefined để UI phản ánh đúng "không có tổ hợp này" — fallback về SKU khác sẽ khiến giá/
 	// tồn kho/ảnh hiển thị nhầm sang 1 tổ hợp mà khách không hề chọn, và có thể khiến khách thêm
 	// nhầm sản phẩm vào giỏ.
+	const hasSelectedAllAttributes = attributes.length > 0 && attributes.every((attribute) => Boolean(selected[attribute]));
 	const selectedSku = findMatchingSku(product.skus, selected);
 	const images = selectedSku ? getSkuImages(selectedSku) : [];
 	const gallery = images.length > 0 ? images : [getProductThumbnail(product)];
@@ -177,8 +175,8 @@ const ProductDetailPage = () => {
 
 						<div className='mt-8 flex flex-wrap items-center gap-2 select-none'>
 							<QuantityStepper value={quantity} max={selectedSku?.stockQuantity ?? 1} disabled={!selectedSku || !inStock} onChange={setQuantity} />
-							<Button type='button' disabled={!inStock} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
-								Thêm vào giỏ
+							<Button type='button' disabled={!inStock || isMutating} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
+								{!hasSelectedAllAttributes ? "Vui lòng chọn đầy đủ tuỳ chọn" : isMutating ? "Đang thêm..." : inStock ? "Thêm vào giỏ" : "Tạm hết hàng"}
 							</Button>
 						</div>
 

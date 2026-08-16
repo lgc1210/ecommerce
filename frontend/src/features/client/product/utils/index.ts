@@ -71,11 +71,6 @@ export function findMatchingSku(skus: PublicProductSku[], selected: VariationDet
 	return skus.find((sku) => Object.entries(selected).every(([key, value]) => sku.variationDetails?.[key] === value));
 }
 
-/** SKU mặc định khi mới vào trang: ưu tiên SKU đầu tiên còn hàng, nếu tất cả hết hàng thì lấy SKU đầu tiên. */
-export function pickDefaultSku(skus: PublicProductSku[]): PublicProductSku | undefined {
-	return skus.find((sku) => sku.stockQuantity > 0) ?? skus[0];
-}
-
 /** Ảnh của 1 SKU, sắp theo isPrimary rồi sortOrder (khớp thứ tự backend trả về), fallback về mảng rỗng. */
 export function getSkuImages(sku: PublicProductSku | undefined): string[] {
 	if (!sku || !sku.images || sku.images.length === 0) return [];
