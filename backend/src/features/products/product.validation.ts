@@ -8,7 +8,7 @@ import { listProductSort, productSort } from "./product.constant.js";
 const SkuInputSchema = z.object({
 	sku: z.string().min(1, { message: "Mã SKU không được để trống." }).max(50).optional(), // Bỏ trống -> hệ thống tự sinh mã SKU từ tên sản phẩm + biến thể
 	price: z.number().positive({ message: "Giá phải lớn hơn 0." }),
-	oldPrice: z.number().positive({ message: "Giá khóa phải lớn hơn 0." }).optional(),
+	oldPrice: z.number().positive({ message: "Giá khóa phải lớn hơn 0." }).nullable().optional(),
 	stockQuantity: z.number().int().min(0, { message: "Tồn kho không được âm." }).optional(),
 	variationDetails: z.record(z.string(), z.any()).refine((obj) => Object.keys(obj).length > 0, {
 		message: "Cần ít nhất 1 thuộc tính biến thể (vd: color, size).",

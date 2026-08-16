@@ -63,12 +63,19 @@ const ProductDetailPage = () => {
 	console.log("re-render");
 
 	const attributes = collectVariationAttributes(product.skus);
-	const selectedSku = findMatchingSku(product.skus, selected) ?? pickDefaultSku(product.skus);
+	// KHÔNG fallback về pickDefaultSku() ở đây — pickDefaultSku chỉ dùng để chọn SKU MẶC ĐỊNH
+	// lúc mới vào trang (xem effect syncedSlug ở trên). Nếu tổ hợp người dùng đang chọn không
+	// khớp SKU nào (vd: chọn "Xanh" nhưng Xanh chỉ tồn tại ở dung lượng khác), selectedSku phải
+	// là undefined để UI phản ánh đúng "không có tổ hợp này" — fallback về SKU khác sẽ khiến giá/
+	// tồn kho/ảnh hiển thị nhầm sang 1 tổ hợp mà khách không hề chọn, và có thể khiến khách thêm
+	// nhầm sản phẩm vào giỏ.
+	const selectedSku = findMatchingSku(product.skus, selected);
 	const images = selectedSku ? getSkuImages(selectedSku) : [];
 	const gallery = images.length > 0 ? images : [getProductThumbnail(product)];
 	const price = selectedSku ? Number(selectedSku.price) : 0;
 	const oldPrice = selectedSku ? Number(selectedSku.oldPrice ?? 0) : 0;
 	const inStock = (selectedSku?.stockQuantity ?? 0) > 0;
+	const isUnavailableCombination = !selectedSku;
 	// Chỉ có tối đa 20 review gần nhất được backend trả về (xem productDetailInclude ở product.service.ts),
 	// nên đây là số lượng review đang hiển thị, không hẳn là tổng số review thực tế của sản phẩm.
 	const reviewCount = product.reviews.length;
@@ -150,7 +157,13 @@ const ProductDetailPage = () => {
 
 						<div className='mt-6 flex items-center gap-2 text-sm'>
 							<span className={`h-2 w-2 rounded-full ${inStock ? "bg-green-600" : "bg-red-500"}`} />
-							{inStock ? <span className='text-ink'>Còn hàng{selectedSku ? ` (${selectedSku.stockQuantity})` : ""}</span> : <span className='text-red-600'>Tạm hết hàng</span>}
+							{isUnavailableCombination ? (
+								<span className='text-red-600'>Không có sẵn tổ hợp này, vui lòng chọn lựa chọn khác</span>
+							) : inStock ? (
+								<span className='text-ink'>Còn hàng ({selectedSku.stockQuantity})</span>
+							) : (
+								<span className='text-red-600'>Tạm hết hàng</span>
+							)}
 						</div>
 
 						{/* Chọn biến thể (màu/size...) */}
@@ -206,7 +219,7 @@ const ProductDetailPage = () => {
 								</li>
 								<li className='flex justify-between border-b border-border py-2'>
 									<span className='text-muted'>Tình trạng</span>
-									<span className='font-medium text-ink'>{inStock ? "Còn hàng" : "Hết hàng"}</span>
+									<span className='font-medium text-ink'>{isUnavailableCombination ? "Không có sẵn" : inStock ? "Còn hàng" : "Hết hàng"}</span>
 								</li>
 								<li className='flex justify-between py-2'>
 									<span className='text-muted'>Bảo hành</span>
