@@ -1,8 +1,9 @@
+import orderService from "../services";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateOrderPayload, ListMyOrdersParams, ListMyOrdersResult, MyOrderDetail, PreviewShippingFeeResult } from "../types";
-import orderService from "../services";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "../../../../utils/api";
+import { CART_QUERY_KEY } from "../../cart/constants";
 
 export const MY_ORDERS_QUERY_KEY = ["client", "orders", "me"] as const;
 
@@ -77,9 +78,11 @@ export const useCreateOrderMutation = () => {
 	return useMutation({
 		mutationFn: (payload: CreateOrderPayload) => orderService.createOrder(payload),
 		onSuccess: () => {
-			// Giỏ hàng KHÔNG bị xóa sau khi đặt hàng (backend giữ nguyên) -> không invalidate
-			// CART_QUERY_KEY ở đây. Chỉ cần làm mới danh sách đơn để tab "Đơn hàng" thấy đơn mới.
+			// Backend giờ đã xoá cart item khi checkout thành công (chống double-order khi bấm đặt
+			// hàng nhiều lần — xem checkout() ở order.service.ts) -> phải invalidate CART_QUERY_KEY
+			// để header/trang giỏ hàng phản ánh đúng giỏ hàng đã trống, không hiện lại cache cũ.
 			queryClient.invalidateQueries({ queryKey: MY_ORDERS_QUERY_KEY });
+			queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
 		},
 		onError: (error) => {
 			toast.error(getApiErrorMessage(error, "Đặt hàng thất bại, vui lòng thử lại."));

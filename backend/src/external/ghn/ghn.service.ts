@@ -52,15 +52,7 @@ interface CalculateShippingFeeInput {
 }
 
 /** Gọi API GHN để tính phí vận chuyển thực tế theo địa chỉ giao hàng + khối lượng/kích thước đơn hàng. */
-export async function calculateShippingFee({
-	toDistrictId,
-	toWardCode,
-	weightGram,
-	lengthCm,
-	widthCm,
-	heightCm,
-	insuranceValue,
-}: CalculateShippingFeeInput): Promise<number> {
+export async function calculateShippingFee({ toDistrictId, toWardCode, weightGram, lengthCm, widthCm, heightCm, insuranceValue }: CalculateShippingFeeInput): Promise<number> {
 	try {
 		const serviceId = await getServiceId(toDistrictId);
 
@@ -92,9 +84,7 @@ export async function calculateShippingFee({
 
 		// Lỗi từ phía GHN (vd. địa chỉ không hợp lệ, quá tải tuyến...) hoặc lỗi mạng
 		const ghnMessage = error?.response?.data?.message;
-		throw new Error(
-			`BadRequest: Không thể tính phí vận chuyển cho địa chỉ này${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,
-		);
+		throw new Error(`BadRequest: Không thể tính phí vận chuyển cho địa chỉ này${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
 	}
 }
 
@@ -204,18 +194,14 @@ export async function cancelShippingOrder(ghnOrderCode: string): Promise<void> {
 		const response = await ghnClient.post(`${env.GHN_API_URL}/v2/switch-status/cancel`, {
 			order_codes: [ghnOrderCode],
 		});
-
 		const result = response.data?.data?.[0];
 		if (!result?.result) {
-			throw new Error(
-				`BadRequest: GHN từ chối hủy đơn vận chuyển${result?.message ? ` (${result.message})` : ""} — đơn có thể đã được lấy hàng/đang giao.`,
-			);
+			throw new Error(`BadRequest: GHN từ chối hủy đơn vận chuyển${result?.message ? ` (${result.message})` : ""} — đơn có thể đã được lấy hàng/đang giao.`);
 		}
 	} catch (error: any) {
 		if (error instanceof Error && /^(BadRequest|NotFound|Config):/.test(error.message)) {
 			throw error;
 		}
-
 		const ghnMessage = error?.response?.data?.message;
 		throw new Error(`BadRequest: Không thể hủy đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
 	}

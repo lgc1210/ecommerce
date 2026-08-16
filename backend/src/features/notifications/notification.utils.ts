@@ -13,13 +13,13 @@ import type { NotificationPayload } from "./notification.validation.js";
  *    feature khác (order, payment, review, ...).
  */
 
-const ORDER_STATUS_TEXT: Record<OrderStatus, string> = {
+const ORDER_STATUS_TEXT: Record<OrderStatus, string> = Object.freeze({
 	pending: "đang chờ xử lý",
 	processing: "đang được chuẩn bị",
 	shipped: "đang được giao",
 	delivered: "đã giao thành công",
 	cancelled: "đã bị hủy",
-};
+} as const);
 
 export function buildOrderPlacedNotification(userId: number, orderId: number, orderNumber: string): NotificationPayload {
 	return {

@@ -101,6 +101,19 @@ class OrderService {
 
 		const order = await prisma.$transaction(
 			async (tx) => {
+				// Xoá các cart item đã đọc ở loadValidatedCartForCheckout NGAY ĐẦU transaction (trước
+				// cả bước trừ kho) để: (1) giỏ hàng trống sau khi đặt hàng thành công — tránh việc
+				// khách bấm "Đặt hàng" thêm lần nữa (do mạng chậm, chưa thấy phản hồi) tạo ra 1 đơn
+				// hàng trùng cho cùng giỏ hàng đó; (2) tự chống race condition thật sự khi 2 request
+				// checkout chạy gần như đồng thời: request nào vào transaction trước sẽ xoá đủ số cart
+				// item mong đợi; request còn lại xoá được ÍT HƠN (vì đã bị xoá trước đó) -> phát hiện
+				// ngay và rollback toàn bộ, không đụng tới tồn kho/coupon, tránh tạo 2 đơn trùng nhau.
+				const cartItemIds = cart.items.map((item) => item.id);
+				const deletedCartItems = await tx.cartItem.deleteMany({ where: { id: { in: cartItemIds }, cartId: cart.id } });
+				if (deletedCartItems.count !== cartItemIds.length) {
+					throw new Error("BadRequest: Giỏ hàng này vừa được đặt hàng ở 1 yêu cầu khác, vui lòng kiểm tra lại đơn hàng của bạn.");
+				}
+
 				// Trừ tồn kho từng SKU, kiểm tra lại 1 lần nữa trong transaction để tránh race condition (2 request đặt hàng cùng lúc)
 				for (const item of cart.items) {
 					const updated = await tx.productSku.updateMany({
