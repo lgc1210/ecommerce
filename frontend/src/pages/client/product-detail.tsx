@@ -8,7 +8,7 @@ import { formatCurrency } from "../../utils/currency";
 import { CartIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../components/icons";
 import VariationSelector from "../../features/client/product/components/variation-selector";
 import { useProductBySlugQuery } from "../../features/client/product/hooks";
-import { collectVariationAttributes, findMatchingSku, getProductThumbnail, getSkuImages, toProductCardItem } from "../../features/client/product/utils";
+import { collectVariationAttributes, computePriceRange, findMatchingSku, getProductThumbnail, getSkuImages, toProductCardItem } from "../../features/client/product/utils";
 import type { VariationDetails } from "../../features/client/product/types";
 import { useCart } from "../../features/client/cart/hooks";
 import ProductCard from "../../features/client/product/components/product-card";
@@ -67,10 +67,11 @@ const ProductDetailPage = () => {
 	// tồn kho/ảnh hiển thị nhầm sang 1 tổ hợp mà khách không hề chọn, và có thể khiến khách thêm
 	// nhầm sản phẩm vào giỏ.
 	const hasSelectedAllAttributes = attributes.length > 0 && attributes.every((attribute) => Boolean(selected[attribute]));
-	const selectedSku = findMatchingSku(product.skus, selected);
+	const selectedSku = hasSelectedAllAttributes ? findMatchingSku(product.skus, selected) : undefined;
 	const images = selectedSku ? getSkuImages(selectedSku) : [];
 	const gallery = images.length > 0 ? images : [getProductThumbnail(product)];
-	const price = selectedSku ? Number(selectedSku.price) : 0;
+	const priceRange = computePriceRange(product.skus);
+	const price = selectedSku ? Number(selectedSku.price) : priceRange.min;
 	const oldPrice = selectedSku ? Number(selectedSku.oldPrice ?? 0) : 0;
 	const inStock = (selectedSku?.stockQuantity ?? 0) > 0;
 	const isUnavailableCombination = !selectedSku;
@@ -148,21 +149,26 @@ const ProductDetailPage = () => {
 
 						<div className='mt-4 flex items-center gap-3'>
 							{Boolean(oldPrice) && <span className='text-xl text-muted line-through'>{formatCurrency(oldPrice)}</span>}
-							<span className='text-3xl font-bold text-primary-dark'>{formatCurrency(price)}</span>
+							<span className='text-3xl font-bold text-primary-dark'>
+								{!selectedSku && priceRange.min !== priceRange.max && <span className='mr-1 text-lg font-semibold text-muted'>Từ</span>}
+								{formatCurrency(price)}
+							</span>
 						</div>
 
 						{product.description && <p className='mt-5 leading-relaxed text-muted'>{product.description}</p>}
 
-						<div className='mt-6 flex items-center gap-2 text-sm'>
-							<span className={`h-2 w-2 rounded-full ${inStock ? "bg-green-600" : "bg-red-500"}`} />
-							{isUnavailableCombination ? (
-								<span className='text-red-600'>Không có sẵn tổ hợp này, vui lòng chọn lựa chọn khác</span>
-							) : inStock ? (
-								<span className='text-ink'>Còn hàng ({selectedSku.stockQuantity})</span>
-							) : (
-								<span className='text-red-600'>Tạm hết hàng</span>
-							)}
-						</div>
+						{Object.keys(selected).length > 0 && (
+							<div className='mt-6 flex items-center gap-2 text-sm'>
+								<span className={`h-2 w-2 rounded-full ${inStock ? "bg-green-600" : "bg-red-500"}`} />
+								{isUnavailableCombination ? (
+									<span className='text-red-600'>Không có sẵn tổ hợp này, vui lòng chọn lựa chọn khác</span>
+								) : inStock ? (
+									<span className='text-ink'>Còn hàng ({selectedSku.stockQuantity})</span>
+								) : (
+									<span className='text-red-600'>Tạm hết hàng</span>
+								)}
+							</div>
+						)}
 
 						{/* Chọn biến thể (màu/size...) */}
 						{attributes.length > 0 && (
@@ -175,8 +181,8 @@ const ProductDetailPage = () => {
 
 						<div className='mt-8 flex flex-wrap items-center gap-2 select-none'>
 							<QuantityStepper value={quantity} max={selectedSku?.stockQuantity ?? 1} disabled={!selectedSku || !inStock} onChange={setQuantity} />
-							<Button type='button' disabled={!inStock || isMutating} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
-								{!hasSelectedAllAttributes ? "Vui lòng chọn đầy đủ tuỳ chọn" : isMutating ? "Đang thêm..." : inStock ? "Thêm vào giỏ" : "Tạm hết hàng"}
+							<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
+								{isMutating ? "Đang thêm..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Thêm vào giỏ"}
 							</Button>
 						</div>
 
