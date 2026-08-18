@@ -2,10 +2,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { BellIcon } from "../../../../../components/icons";
 import paths from "../../../../../configs/constants/paths";
 import { useAuth } from "../../../../auth/hooks/useAuth";
-import { useMarkNotificationAsRead, useMyNotificationsQuery } from "../../hooks";
-import { NOTIFICATION_TYPE_ICON } from "../../constants";
-import { resolveNotificationLink, timeAgo } from "../../utils";
-import type { Notification } from "../../types";
+import { useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../notification/hooks";
+import { NOTIFICATION_TYPE_ICON } from "../../../notification/constants";
+import { resolveNotificationLink, timeAgo } from "../../../notification/utils";
+import type { Notification } from "../../../notification/types";
 import HoverPreview from "../../../../../shared/components/hover-preview";
 import NotificationBellSkeleton from "./skeleton";
 
