@@ -1,6 +1,7 @@
+import type { NOTIFICATION_TYPE } from "../../../../shared/constants/notification";
 import type { Pagination } from "../../../../types";
 
-export type NotificationType = "order" | "payment" | "promotion" | "stock" | "system" | "review";
+export type NotificationType = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE];
 
 /** 1 thông báo của user hiện tại (GET /notifications). */
 export interface Notification {

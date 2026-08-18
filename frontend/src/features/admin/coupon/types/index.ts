@@ -1,6 +1,7 @@
 import type { Pagination } from "../../../../types";
+import type { DISCOUNT_TYPE } from "../../../client/order/constants";
 
-export type DiscountType = "fixed" | "percentage";
+export type DiscountType = (typeof DISCOUNT_TYPE)[keyof typeof DISCOUNT_TYPE];
 
 /**
  * 1 mã giảm giá nhìn từ phía admin. Lưu ý: discountValue/minOrderValue/maxDiscountValue

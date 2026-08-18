@@ -39,9 +39,7 @@ export const useCartStore = create<CartState>()(
 					if (existing) {
 						const nextQuantity = Math.min(existing.quantity + quantity, existing.stockQuantity);
 						return {
-							items: state.items.map((line) =>
-								line.productSkuId === item.productSkuId ? { ...line, ...item, quantity: nextQuantity } : line,
-							),
+							items: state.items.map((line) => (line.productSkuId === item.productSkuId ? { ...line, ...item, quantity: nextQuantity } : line)),
 						};
 					}
 					return {
@@ -59,11 +57,7 @@ export const useCartStore = create<CartState>()(
 					items:
 						quantity <= 0
 							? state.items.filter((line) => line.productSkuId !== productSkuId)
-							: state.items.map((line) =>
-									line.productSkuId === productSkuId
-										? { ...line, quantity: Math.min(quantity, line.stockQuantity) }
-										: line,
-								),
+							: state.items.map((line) => (line.productSkuId === productSkuId ? { ...line, quantity: Math.min(quantity, line.stockQuantity) } : line)),
 				})),
 			clearCart: () => {
 				set({ items: [] });

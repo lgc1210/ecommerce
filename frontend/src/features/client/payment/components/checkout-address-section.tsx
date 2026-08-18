@@ -54,10 +54,7 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 				</div>
 
 				{addresses.length > 0 && (
-					<button
-						type='button'
-						onClick={() => setPickerOpen(true)}
-						className='cursor-pointer text-sm font-semibold text-primary hover:underline'>
+					<button type='button' onClick={() => setPickerOpen(true)} className='cursor-pointer text-sm font-semibold text-primary hover:underline'>
 						Thay đổi
 					</button>
 				)}
@@ -70,20 +67,13 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 					<p className='font-semibold text-ink'>{selectedAddress.recipientName}</p>
 					<p className='mt-1 text-sm text-muted'>{selectedAddress.phoneNumber}</p>
 					<p className='mt-2 text-sm text-muted'>
-						{selectedAddress.addressLine}, {selectedAddress.wardName}, {selectedAddress.districtName},{" "}
-						{selectedAddress.provinceName}
+						{selectedAddress.addressLine}, {selectedAddress.wardName}, {selectedAddress.districtName}, {selectedAddress.provinceName}
 					</p>
 				</div>
 			) : (
 				<div className='rounded-2xl border border-dashed border-border p-4 text-center'>
 					<p className='text-sm text-muted'>Bạn chưa có địa chỉ nhận hàng nào.</p>
-					<Button
-						type='button'
-						size='sm'
-						className='mt-3'
-						icon={<PlusIcon className='h-4 w-4' />}
-						iconPosition='left'
-						onClick={() => setFormOpen(true)}>
+					<Button type='button' size='sm' className='mt-3' icon={<PlusIcon className='h-4 w-4' />} iconPosition='left' onClick={() => setFormOpen(true)}>
 						Thêm địa chỉ
 					</Button>
 				</div>
@@ -105,14 +95,7 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 				/>
 			)}
 
-			{formOpen && (
-				<AddressFormModal
-					initialValue={null}
-					onClose={() => setFormOpen(false)}
-					isSubmitting={createAddress.isPending}
-					onSubmit={handleCreateAddress}
-				/>
-			)}
+			{formOpen && <AddressFormModal initialValue={null} onClose={() => setFormOpen(false)} isSubmitting={createAddress.isPending} onSubmit={handleCreateAddress} />}
 		</section>
 	);
 };

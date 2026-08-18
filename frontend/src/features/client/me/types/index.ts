@@ -1,4 +1,6 @@
-export type AddressTag = "home" | "office";
+import type { ADDRESS_TAG } from "../../../../shared/constants/address";
+
+export type AddressTag = (typeof ADDRESS_TAG)[keyof typeof ADDRESS_TAG];
 
 /** Địa chỉ giao hàng/thanh toán của chính user hiện tại (GET/POST/PATCH /users/me/addresses). */
 export interface UserAddress {

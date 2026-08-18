@@ -1,6 +1,7 @@
+import type { CONTACT_STATUS } from "../../../../shared/constants/contact";
 import type { Pagination } from "../../../../types";
 
-export type ContactStatus = "new" | "in_progress" | "resolved" | "closed";
+export type ContactStatus = (typeof CONTACT_STATUS)[keyof typeof CONTACT_STATUS];
 
 /**
  * Payload gửi form liên hệ công khai (POST /contacts). Khớp với

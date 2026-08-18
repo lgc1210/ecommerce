@@ -178,8 +178,6 @@ class AuthService {
 				throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Google.");
 			});
 
-		console.log("GOOGLE PROFILE: ", googleProfile);
-
 		if (!googleProfile || googleProfile.error || !googleProfile.email) {
 			throw new Error("Unauthorized: Không thể lấy thông tin tài khoản Google.");
 		}
