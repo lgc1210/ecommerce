@@ -9,5 +9,5 @@ export const NOTIFICATION_TYPE = Object.freeze({
 
 export const BROADCAST_NOTIFICATION_TYPE = Object.freeze({
 	[NOTIFICATION_TYPE.promotion]: "promotion",
-	[NOTIFICATION_TYPE.payment]: "payment",
+	[NOTIFICATION_TYPE.system]: "system",
 });

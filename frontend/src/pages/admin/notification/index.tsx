@@ -7,10 +7,11 @@ import Popup from "../../../components/popup";
 import { useBroadcastNotification } from "../../../features/admin/notification/hooks";
 import type { BroadcastNotificationType } from "../../../features/admin/notification/types";
 import { BellIcon } from "../../../components/icons";
+import { BROADCAST_NOTIFICATION_TYPE } from "../../../shared/constants/notification";
 
 const TYPE_OPTIONS: { value: BroadcastNotificationType; label: string }[] = [
-	{ value: "promotion", label: "Khuyến mãi" },
-	{ value: "system", label: "Hệ thống" },
+	{ value: BROADCAST_NOTIFICATION_TYPE.promotion, label: "Khuyến mãi" },
+	{ value: BROADCAST_NOTIFICATION_TYPE.system, label: "Hệ thống" },
 ];
 
 type Errors = {
