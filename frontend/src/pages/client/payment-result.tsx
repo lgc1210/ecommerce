@@ -123,12 +123,14 @@ const ResultCard = ({ tone, title, description, payment }: ResultCardProps) => {
 				</div>
 			)}
 
-			<div className='mt-8 flex justify-center gap-3'>
-				<Link to={paths.client.account} state={{ tab: "orders" }}>
-					<Button variant='outline'>Xem đơn hàng của tôi</Button>
+			<div className='mt-8 flex flex-wrap items-center justify-center gap-3'>
+				<Link to={paths.client.account} state={{ tab: "orders" }} className='w-full!'>
+					<Button variant='outline' className='w-full!'>
+						Xem đơn hàng của tôi
+					</Button>
 				</Link>
-				<Link to={paths.client.shop}>
-					<Button>Tiếp tục mua sắm</Button>
+				<Link to={paths.client.shop} className='w-full!'>
+					<Button className='w-full!'>Tiếp tục mua sắm</Button>
 				</Link>
 			</div>
 		</div>

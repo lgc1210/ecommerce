@@ -7,6 +7,8 @@ import UserMenu from "../../../../components/user-menu";
 import Button from "../../../../components/button";
 import NotificationBell from "./notification-bell";
 import PreviewCart from "./preview-cart";
+import Search from "./search";
+import CategoryFilter from "./category-filter";
 
 const navItems = [
 	{ to: paths.client.home, label: "Trang chủ", end: true },
@@ -23,7 +25,7 @@ const Header = () => {
 
 	return (
 		<header className='sticky top-0 z-30 border-b border-border bg-surface/95'>
-			<div className='mx-auto flex h-18 max-w-7xl items-center lg:justify-between gap-4 px-4 sm:px-6 lg:px-8'>
+			<div className='mx-auto flex h-18 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8'>
 				{/* Mobile menu toggle */}
 				<Button type='button' variant='outline' onClick={() => setMobileOpen(true)} aria-label='Mở menu' className='size-10! p-0! rounded-full lg:hidden' icon={<MenuIcon className='h-5 w-5' />} />
 
@@ -33,16 +35,18 @@ const Header = () => {
 					<span className='text-xl font-extrabold tracking-tight text-ink hidden sm:block'>Commerce</span>
 				</Link>
 
-				{/* Desktop nav */}
-				<nav className='ml-4 hidden items-center justify-center gap-7 lg:flex'>
+				{/* Desktop nav — "Danh mục" gộp chung hàng nav (không phải nút riêng) để tiết kiệm không gian */}
+				<nav className='hidden items-center justify-center gap-7 lg:flex'>
 					{navItems.map((item) => (
 						<NavLink key={item.to} to={item.to} end={item.end} className={linkClass} viewTransition>
 							{item.label}
 						</NavLink>
 					))}
+					<CategoryFilter />
 				</nav>
 
 				<div className='ml-auto flex items-center gap-1.5'>
+					<Search />
 					<UserMenu
 						actions={[
 							{
