@@ -75,3 +75,15 @@ export function buildPaymentRefundedNotification(userId: number, orderId: number
 		referenceId: String(orderId),
 	};
 }
+
+/** actionUrl phải khớp route thật của FE là "/product/:slug" (số ít, dùng slug) — xem paths.client.productDetail. */
+export function buildReviewRepliedNotification(userId: number, productSlug: string, reviewId: number): NotificationPayload {
+	return {
+		userId,
+		type: "review",
+		title: "Shop đã phản hồi đánh giá của bạn",
+		message: "Đánh giá của bạn vừa nhận được phản hồi từ shop. Xem ngay nhé!",
+		actionUrl: `/product/${productSlug}#review-${reviewId}`,
+		referenceId: String(reviewId),
+	};
+}

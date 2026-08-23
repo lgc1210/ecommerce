@@ -1,11 +1,11 @@
 import { useState, type SubmitEvent } from "react";
-import BreadCrumb from "../../components/breadcrumb";
-import Button from "../../components/button";
-import FormControl from "../../components/form-control";
-import { HeadsetIcon, MailIcon, MapPinIcon, PhoneIcon } from "../../components/icons";
-import { useSendContact } from "../../features/client/contact/hooks/useContact";
-import type { ContactPayload } from "../../features/client/contact/types";
-import EmbeddedMap from "../../features/client/contact/components/embedded-map";
+import BreadCrumb from "../../../components/breadcrumb";
+import Button from "../../../components/button";
+import FormControl from "../../../components/form-control";
+import { HeadsetIcon, MailIcon, MapPinIcon, PhoneIcon } from "../../../components/icons";
+import { useSendContact } from "../../../features/client/contact/hooks/useContact";
+import type { ContactPayload } from "../../../features/client/contact/types";
+import EmbeddedMap from "../../../features/client/contact/components/embedded-map";
 
 const contactInfo = [
 	{
@@ -130,41 +130,14 @@ const ContactPage = () => {
 
 					<div>
 						<h2 className='text-2xl font-extrabold tracking-tight text-ink'>Gửi tin nhắn cho chúng tôi</h2>
-						<p className='mt-2 text-sm text-muted'>
-							Điền thông tin bên dưới, đội ngũ Ecommerce sẽ liên hệ lại trong thời gian sớm nhất.
-						</p>
+						<p className='mt-2 text-sm text-muted'>Điền thông tin bên dưới, đội ngũ Ecommerce sẽ liên hệ lại trong thời gian sớm nhất.</p>
 
 						<form onSubmit={handleSubmit} className='mt-6 space-y-4'>
 							<div className='grid gap-4 sm:grid-cols-2'>
-								<FormControl
-									variant='surface'
-									name='name'
-									value={form.name}
-									onChange={handleChange("name")}
-									placeholder='Họ và tên'
-									maxLength={100}
-									error={errors.name}
-								/>
-								<FormControl
-									variant='surface'
-									type='email'
-									name='email'
-									value={form.email}
-									onChange={handleChange("email")}
-									placeholder='Email'
-									maxLength={255}
-									error={errors.email}
-								/>
+								<FormControl variant='surface' name='name' value={form.name} onChange={handleChange("name")} placeholder='Họ và tên' maxLength={100} error={errors.name} />
+								<FormControl variant='surface' type='email' name='email' value={form.email} onChange={handleChange("email")} placeholder='Email' maxLength={255} error={errors.email} />
 							</div>
-							<FormControl
-								variant='surface'
-								name='subject'
-								value={form.subject}
-								onChange={handleChange("subject")}
-								placeholder='Chủ đề'
-								maxLength={255}
-								error={errors.subject}
-							/>
+							<FormControl variant='surface' name='subject' value={form.subject} onChange={handleChange("subject")} placeholder='Chủ đề' maxLength={255} error={errors.subject} />
 							<FormControl
 								as='textarea'
 								variant='surface'

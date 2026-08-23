@@ -13,6 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, `../../${envFileTarget}`) });
 
 // 2. Define a strict structural schema for your environment variables
 const envSchema = z.object({
+	ADMIN_PASSWORD: z.string().min(8, { message: "ADMIN_PASSWORD must be at least 8 characters long." }),
 	CLIENT_URL: z.url({ message: "CLIENT_URL must be a valid connection string format." }),
 
 	COOKIE_DOMAIN: z.string().optional(), // dùng khi mua domain riêng sau này, hiện để trống

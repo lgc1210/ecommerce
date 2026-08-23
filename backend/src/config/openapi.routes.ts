@@ -39,7 +39,17 @@ import {
 } from "../features/products/product.validation.js";
 import { AddCartItemSchema, UpdateCartItemSchema, CartItemParamSchema } from "../features/carts/cart.validation.js";
 import { RequestWelcomeCouponSchema, ValidateCouponSchema, ListCouponsQuerySchema, CouponIdParamSchema, CreateCouponSchema, UpdateCouponSchema } from "../features/coupons/coupon.validation.js";
-import { ListReviewsByProductQuerySchema, CreateReviewSchema, UpdateReviewSchema, ReviewIdParamSchema, ListReviewsAdminQuerySchema } from "../features/reviews/review.validation.js";
+import {
+	ListReviewsByProductQuerySchema,
+	ListMyReviewsQuerySchema,
+	CreateReviewSchema,
+	UpdateReviewSchema,
+	ReviewIdParamSchema,
+	ListReviewsAdminQuerySchema,
+	ModerateReviewSchema,
+	CreateReviewReplySchema,
+	UpdateReviewReplySchema,
+} from "../features/reviews/review.validation.js";
 import { CreateContactSchema, ListOwnContactsQuerySchema, ListContactsQuerySchema, ContactIdParamSchema, UpdateContactStatusSchema } from "../features/contacts/contact.validation.js";
 import {
 	GhnWebhookSchema,
@@ -156,12 +166,19 @@ export const routeManifest: RouteMeta[] = [
 	{ method: "delete", path: "/coupons/id/:id", tag: "Coupons", summary: "[Admin] Xoá mã giảm giá", auth: true, permission: "coupon:manage", schema: CouponIdParamSchema },
 
 	// ── Reviews ──────────────────────────────────────────────────────────
-	{ method: "get", path: "/reviews/product/:productId", tag: "Reviews", summary: "Danh sách đánh giá của 1 sản phẩm (public)", schema: ListReviewsByProductQuerySchema },
-	{ method: "post", path: "/reviews", tag: "Reviews", summary: "Gửi đánh giá sản phẩm", auth: true, permission: "review:create", schema: CreateReviewSchema },
-	{ method: "patch", path: "/reviews/:id", tag: "Reviews", summary: "Sửa đánh giá của chính mình", auth: true, permission: "review:create", schema: UpdateReviewSchema },
+	{ method: "get", path: "/reviews/product/:productId", tag: "Reviews", summary: "Danh sách đánh giá của 1 sản phẩm (public, chỉ review đang hiển thị)", schema: ListReviewsByProductQuerySchema },
+	{ method: "get", path: "/reviews/reviewable-items", tag: "Reviews", summary: "Sản phẩm đã mua (đơn đã giao, còn trong hạn 30 ngày) nhưng chưa đánh giá", auth: true, permission: "review:create" },
+	{ method: "get", path: "/reviews/me", tag: "Reviews", summary: "Danh sách đánh giá mình đã viết (mọi trạng thái hiển thị)", auth: true, permission: "review:create", schema: ListMyReviewsQuerySchema },
+	{ method: "post", path: "/reviews", tag: "Reviews", summary: "Gửi đánh giá sản phẩm đã mua (trong vòng 30 ngày kể từ khi nhận hàng)", auth: true, permission: "review:create", schema: CreateReviewSchema },
+	{ method: "patch", path: "/reviews/:id", tag: "Reviews", summary: "Sửa đánh giá của chính mình (chỉ được sửa tối đa 1 lần)", auth: true, permission: "review:create", schema: UpdateReviewSchema },
 	{ method: "delete", path: "/reviews/:id", tag: "Reviews", summary: "Xoá đánh giá của chính mình", auth: true, permission: "review:create", schema: ReviewIdParamSchema },
-	{ method: "get", path: "/reviews/admin", tag: "Reviews", summary: "[Admin] Danh sách toàn bộ đánh giá", auth: true, permission: "review:update", schema: ListReviewsAdminQuerySchema },
+	{ method: "get", path: "/reviews/admin", tag: "Reviews", summary: "[Admin] Danh sách toàn bộ đánh giá (kèm bộ lọc, log kiểm duyệt gần nhất)", auth: true, permission: "review:update", schema: ListReviewsAdminQuerySchema },
+	{ method: "patch", path: "/reviews/admin/:id/hide", tag: "Reviews", summary: "[Admin] Ẩn 1 đánh giá vi phạm (không sửa nội dung/rating gốc)", auth: true, permission: "review:update", schema: ModerateReviewSchema },
+	{ method: "patch", path: "/reviews/admin/:id/unhide", tag: "Reviews", summary: "[Admin] Hiện lại 1 đánh giá đã bị ẩn", auth: true, permission: "review:update", schema: ModerateReviewSchema },
 	{ method: "delete", path: "/reviews/admin/:id", tag: "Reviews", summary: "[Admin] Xoá 1 đánh giá bất kỳ", auth: true, permission: "review:update", schema: ReviewIdParamSchema },
+	{ method: "post", path: "/reviews/admin/:id/reply", tag: "Reviews", summary: "[Admin] Phản hồi chính thức 1 đánh giá (tối đa 1 reply/review)", auth: true, permission: "review:update", schema: CreateReviewReplySchema },
+	{ method: "patch", path: "/reviews/admin/:id/reply", tag: "Reviews", summary: "[Admin] Sửa nội dung phản hồi đã có", auth: true, permission: "review:update", schema: UpdateReviewReplySchema },
+	{ method: "delete", path: "/reviews/admin/:id/reply", tag: "Reviews", summary: "[Admin] Xoá phản hồi của 1 đánh giá", auth: true, permission: "review:update", schema: ReviewIdParamSchema },
 
 	// ── Contacts ─────────────────────────────────────────────────────────
 	{ method: "post", path: "/contacts", tag: "Contacts", summary: "Gửi form liên hệ (không bắt buộc đăng nhập)", auth: "optional", schema: CreateContactSchema },

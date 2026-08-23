@@ -1,14 +1,14 @@
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import BreadCrumb from "../../components/breadcrumb";
-import Button from "../../components/button";
-import { CheckIcon, ClockIcon, XIcon } from "../../components/icons";
-import paths from "../../configs/constants/paths";
-import { useOwnPaymentQuery } from "../../features/client/payment/hooks";
-import { ONLINE_GATEWAY_METHODS } from "../../features/client/payment/constants";
-import { PAYMENT_METHOD_LABEL } from "../../features/admin/order/utils";
-import { formatCurrency } from "../../utils/currency";
-import { PAYMENT_STATUS } from "../../shared/constants/order";
+import BreadCrumb from "../../../components/breadcrumb";
+import Button from "../../../components/button";
+import { CheckIcon, ClockIcon, XIcon } from "../../../components/icons";
+import paths from "../../../configs/constants/paths";
+import { useOwnPaymentQuery } from "../../../features/client/payment/hooks";
+import { ONLINE_GATEWAY_METHODS } from "../../../features/client/payment/constants";
+import { PAYMENT_METHOD_LABEL } from "../../../features/admin/order/utils";
+import { formatCurrency } from "../../../utils/currency";
+import { PAYMENT_STATUS } from "../../../shared/constants/order";
 
 /**
  * Suy ra Order.id từ query string trình duyệt được redirect về:

@@ -552,7 +552,14 @@ class OrderService {
 
 			return tx.order.update({
 				where: { id: order.id },
-				data: { orderStatus: nextStatus, ...(options.ghnStatus ? { ghnStatus: options.ghnStatus } : {}) },
+				data: {
+					orderStatus: nextStatus,
+					...(options.ghnStatus ? { ghnStatus: options.ghnStatus } : {}),
+					// Chỉ set 1 LẦN DUY NHẤT khi thực sự chuyển sang "delivered" — currentStatus đã được
+					// đảm bảo khác "delivered" ở đây nhờ isValidOrderStatusTransition/isTerminal chặn
+					// chuyển đi từ trạng thái terminal, nên không lo bị ghi đè lại mốc thời gian cũ.
+					...(nextStatus === OrderStatus.delivered ? { deliveredAt: new Date() } : {}),
+				},
 				include: orderDetailInclude,
 			});
 		});

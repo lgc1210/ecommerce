@@ -75,7 +75,7 @@ backend/src/
     ├── payments/               # Trạng thái thanh toán + cổng thanh toán (gateways/)
     ├── reviews/                # Đánh giá sản phẩm
     ├── contacts/               # Form liên hệ
-    ├── notifications/          # Thông báo in-app (tự bắn khi đơn hàng/thanh toán đổi trạng thái + admin broadcast hàng loạt)
+    ├── notifications/          # Thông báo in-app (tự bắn khi đơn hàng/thanh toán đổi trạng thái, shop phản hồi review... + admin broadcast hàng loạt)
     ├── dashboard/              # Thống kê tổng quan cho admin
     └── uploads/                # Upload ảnh sản phẩm
 ```
@@ -92,8 +92,8 @@ Các nhóm bảng chính (xem `backend/prisma/schema.prisma`):
 1. **IAM**: `roles`, `permissions`, `role_permissions`, `users` (hỗ trợ login local + Google/Facebook), `refresh_tokens`, `user_addresses`.
 2. **Catalog**: `categories` (cây phân cấp, tự tham chiếu), `products`, `product_sku` (mỗi dòng là 1 biến thể — màu/size riêng, có giá, tồn kho, kích thước/khối lượng vật lý để tính phí ship GHN), `product_images` (ảnh gắn theo từng SKU, không phải theo sản phẩm).
 3. **Giỏ hàng**: `carts`, `cart_items`.
-4. **Đơn hàng & thanh toán**: `coupons`, `orders` (lưu cả mã vận đơn + trạng thái vận chuyển GHN), `order_items` (chụp lại giá & biến thể tại thời điểm mua), `payments` (state machine: `pending → completed/failed → refunded`).
-5. **Tương tác khách hàng**: `reviews`, `otps` (xác thực đăng ký / đổi mật khẩu / đổi SĐT), `contacts`.
+4. **Đơn hàng & thanh toán**: `coupons`, `orders` (lưu cả mã vận đơn + trạng thái vận chuyển GHN, và `delivered_at` — mốc thời gian chuyển sang "delivered", dùng để tính hạn 30 ngày được phép đánh giá), `order_items` (chụp lại giá & biến thể tại thời điểm mua), `payments` (state machine: `pending → completed/failed → refunded`).
+5. **Tương tác khách hàng**: `reviews` (đánh giá theo mô hình **verified purchase** — gắn với `order_item` cụ thể, chỉ viết được trong 30 ngày kể từ `orders.delivered_at`, sửa tối đa 1 lần), `review_replies` (phản hồi chính thức của shop, tối đa 1/review), `review_moderation_logs` (lịch sử ẩn/hiện review vi phạm — không sửa nội dung gốc), `otps` (xác thực đăng ký / đặt lại mật khẩu / đổi SĐT), `contacts`.
 
 Sơ đồ ERD Database
 ![Ảnh sơ đồ ERD Database](docs/images/project-structure/ERD.png)
@@ -107,24 +107,26 @@ Sơ đồ ERD Database
 
 ### 2.5. Danh sách API chính (tiền tố `/api`)
 
-| Nhóm              | Route                                                                                                                                                       | Ghi chú                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Auth              | `/auth/register`, `/verify-otp`, `/resend-otp`, `/login`, `/google`, `/facebook`, `/refresh-token`, `/logout`, `/forgot-password`, `/reset-password`, `/me` | Public, trừ `/me`                                 |
-| RBAC              | `/rbac/roles`, `/rbac/permissions`, `/rbac/roles/:id/permissions`                                                                                           | Admin (`rbac:manage`)                             |
-| Users             | `/users/me`, `/users/me/addresses`, `/users` (admin)                                                                                                        | Self-service + Admin                              |
-| Addresses (admin) | `/addresses`, `/addresses/user/:userId`                                                                                                                     | Quản trị địa chỉ mọi user                         |
-| Categories        | `/categories`, `/categories/featured`, `/categories/slug/:slug`, `/categories/id/:id` (admin)                                                               | Public đọc, admin ghi                             |
-| Products          | `/products`, `/products/featured`, `/products/slug/:slug`, `/products/admin`, `/products/id/:id/skus`, `.../images`                                         | Public đọc, admin quản lý SKU/ảnh                 |
-| Cart              | `/cart`, `/cart/items`                                                                                                                                      | Yêu cầu đăng nhập                                 |
-| Coupons           | `/coupons/request-welcome`, `/coupons/validate`, `/coupons` (admin CRUD)                                                                                    |                                                   |
-| Reviews           | `/reviews/product/:id`, `/reviews` (CRUD của chính khách), `/reviews/admin`                                                                                 |                                                   |
-| Contacts          | `/contacts` (public gửi), `/contacts/me`, `/contacts` (admin)                                                                                               |                                                   |
-| Notifications     | `/notifications` (self-service: xem/đánh dấu đã đọc/xóa), `/notifications/broadcast` (admin)                                                                | Broadcast gửi TOÀN BỘ customer đang hoạt động     |
-| Orders            | `/orders` (checkout), `/orders/shipping-fee`, `/orders/me`, `/orders/admin`, `/orders/webhooks/ghn`                                                         | Webhook GHN không cần auth                        |
-| Payments          | `/payments/me/:orderId`, `/payments/me/:orderId/pay`, `/payments/vnpay/return`, `/payments/vnpay/ipn`, `/payments/zalopay/callback`, `/payments/admin`      | Return/IPN không cần auth (gateway gọi trực tiếp) |
-| Dashboard         | `/dashboard/overview`, `/revenue`, `/top-products`, `/recent-orders`, `/low-stock`                                                                          | Admin                                             |
-| Uploads           | `/uploads/product-image`                                                                                                                                    | Admin, multipart/form-data                        |
-| GHN               | `/external/ghn/provinces`, `/districts`, `/wards`                                                                                                           | Proxy tra cứu địa chỉ hành chính cho GHN          |
+| Nhóm              | Route                                                                                                                                                                                                   | Ghi chú                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Auth              | `/auth/register`, `/verify-otp`, `/resend-otp`, `/login`, `/google`, `/facebook`, `/refresh-token`, `/logout`, `/forgot-password`, `/reset-password`, `/me`                                             | Public, trừ `/me`                                 |
+| RBAC              | `/rbac/roles`, `/rbac/permissions`, `/rbac/roles/:id/permissions`                                                                                                                                       | Admin (`rbac:manage`)                             |
+| Users             | `/users/me`, `/users/me/addresses`, `/users` (admin)                                                                                                                                                    | Self-service + Admin                              |
+| Addresses (admin) | `/addresses`, `/addresses/user/:userId`                                                                                                                                                                 | Quản trị địa chỉ mọi user                         |
+| Categories        | `/categories`, `/categories/featured`, `/categories/slug/:slug`, `/categories/id/:id` (admin)                                                                                                           | Public đọc, admin ghi                             |
+| Products          | `/products`, `/products/featured`, `/products/slug/:slug`, `/products/admin`, `/products/id/:id/skus`, `.../images`                                                                                     | Public đọc, admin quản lý SKU/ảnh                 |
+| Cart              | `/cart`, `/cart/items`                                                                                                                                                                                  | Yêu cầu đăng nhập                                 |
+| Coupons           | `/coupons/request-welcome`, `/coupons/validate`, `/coupons` (admin CRUD)                                                                                                                                |                                                   |
+| Reviews           | `/reviews/product/:productId`, `/reviews/reviewable-items`, `/reviews/me`, `/reviews` (tạo/sửa/xóa của chính khách), `/reviews/admin`, `/reviews/admin/:id/hide`, `/unhide`, `/reviews/admin/:id/reply` | Đánh giá theo mô hình verified-purchase (xem 2.3) |
+| Contacts          | `/contacts` (public gửi), `/contacts/me`, `/contacts` (admin)                                                                                                                                           |                                                   |
+| Notifications     | `/notifications` (self-service: xem/đánh dấu đã đọc/xóa), `/notifications/broadcast` (admin)                                                                                                            | Broadcast gửi TOÀN BỘ customer đang hoạt động     |
+| Orders            | `/orders` (checkout), `/orders/shipping-fee`, `/orders/me`, `/orders/admin`, `/orders/webhooks/ghn`                                                                                                     | Webhook GHN không cần auth                        |
+| Payments          | `/payments/me/:orderId`, `/payments/me/:orderId/pay`, `/payments/vnpay/return`, `/payments/vnpay/ipn`, `/payments/zalopay/callback`, `/payments/admin`                                                  | Return/IPN không cần auth (gateway gọi trực tiếp) |
+| Dashboard         | `/dashboard/overview`, `/revenue`, `/top-products`, `/recent-orders`, `/low-stock`                                                                                                                      | Admin                                             |
+| Uploads           | `/uploads/product-image`                                                                                                                                                                                | Admin, multipart/form-data                        |
+| GHN               | `/external/ghn/provinces`, `/districts`, `/wards`                                                                                                                                                       | Proxy tra cứu địa chỉ hành chính cho GHN          |
+
+Toàn bộ API trên được tài liệu hoá tự động dạng OpenAPI 3.0 — sinh trực tiếp từ Zod schema đang dùng thật trong validation (`backend/src/config/openapi.routes.ts`), luôn khớp với hành vi thực tế. Xem trực quan tại **Swagger UI** (`/api/docs`) hoặc import `/api/docs.json` vào Postman để test các route yêu cầu đăng nhập.
 
 Ảnh giao diện Swagger UI — tổng quan API
 ![Ảnh giao diện Swagger UI — tổng quan API](docs/images/swagger/apis.png)
@@ -185,8 +187,8 @@ frontend/src/
 └── features/
     ├── auth/               # Zustand store, useAuth hook, service gọi /api/auth, route loader
     ├── external/location/    # Gọi API GHN (tỉnh/huyện/xã) cho form địa chỉ
-    ├── client/              # home, shop, product, cart, order, payment, contact, notification, about, me (tài khoản)
-    └── admin/               # dashboard, product, category, coupon, order, payment, user, rbac, contact, notification, header, sidebar
+    ├── client/              # home, shop, product, cart, order, payment, review, contact, notification, about, me (tài khoản)
+    └── admin/               # dashboard, product, category, coupon, order, review, payment, user, rbac, contact, notification, header, sidebar
 ```
 
 Mỗi feature con thường có: `components/`, `hooks/`, `services/` (gọi API), `types/`, `utils/`, đúng khuôn mẫu với backend để hai bên "nói cùng ngôn ngữ".
@@ -200,6 +202,7 @@ Các trang: **Trang chủ, Cửa hàng (Shop), Chi tiết sản phẩm, Giỏ h�
 
 - Giỏ hàng **không yêu cầu đăng nhập** (lưu ở Zustand + localStorage) — chỉ bắt đăng nhập khi vào bước Thanh toán.
 - Trang Thanh toán tính phí vận chuyển GHN thật theo địa chỉ đã chọn, áp mã giảm giá, rồi tạo đơn hàng thật.
+- Trang chi tiết sản phẩm có tab "Đánh giá" (điểm trung bình, phân bổ theo sao, lọc/sắp xếp, phản hồi của shop); tab "Đánh giá của tôi" trong trang tài khoản cho phép viết đánh giá cho sản phẩm đã mua (đơn đã giao, còn trong hạn 30 ngày) và sửa (tối đa 1 lần)/xóa đánh giá đã viết.
 - Nội dung tĩnh của Trang chủ / Giới thiệu / Liên hệ / banner Cửa hàng được lấy từ **Strapi CMS** (không hard-code trong code frontend), cho phép chỉnh nội dung marketing mà không cần deploy lại.
 
 Trang chủ
@@ -214,8 +217,9 @@ Trang liên hệ
 Trang cửa hàng
 ![Ảnh giao diện trang sản phẩm](docs/images/client/shop.png)
 
-Trang sản phẩm
+Trang sản phẩm & đánh giá
 ![Ảnh giao diện trang chi tiết sản phẩm](docs/images/client/product.png)
+![Ảnh giao diện đánh giá của sản phẩm](docs/images/client/review.png)
 
 Trang giỏ hàng
 ![Ảnh giao diện trang giỏ hàng](docs/images/client/cart.png)
@@ -235,9 +239,21 @@ Trang chi tiết đơn hàng của tôi
 Trang quản lý thông báo của tôi
 ![Ảnh giao diện quản lý thông báo của tôi](docs/images/client/notifications.png)
 
+Trang quản lý đánh giá của tôi
+![Ảnh giao diện quản lý đánh giá](docs/images/client/me-reviews.png)
+
+Trang quản lý sổ địa chỉ của tôi
+![Ảnh giao diện quản lý sổ địa chi của tôi](docs/images/client/me-addresses.png)
+
+Trang quản lý thông tin cá nhân
+![Ảnh giao diện quản lý thông tin cá nhân](docs/images/client/me-info.png)
+
+Trang quản lý liên hệ của tôi
+![Ảnh giao diện quản lý liên hệ của tôi](docs/images/client/me-contacts.png)
+
 ### 3.4. Giao diện Admin
 
-Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Thanh toán**, **Liên hệ**, **Thông báo** (gửi hàng loạt).
+Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Đánh giá sản phẩm** (kiểm duyệt ẩn/hiện kèm lý do, phản hồi chính thức), **Thanh toán**, **Liên hệ**, **Thông báo** (gửi hàng loạt).
 
 Trang dashboard admin
 ![Ảnh giao diện Dashboard Admin](docs/images/admin/dashboard.png)
@@ -268,6 +284,12 @@ Trang quản lý đơn hàng
 
 Trang quản lý người dùng
 ![Ảnh giao diện quản lý người dùng](docs/images/admin/users.png)
+
+Trang quản lý đánh giá
+![Ảnh giao diện quản lý đánh giá](docs/images/admin/review.png)
+
+Trang quản lý liên hệ
+![Ảnh giao diện quản lý liên hệ](docs/images/admin/contacts.png)
 
 ### 3.5. Hệ thống thông báo (Notification)
 
@@ -361,6 +383,7 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **Tích hợp vận chuyển & thanh toán thực tế cho thị trường Việt Nam**: GHN tính phí ship theo kích thước/khối lượng từng biến thể sản phẩm, VNPay & ZaloPay, cơ chế tự hủy đơn "pending" quá hạn.
 - **Tách CMS khỏi hệ thống giao dịch**: nội dung marketing (Home/About/Contact/Shop banner) quản lý độc lập qua Strapi, không cần deploy lại frontend khi đổi nội dung.
 - **Hệ thống thông báo in-app**: tự động bắn khi đơn hàng/thanh toán đổi trạng thái, admin gửi hàng loạt tới toàn bộ khách hàng (xử lý theo batch), kiến trúc kênh gửi (Strategy Pattern) sẵn sàng mở rộng thêm email/push.
+- **Đánh giá sản phẩm theo mô hình verified-purchase**: chỉ đánh giá được sản phẩm đã mua và đơn đã giao, trong vòng 30 ngày kể từ ngày nhận hàng; sửa tối đa 1 lần; kiểm duyệt viên chỉ ẩn/hiện chứ không sửa nội dung gốc, mọi thao tác được ghi log để đối soát.
 - Giao diện Client lấy cảm hứng từ **Etonal** (tông màu kem – cam cháy), giao diện Admin có dashboard trực quan bằng ECharts.
 
 ## 7. Định hướng phát triển tiếp theo

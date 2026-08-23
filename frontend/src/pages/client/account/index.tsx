@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { BellIcon, BoxIcon, MailIcon, MapPinIcon, UserIcon } from "../../../components/icons";
+import { BellIcon, BoxIcon, MailIcon, MapPinIcon, StarIcon, UserIcon } from "../../../components/icons";
 import { TabItem, Tabs } from "../../../components/tabs";
 
 import BreadCrumb from "../../../components/breadcrumb";
@@ -9,6 +9,7 @@ import MyContactsTab from "../../../features/client/me/components/account/my-con
 import NotificationsTab from "../../../features/client/me/components/account/notifications-tab";
 import OrdersTab from "../../../features/client/me/components/account/order-tab";
 import ProfileTab from "../../../features/client/me/components/account/profile-tab";
+import ReviewsTab from "../../../features/client/me/components/account/review-tab";
 
 const TABS = [
 	{
@@ -25,6 +26,11 @@ const TABS = [
 		name: "orders",
 		icon: <BoxIcon className='h-4 w-4' />,
 		label: "Đơn hàng",
+	},
+	{
+		name: "reviews",
+		icon: <StarIcon className='h-4 w-4' />,
+		label: "Đánh giá của tôi",
 	},
 	{
 		name: "contacts",
@@ -99,6 +105,7 @@ const AccountPage = () => {
 				{tab === "profile" && <ProfileTab />}
 				{tab === "addresses" && <AddressesTab />}
 				{tab === "orders" && <OrdersTab initialSelectedOrderId={initialOrderId} />}
+				{tab === "reviews" && <ReviewsTab />}
 				{tab === "contacts" && <MyContactsTab />}
 				{tab === "notifications" && <NotificationsTab />}
 			</div>

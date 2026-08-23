@@ -2,12 +2,9 @@ import bcrypt from "bcrypt";
 import prisma from "../../config/prisma.js";
 import pkg from "../../generated/prisma/index.js";
 import { BCRYPT_SALT_ROUNDS } from "../auth/auth.constant.js";
+import { env } from "../../config/dotenv.js";
 
 const { Provider } = pkg;
-
-// Mật khẩu mặc định dùng chung cho toàn bộ tài khoản seed (chỉ dùng cho môi trường dev/demo).
-// Các tài khoản này được tạo sẵn với isVerified: true để có thể đăng nhập ngay, bỏ qua bước xác thực OTP.
-const SEED_PASSWORD = "Password123!";
 
 interface SeedUserInput {
 	name: string;
@@ -30,7 +27,7 @@ export const userSeed = async () => {
 	const roles = await prisma.role.findMany({ where: { name: { in: seedUsers.map((u) => u.roleName) } } });
 	const roleIdByName = new Map(roles.map((role) => [role.name, role.id]));
 
-	const passwordHash = await bcrypt.hash(SEED_PASSWORD, BCRYPT_SALT_ROUNDS);
+	const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, BCRYPT_SALT_ROUNDS);
 
 	for (const seedUser of seedUsers) {
 		const roleId = roleIdByName.get(seedUser.roleName);
@@ -54,5 +51,5 @@ export const userSeed = async () => {
 		});
 	}
 
-	console.log(`Seeding: Users created successfully (mật khẩu mặc định: "${SEED_PASSWORD}")`);
+	console.log(`Seeding: Users created successfully (mật khẩu mặc định: "${env.ADMIN_PASSWORD}")`);
 };

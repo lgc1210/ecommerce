@@ -9,6 +9,7 @@ import {
 	buildPaymentCompletedNotification,
 	buildPaymentFailedNotification,
 	buildPaymentRefundedNotification,
+	buildReviewRepliedNotification,
 } from "./notification.utils.js";
 
 interface ListOwnNotificationsParams {
@@ -122,6 +123,10 @@ class NotificationService {
 
 	async notifyPaymentRefunded(userId: number, orderId: number, orderNumber: string): Promise<void> {
 		await this.dispatch(buildPaymentRefundedNotification(userId, orderId, orderNumber));
+	}
+
+	async notifyReviewReplied(userId: number, productSlug: string, reviewId: number): Promise<void> {
+		await this.dispatch(buildReviewRepliedNotification(userId, productSlug, reviewId));
 	}
 
 	// ==========================================

@@ -211,6 +211,7 @@ CREATE TABLE `orders` (
     `order_status` ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') NOT NULL DEFAULT 'pending',
     `ghn_order_code` VARCHAR(50) NULL,
     `ghn_status` VARCHAR(50) NULL,
+    `delivered_at` DATETIME(3) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
 
@@ -254,12 +255,46 @@ CREATE TABLE `reviews` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NULL,
     `product_id` INTEGER NOT NULL,
+    `order_item_id` INTEGER NULL,
     `rating` TINYINT NOT NULL,
     `comment` TEXT NULL,
+    `is_visible` BOOLEAN NOT NULL DEFAULT true,
+    `is_refunded_tag` BOOLEAN NOT NULL DEFAULT false,
+    `edit_count` INTEGER NOT NULL DEFAULT 0,
+    `last_edited_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NULL,
+
+    UNIQUE INDEX `reviews_order_item_id_key`(`order_item_id`),
+    INDEX `reviews_user_id_product_id_idx`(`user_id`, `product_id`),
+    INDEX `reviews_product_id_idx`(`product_id`),
+    INDEX `reviews_is_visible_idx`(`is_visible`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `review_replies` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `review_id` INTEGER NOT NULL,
+    `replied_by` INTEGER NOT NULL,
+    `reply_content` TEXT NOT NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NULL,
+
+    UNIQUE INDEX `review_replies_review_id_key`(`review_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `review_moderation_logs` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `review_id` INTEGER NOT NULL,
+    `action_by_user_id` INTEGER NOT NULL,
+    `is_hidden` BOOLEAN NOT NULL,
+    `reason` VARCHAR(255) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `reviews_user_id_product_id_idx`(`user_id`, `product_id`),
-    UNIQUE INDEX `reviews_user_id_product_id_key`(`user_id`, `product_id`),
+    INDEX `review_moderation_logs_review_id_idx`(`review_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -421,6 +456,21 @@ ALTER TABLE `reviews` ADD CONSTRAINT `reviews_user_id_fkey` FOREIGN KEY (`user_i
 
 -- AddForeignKey
 ALTER TABLE `reviews` ADD CONSTRAINT `reviews_product_id_fkey` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `reviews` ADD CONSTRAINT `reviews_order_item_id_fkey` FOREIGN KEY (`order_item_id`) REFERENCES `order_items`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `review_replies` ADD CONSTRAINT `review_replies_review_id_fkey` FOREIGN KEY (`review_id`) REFERENCES `reviews`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `review_replies` ADD CONSTRAINT `review_replies_replied_by_fkey` FOREIGN KEY (`replied_by`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `review_moderation_logs` ADD CONSTRAINT `review_moderation_logs_review_id_fkey` FOREIGN KEY (`review_id`) REFERENCES `reviews`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `review_moderation_logs` ADD CONSTRAINT `review_moderation_logs_action_by_user_id_fkey` FOREIGN KEY (`action_by_user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `otps` ADD CONSTRAINT `otps_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

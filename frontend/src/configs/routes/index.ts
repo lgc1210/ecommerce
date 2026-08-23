@@ -30,6 +30,7 @@ import AdminCouponPage from "../../pages/admin/coupon";
 import AdminOrderPage from "../../pages/admin/order";
 import AdminPaymentPage from "../../pages/admin/payment";
 import AdminContactPage from "../../pages/admin/contact";
+import AdminReviewPage from "../../pages/admin/review";
 import AdminNotificationPage from "../../pages/admin/notification";
 
 // Layouts
@@ -223,6 +224,12 @@ const router = createBrowserRouter([
 				loader: requirePermissionLoader(permissions.contact.manage),
 				Component: AdminContactPage,
 				handle: { title: "Contact", crumb: () => "Contact" },
+			},
+			{
+				path: paths.admin.review,
+				loader: requirePermissionLoader(permissions.review.update),
+				Component: AdminReviewPage,
+				handle: { title: "Review", crumb: () => "Review" },
 			},
 			{
 				path: paths.admin.notification,

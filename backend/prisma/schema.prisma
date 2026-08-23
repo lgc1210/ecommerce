@@ -160,6 +160,8 @@ model User {
   conversationsAsUserOne Conversation[] @relation("ConversationUserOne")
   conversationsAsUserTwo Conversation[] @relation("ConversationUserTwo")
   messages               Message[]
+  reviewReplies          ReviewReply[]
+  reviewModerationLogs   ReviewModerationLog[]
 
   @@index([provider, providerId])
   @@map("users")
@@ -370,6 +372,7 @@ model Order {
   // (vd: ready_to_pick, delivering, delivered, cancel...) — KHÔNG phải orderStatus của hệ thống.
   ghnOrderCode      String?      @unique @map("ghn_order_code") @db.VarChar(50)
   ghnStatus         String?      @map("ghn_status") @db.VarChar(50)
+  deliveredAt       DateTime?    @map("delivered_at")
   createdAt         DateTime?    @default(now()) @map("created_at")
   updatedAt         DateTime?    @updatedAt @map("updated_at")
 
@@ -396,6 +399,7 @@ model OrderItem {
 
   order             Order       @relation(fields: [orderId], references: [id])
   productSku        ProductSku? @relation(fields: [productSkuId], references: [id])
+  review            Review?     // Review chứng minh user đã mua sản phẩm này trước khi được phép đánh giá
 
   @@map("order_items")
 }
@@ -423,20 +427,61 @@ model Payment {
 
 /// Đánh giá sản phẩm từ người mua
 model Review {
-  id        Int      @id @default(autoincrement())
-  userId    Int?     @map("user_id")
-  productId Int      @map("product_id")
-  rating    Int      @db.TinyInt // Thang điểm từ 1-5
-  comment   String?  @db.Text
-  createdAt DateTime? @default(now()) @map("created_at")
+  id              Int       @id @default(autoincrement())
+  userId          Int?      @map("user_id")
+  productId       Int       @map("product_id")
+  orderItemId     Int?      @unique @map("order_item_id") // Order item chứng minh user đã mua sản phẩm
+  rating          Int       @db.TinyInt // Thang điểm từ 1-5
+  comment         String?   @db.Text
+  isVisible       Boolean   @default(true) @map("is_visible")
+  isRefundedTag   Boolean   @default(false) @map("is_refunded_tag") // Đánh dấu nếu khách hoàn/trả hàng sau khi review
+  editCount       Int       @default(0) @map("edit_count")
+  lastEditedAt    DateTime? @map("last_edited_at")
+  createdAt       DateTime? @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
 
-  user      User?    @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  user            User?     @relation(fields: [userId], references: [id])
+  product         Product   @relation(fields: [productId], references: [id])
+  orderItem       OrderItem? @relation(fields: [orderItemId], references: [id])
+  reply           ReviewReply?
+  moderationLogs  ReviewModerationLog[]
 
   @@map("reviews")
-  
+
   @@index([userId, productId])
-  @@unique([userId, productId])
+  @@index([productId])
+  @@index([isVisible])
+}
+
+/// Lưu phản hồi chính thức của Shop/Admin dưới review (mới thêm)
+model ReviewReply {
+  id           Int      @id @default(autoincrement())
+  reviewId     Int      @unique @map("review_id")
+  repliedBy    Int      @map("replied_by")
+  replyContent String   @map("reply_content") @db.Text
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+
+  review       Review   @relation(fields: [reviewId], references: [id])
+  repliedByUser User    @relation(fields: [repliedBy], references: [id])
+
+  @@map("review_replies")
+}
+
+/// Lưu lịch sử hành động ẩn/hiện review do internal (staff/admin) thực hiện — thay thế cho việc sửa nội dung review
+model ReviewModerationLog {
+  id             Int      @id @default(autoincrement())
+  reviewId       Int      @map("review_id")
+  actionByUserId Int      @map("action_by_user_id") // Nhân sự thực hiện, quyền hạn tra qua User.role (RBAC)
+  isHidden       Boolean  @map("is_hidden") // true = ẩn review, false = hiện lại review
+  reason         String?  @db.VarChar(255)
+  createdAt      DateTime? @default(now()) @map("created_at")
+
+  review         Review   @relation(fields: [reviewId], references: [id])
+  actionByUser   User     @relation(fields: [actionByUserId], references: [id])
+
+  @@index([reviewId])
+  @@map("review_moderation_logs")
 }
 
 /// Lưu mã OTP cho xác thực email, số điện thoại, reset mật khẩu

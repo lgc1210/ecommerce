@@ -15,6 +15,7 @@ import ProductCard from "../../../features/client/product/components/product-car
 import { TabItem, Tabs } from "../../../components/tabs";
 import QuantityStepper from "../../../shared/components/quantity-stepper";
 import ProductDetailPageSkeleton from "./skeleton";
+import ProductReviewsTab from "../../../features/client/review/components/product-reviews-tab";
 
 const tabs = [
 	{ id: "description", label: "Mô tả" },
@@ -232,24 +233,7 @@ const ProductDetailPage = () => {
 								</li>
 							</ul>
 						)}
-						{activeTab === "reviews" &&
-							(product.reviews.length > 0 ? (
-								<ul className='space-y-6'>
-									{product.reviews.map((review) => (
-										<li key={review.id} className='border-b border-border pb-6 last:border-0'>
-											<div className='flex items-center gap-1 text-primary'>
-												{Array.from({ length: 5 }).map((_, i) => (
-													<StarIcon key={i} className={`h-3.5 w-3.5 ${i < review.rating ? "text-primary" : "text-border"}`} />
-												))}
-											</div>
-											<p className='mt-2 font-semibold text-ink'>{review.user?.name ?? "Khách hàng"}</p>
-											{review.comment && <p className='mt-1 text-ink/80'>{review.comment}</p>}
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className='text-muted'>Sản phẩm này chưa có đánh giá nào.</p>
-							))}
+						{activeTab === "reviews" && <ProductReviewsTab productId={product.id} />}
 					</div>
 				</div>
 
