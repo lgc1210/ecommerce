@@ -72,12 +72,15 @@ const envSchema = z.object({
 	GHN_FROM_DISTRICT_ID: z.string().min(1, { message: "GHN_FROM_DISTRICT_ID is required for Giao Hàng Nhanh." }),
 	GHN_FROM_WARD_CODE: z.string().min(1, { message: "GHN_FROM_WARD_CODE is required for Giao Hàng Nhanh." }),
 
-	// Resend (gửi email qua HTTPS API — xem src/config/email.ts). Thay cho SMTP cũ vì nhiều
-	// nền tảng hosting (Railway, Render...) chặn outbound SMTP ở tầng network, gây timeout ở
-	// production dù local dev chạy bình thường.
-	RESEND_API_KEY: z.string().min(1, { message: "RESEND_API_KEY is required to send emails via Resend." }),
-	// Địa chỉ "from" — domain phải được verify trên Resend trước, dạng '"Tên hiển thị" <email@domain.com>'.
-	RESEND_FROM_EMAIL: z.string().min(1, { message: "RESEND_FROM_EMAIL is required to send emails via Resend." }),
+	// Brevo (gửi email qua HTTPS API — xem src/config/email.ts). Dùng HTTPS API (không phải SMTP
+	// relay) vì nhiều nền tảng hosting (Railway, Render...) chặn outbound SMTP ở tầng network, gây
+	// timeout ở production dù local dev chạy bình thường.
+	BREVO_API_KEY: z.string().min(1, { message: "BREVO_API_KEY is required to send emails via Brevo." }),
+	// Sender email PHẢI được verify trên Brevo trước (Senders & IP > Senders) — verify 1 email đơn lẻ
+	// dễ hơn nhiều so với verify cả 1 domain (không bị giới hạn "chỉ gửi được cho chính mình" như
+	// Resend ở gói miễn phí chưa verify domain).
+	BREVO_SENDER_EMAIL: z.email({ message: "BREVO_SENDER_EMAIL must be a valid, verified sender email on Brevo." }),
+	BREVO_SENDER_NAME: z.string().min(1, { message: "BREVO_SENDER_NAME is required to send emails via Brevo." }),
 
 	// Dọn đơn "pending" thanh toán online quá hạn (khách bỏ ngang, không bao giờ thanh toán/thử
 	// lại) — tự động hủy + hoàn tồn kho/lượt dùng coupon sau X giờ kể từ lúc đặt hàng. Không áp

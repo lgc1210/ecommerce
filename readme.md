@@ -47,7 +47,7 @@ Sơ đồ kiến trúc tổng thể
 - **Xác thực**: JWT (access token + refresh token riêng biệt), cookie `httpOnly`, `bcrypt` để hash mật khẩu.
 - **OAuth**: Google (`google-auth-library`, xác thực idToken) và Facebook (Graph API `debug_token`).
 - **Validation**: Zod cho toàn bộ input (body/query/param) thông qua middleware `validate`.
-- **Khác**: `helmet` (bảo mật header), `cors`, `morgan` (logging), `multer` (upload ảnh), `nodemailer` (gửi email OTP), `node-cron` (job nền).
+- **Khác**: `helmet` (bảo mật header), `cors`, `morgan` (logging), `multer` (upload ảnh), `@getbrevo/brevo` (gửi email OTP qua HTTPS API), `node-cron` (job nền).
 
 ### 2.2. Kiến trúc thư mục — modular theo feature
 
@@ -136,7 +136,7 @@ Toàn bộ API trên được tài liệu hoá tự động dạng OpenAPI 3.0 �
 - **GHN (Giao Hàng Nhanh)**: tra cứu tỉnh/huyện/xã, tính phí vận chuyển thực tế theo kích thước/khối lượng từng SKU, tạo đơn, nhận webhook cập nhật trạng thái vận chuyển (`ghnStatus`, tách biệt với `orderStatus` nội bộ).
 - **Cổng thanh toán**: VNPay và ZaloPay đã có gateway triển khai đầy đủ (`features/payments/gateways/`); MoMo/Stripe/PayPal đã có trong enum `PaymentMethod` và biến môi trường mẫu nhưng gateway MoMo chưa thấy code triển khai trong `gateways/` (chỉ VNPay + ZaloPay).
 - **OAuth**: Google (idToken) và Facebook (accessToken + Graph API debug_token).
-- **Email**: gửi OTP đăng ký / đặt lại mật khẩu qua SMTP (Nodemailer, ví dụ cấu hình Mailtrap cho dev).
+- **Email**: gửi OTP đăng ký / đặt lại mật khẩu / đổi SĐT qua Brevo Transactional Email API (HTTPS, không phải SMTP — tránh bị chặn outbound SMTP trên các nền tảng hosting như Railway/Render).
 - **Cron job nội bộ**: tự động hủy đơn "pending" thanh toán online quá hạn (`PENDING_ORDER_TTL_HOURS`, mặc định 24h), hoàn lại tồn kho + lượt dùng coupon; không áp dụng cho đơn COD.
 
 ### 2.7. Biến môi trường

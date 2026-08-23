@@ -1,10 +1,12 @@
-import { Resend } from "resend";
+import { BrevoClient, BrevoError } from "@getbrevo/brevo";
 import { env } from "./dotenv.js";
 
-// Resend gửi qua HTTPS API (port 443) thay vì SMTP thuần (port 25/465/587) — tránh bị các
-// nền tảng hosting (Railway, Render, Heroku...) chặn outbound SMTP ở tầng network. Xem thêm
-// lý do đổi từ nodemailer/SMTP sang Resend trong lịch sử trao đổi/README.
-const resend = new Resend(env.RESEND_API_KEY);
+// Brevo gửi qua HTTPS API (port 443) thay vì SMTP thuần (port 25/465/587) — tránh bị các nền
+// tảng hosting (Railway, Render, Heroku...) chặn outbound SMTP ở tầng network. Đổi từ Resend sang
+// Brevo vì Resend ở gói miễn phí CHƯA verify domain riêng chỉ cho gửi email tới đúng địa chỉ đã
+// đăng ký tài khoản Resend — không dùng được cho user thật. Brevo không có giới hạn này miễn là
+// sender email (BREVO_SENDER_EMAIL) đã được verify (verify 1 email đơn lẻ, không cần verify domain).
+const brevo = new BrevoClient({ apiKey: env.BREVO_API_KEY });
 
 interface SendEmailInput {
 	to: string;
@@ -14,21 +16,24 @@ interface SendEmailInput {
 
 /**
  * Helper gửi email dùng chung cho toàn bộ backend (welcome coupon, welcome user, OTP...).
- * `from` cố định dùng chung 1 địa chỉ/domain đã verify trên Resend (RESEND_FROM_EMAIL) —
- * KHÔNG để từng feature tự khai from riêng, vì Resend yêu cầu domain gửi phải được verify
- * trước, tự ý đổi from ở nơi gọi rất dễ dẫn tới gửi thất bại do domain chưa verify.
+ * `sender` cố định dùng chung 1 email đã verify trên Brevo (BREVO_SENDER_EMAIL/BREVO_SENDER_NAME) —
+ * KHÔNG để từng feature tự khai sender riêng, vì Brevo yêu cầu sender phải được verify trước, tự ý
+ * đổi sender ở nơi gọi rất dễ dẫn tới gửi thất bại do email chưa verify.
  */
 export async function sendEmail({ to, subject, html }: SendEmailInput) {
-	const { error } = await resend.emails.send({
-		from: env.RESEND_FROM_EMAIL,
-		to,
-		subject,
-		html,
-	});
-
-	if (error) {
-		throw new Error(`Resend gửi email thất bại: ${error.message}`);
+	try {
+		await brevo.transactionalEmails.sendTransacEmail({
+			sender: { email: env.BREVO_SENDER_EMAIL, name: env.BREVO_SENDER_NAME },
+			to: [{ email: to }],
+			subject,
+			htmlContent: html,
+		});
+	} catch (error) {
+		if (error instanceof BrevoError) {
+			throw new Error(`Brevo gửi email thất bại: ${error.message}`);
+		}
+		throw error;
 	}
 }
 
-export default resend;
+export default brevo;
