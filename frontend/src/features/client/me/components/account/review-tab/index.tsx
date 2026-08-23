@@ -119,15 +119,14 @@ const ReviewsTab = () => {
 								</div>
 							);
 						})}
+
+						{myReviewsData && <Pagination total={myReviewsData.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoadingMyReviews} />}
 					</div>
 				)}
-
-				{myReviewsData && <Pagination total={myReviewsData.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoadingMyReviews} />}
 			</div>
 
 			{reviewingItem && <ReviewFormModal target={{ mode: "create", item: reviewingItem }} onClose={() => setReviewingItem(null)} />}
 			{editingReview && <ReviewFormModal target={{ mode: "edit", review: editingReview }} onClose={() => setEditingReview(null)} />}
-
 			{deletingReview && (
 				<Popup
 					title='Xóa đánh giá'

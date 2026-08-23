@@ -1,11 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import type { PublicReview } from "../../types";
+import { REVIEW_SORT_LABEL, type ReviewSort } from "../../../../../shared/constants/review";
 import { useReviewsByProductQuery } from "../../hooks";
-import ReviewCard from "../review-card";
+import ProductReviewsTabSkeleton from "./skeleton";
 import StarRating from "../star-rating";
 import FormSelect from "../../../../../components/form-select";
-import { REVIEW_SORT_LABEL, type ReviewSort } from "../../../../../shared/constants/review";
+import ReviewCard from "../review-card";
 
 const PAGE_SIZE = 10;
+/** Khớp hash `#review-{id}` mà notification "shop phản hồi" build ra — xem buildReviewRepliedNotification ở backend. */
+const REVIEW_HASH_PATTERN = /^#review-(\d+)$/;
+/** Thời gian giữ viền highlight trước khi tự tắt, tính từ lúc review được tìm thấy và cuộn tới. */
+const HIGHLIGHT_DURATION_MS = 3000;
+// Tham chiếu cố định (không phải `[]` literal) khi chưa có data — tránh logic bên dưới nghĩ
+// "reviews" đổi giá trị ở MỌI lần render (mảng literal mới luôn !== mảng literal cũ dù cùng rỗng).
+const EMPTY_REVIEWS: PublicReview[] = [];
 
 interface ProductReviewsTabProps {
 	productId: number;
@@ -13,18 +23,56 @@ interface ProductReviewsTabProps {
 
 /** Nội dung tab "Đánh giá" ở trang chi tiết sản phẩm — chỉ gồm review công khai (isVisible=true). */
 const ProductReviewsTab = ({ productId }: ProductReviewsTabProps) => {
+	const { hash } = useLocation();
+	const highlightReviewId = Number(hash.match(REVIEW_HASH_PATTERN)?.[1]) || undefined;
+	// Lưu ID review LẦN GẦN NHẤT đã tự highlight (không phải boolean) — để nếu khách bấm 2 thông
+	// báo review-reply KHÁC NHAU liên tiếp cho cùng 1 sản phẩm (không rời trang, component không
+	// remount), mỗi highlightReviewId mới vẫn được xử lý đúng 1 lần, thay vì bị 1 cờ chặn hết.
+	// Dùng useState (không phải useRef) vì cần ĐỌC/GHI trong lúc render — ref không được phép truy
+	// cập lúc render (rule react-hooks/refs); cùng pattern với "syncedSlug" ở product-detail page.
+	const [handledId, setHandledId] = useState<number | undefined>(undefined);
+	// State RIÊNG cho việc hiển thị viền highlight (khác `highlightReviewId` đọc thẳng từ hash) —
+	// `highlightReviewId` tồn tại mãi cho tới khi URL đổi, còn viền chỉ nên hiện tạm thời rồi tự tắt.
+	const [activeHighlightId, setActiveHighlightId] = useState<number | undefined>(undefined);
+
 	const [page, setPage] = useState(1);
 	const [rating, setRating] = useState<number | undefined>(undefined);
-	const [sort, setSort] = useState<ReviewSort>("newest");
+	const [sort, setSort] = useState<ReviewSort>(Object.keys(REVIEW_SORT_LABEL)[0] as ReviewSort);
 
 	const { data, isLoading } = useReviewsByProductQuery(productId, { page, limit: PAGE_SIZE, rating, sort });
-	const reviews = data?.data ?? [];
+	const reviews = data?.data ?? EMPTY_REVIEWS;
 	const summary = data?.summary;
+
+	// "Điều chỉnh state khi render" (không dùng useEffect) để phát hiện đúng thời điểm review cần
+	// highlight đã xuất hiện trong dữ liệu vừa tải — cùng pattern với "syncedSlug" ở product-detail
+	// page. Việc CUỘN và HẸN GIỜ TẮT (side effect thật sự, đụng tới DOM/timer) nằm ở useEffect bên
+	// dưới, kích hoạt khi activeHighlightId đổi.
+	if (highlightReviewId && handledId !== highlightReviewId && reviews.some((r) => r.id === highlightReviewId)) {
+		setHandledId(highlightReviewId);
+		setActiveHighlightId(highlightReviewId);
+	}
+
+	useEffect(() => {
+		if (activeHighlightId === undefined) return;
+		// Đợi 1 nhịp cho DOM render xong review vừa lọc/thêm vào trước khi cuộn.
+		const raf = requestAnimationFrame(() => {
+			document.getElementById(`review-${activeHighlightId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+		});
+		const timeoutId = setTimeout(() => setActiveHighlightId(undefined), HIGHLIGHT_DURATION_MS);
+		// Cleanup chạy cả khi activeHighlightId đổi sang ID khác lẫn khi unmount — không cần effect
+		// riêng cho unmount hay ref lưu timeout thủ công.
+		return () => {
+			cancelAnimationFrame(raf);
+			clearTimeout(timeoutId);
+		};
+	}, [activeHighlightId]);
 
 	const handleFilterRating = (nextRating: number | undefined) => {
 		setRating(nextRating);
 		setPage(1);
 	};
+
+	if (isLoading) return <ProductReviewsTabSkeleton />;
 
 	return (
 		<div className='max-w-3xl'>
@@ -81,12 +129,10 @@ const ProductReviewsTab = ({ productId }: ProductReviewsTabProps) => {
 			)}
 
 			{/* Danh sách review */}
-			{isLoading ? (
-				<p className='text-muted'>Đang tải đánh giá...</p>
-			) : reviews.length > 0 ? (
+			{reviews.length > 0 ? (
 				<ul className='space-y-6'>
 					{reviews.map((review) => (
-						<ReviewCard key={review.id} review={review} />
+						<ReviewCard key={review.id} review={review} isHighlighted={review.id === activeHighlightId} />
 					))}
 				</ul>
 			) : (

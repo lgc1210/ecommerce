@@ -40,12 +40,7 @@ const getPageList = (current: number, total: number): (number | "ellipsis")[] =>
  * không, đổi dropdown "Hiển thị x/trang" ở đây sẽ không khớp với data thực tế
  * được fetch.
  */
-const Pagination = ({
-	total,
-	pageSizeOptions = [10, 20, 50],
-	defaultLimit = 10,
-	isLoading = false,
-}: PaginationProps) => {
+const Pagination = ({ total, pageSizeOptions = [10, 20, 50], defaultLimit = 10, isLoading = false }: PaginationProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const page = Number(searchParams.get("page")) || 1;
@@ -124,13 +119,7 @@ const Pagination = ({
 							…
 						</span>
 					) : (
-						<Button
-							key={p}
-							type='button'
-							variant={p === page ? "primary" : "ghost"}
-							disabled={isLoading}
-							onClick={() => goToPage(p)}
-							className='px-4.5!'>
+						<Button key={p} type='button' variant={p === page ? "primary" : "ghost"} disabled={isLoading} onClick={() => goToPage(p)} className='px-4.5!'>
 							{p}
 						</Button>
 					),

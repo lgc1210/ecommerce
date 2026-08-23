@@ -47,18 +47,23 @@ const AdminReviewPage = () => {
 	});
 	const deleteReview = useAdminDeleteReview();
 
-	const [selectedReview, setSelectedReview] = useState<AdminReview | null>(null);
+	// Lưu ID thay vì cả object review — nếu lưu cả object sẽ là 1 bản CHỤP TĨNH tại thời điểm bấm
+	// vào dòng, không tự đồng bộ khi query refetch (vd sau khi ẩn/hiện). Luôn tra cứu lại object
+	// MỚI NHẤT từ "reviews" (nguồn dữ liệu sống) bên dưới, để modal luôn phản ánh đúng dữ liệu hiện
+	// tại thay vì bị kẹt ở trạng thái cũ ngay sau khi mutation vừa chạy xong.
+	const [selectedReviewId, setSelectedReviewId] = useState<number | null>(null);
 	const [deletingReview, setDeletingReview] = useState<AdminReview | null>(null);
 
 	const reviews = data?.data ?? [];
 	const pagination = data?.pagination;
+	const selectedReview = reviews.find((r) => r.id === selectedReviewId) ?? null;
 
 	const handleConfirmDelete = () => {
 		if (!deletingReview) return;
 		deleteReview.mutate(deletingReview.id, {
 			onSuccess: () => {
 				setDeletingReview(null);
-				setSelectedReview(null);
+				setSelectedReviewId(null);
 			},
 		});
 	};
@@ -115,7 +120,7 @@ const AdminReviewPage = () => {
 							</tr>
 						) : (
 							reviews.map((review) => (
-								<tr key={review.id} onClick={() => setSelectedReview(review)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr key={review.id} onClick={() => setSelectedReviewId(review.id)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='max-w-70 truncate px-5 py-3.5 font-medium text-ink'>{review.product.name}</td>
 									<td className='px-5 py-3.5 text-ink/80'>{review.user?.name ?? "Người dùng đã xóa"}</td>
 									<td className='px-5 py-3.5'>
@@ -136,7 +141,7 @@ const AdminReviewPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{selectedReview && <ReviewDetailModal review={selectedReview} onClose={() => setSelectedReview(null)} onRequestDelete={() => setDeletingReview(selectedReview)} />}
+			{selectedReview && <ReviewDetailModal review={selectedReview} onClose={() => setSelectedReviewId(null)} onRequestDelete={() => setDeletingReview(selectedReview)} />}
 			{deletingReview && (
 				<Popup
 					title='Xóa đánh giá'

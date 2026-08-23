@@ -10,6 +10,8 @@ import NotificationsTab from "../../../features/client/me/components/account/not
 import OrdersTab from "../../../features/client/me/components/account/order-tab";
 import ProfileTab from "../../../features/client/me/components/account/profile-tab";
 import ReviewsTab from "../../../features/client/me/components/account/review-tab";
+import { useAuth } from "../../../features/auth/hooks/useAuth";
+import permissions from "../../../configs/constants/permissions";
 
 const TABS = [
 	{
@@ -56,6 +58,17 @@ const AccountPage = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const state = location.state as AccountPageLocationState | null;
+	const { can } = useAuth();
+
+	// TOÀN BỘ endpoint đứng sau tab này (kể cả GET /reviews/me, /reviews/reviewable-items — không
+	// chỉ riêng hành động tạo/sửa) đều yêu cầu permission "review:create" ở backend (xem
+	// review.routes.ts). "customer" có quyền này, "manager"/"admin" (quyền kiểm duyệt review nằm ở
+	// "review:update" riêng, dùng cho trang admin) thì KHÔNG — nhưng /account chỉ check đăng nhập
+	// (requireAuthLoader), không giới hạn theo role, nên 1 tài khoản manager vẫn vào được trang
+	// này. Ẩn hẳn tab thay vì chỉ ẩn nút ghi/sửa, để tránh gọi API chắc chắn sẽ bị 403 và tránh
+	// hiện ra 1 tab rỗng/lỗi không rõ nguyên nhân với người không có quyền.
+	const canManageReviews = can(permissions.review.create);
+	const visibleTabs = TABS.filter((item) => item.name !== "reviews" || canManageReviews);
 
 	const [tab, setTab] = useState<Tab>(state?.tab ?? TABS[0].name);
 	const [initialOrderId, setInitialOrderId] = useState<number | null>(state?.orderId ?? null);
@@ -95,7 +108,7 @@ const AccountPage = () => {
 
 			<div className='mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8'>
 				<Tabs value={tab} onChange={handleTabChange} className='mb-6 overflow-x-scroll no-scrollbar'>
-					{TABS.map((item) => (
+					{visibleTabs.map((item) => (
 						<TabItem key={item.name} value={item.name} icon={item.icon}>
 							{item.label}
 						</TabItem>
@@ -105,7 +118,7 @@ const AccountPage = () => {
 				{tab === "profile" && <ProfileTab />}
 				{tab === "addresses" && <AddressesTab />}
 				{tab === "orders" && <OrdersTab initialSelectedOrderId={initialOrderId} />}
-				{tab === "reviews" && <ReviewsTab />}
+				{tab === "reviews" && canManageReviews && <ReviewsTab />}
 				{tab === "contacts" && <MyContactsTab />}
 				{tab === "notifications" && <NotificationsTab />}
 			</div>

@@ -4,11 +4,15 @@ import type { PublicReview } from "../types";
 
 interface ReviewCardProps {
 	review: PublicReview;
+	/** true khi review này đang được nhắm tới từ 1 deep-link (vd click thông báo shop phản hồi) — viền nổi bật tạm thời để khách dễ nhận ra. */
+	isHighlighted?: boolean;
 }
 
 /** 1 review công khai, kèm phản hồi chính thức của shop (nếu có) — hiển thị trong tab "Đánh giá". */
-const ReviewCard = ({ review }: ReviewCardProps) => (
-	<li className='border-b border-border pb-6 last:border-0'>
+const ReviewCard = ({ review, isHighlighted = false }: ReviewCardProps) => (
+	<li
+		id={`review-${review.id}`}
+		className={`scroll-mt-24 border-b border-border pb-6 transition-colors duration-700 last:border-0 ${isHighlighted ? "-mx-4 rounded-xl border-b-0 bg-primary/5 px-4 py-4 ring-2 ring-primary/40" : ""}`}>
 		<StarRating rating={review.rating} size='sm' />
 		<div className='mt-2 flex flex-wrap items-center gap-2'>
 			<p className='font-semibold text-ink'>{review.user?.name ?? "Khách hàng"}</p>

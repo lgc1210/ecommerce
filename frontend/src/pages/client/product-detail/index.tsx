@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../components/breadcrumb";
 import Button from "../../../components/button";
@@ -16,6 +16,8 @@ import { TabItem, Tabs } from "../../../components/tabs";
 import QuantityStepper from "../../../shared/components/quantity-stepper";
 import ProductDetailPageSkeleton from "./skeleton";
 import ProductReviewsTab from "../../../features/client/review/components/product-reviews-tab";
+import ProductDescriptionTab from "../../../features/client/product/components/product-description-tab";
+import ProductSpecsTab from "../../../features/client/product/components/product-specs-tab";
 
 const tabs = [
 	{ id: "description", label: "Mô tả" },
@@ -25,13 +27,18 @@ const tabs = [
 
 const ProductDetailPage = () => {
 	const { slug } = useParams<{ slug: string }>();
+	const { hash } = useLocation();
 	const { data: product, isLoading, isError } = useProductBySlugQuery(slug);
 	const { addItem, isAuthenticated, isMutating } = useCart();
 
 	const [selected, setSelected] = useState<VariationDetails>({});
 	const [activeImage, setActiveImage] = useState(0);
 	const [quantity, setQuantity] = useState(1);
-	const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("description");
+	// Deep-link từ thông báo "shop phản hồi đánh giá" trỏ tới "/product/:slug#review-{id}" (xem
+	// buildReviewRepliedNotification ở backend) — tự mở thẳng tab "Đánh giá" thay vì mặc định về
+	// tab "Mô tả" rồi bắt khách phải tự bấm sang. Việc cuộn/highlight đúng review đó nằm ở
+	// ProductReviewsTab (đọc lại location.hash tương tự).
+	const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>(hash.startsWith("#review-") ? "reviews" : "description");
 
 	// Theo dõi slug đã đồng bộ state gần nhất, để phát hiện khi product vừa tải xong hoặc đổi
 	// sang sản phẩm khác. Dùng pattern "điều chỉnh state khi render" (thay vì useEffect + setState)
@@ -43,6 +50,11 @@ const ProductDetailPage = () => {
 		setSelected({});
 		setActiveImage(0);
 		setQuantity(1);
+		// Cùng 1 lý do như "activeTab" khởi tạo ở trên: nếu khách đang ở sẵn trang chi tiết sản
+		// phẩm A rồi bấm thông báo trỏ sang sản phẩm B (React Router tái dùng component vì cùng
+		// pattern "/product/:slug", không remount), useState lazy-init phía trên KHÔNG chạy lại —
+		// phải đồng bộ activeTab ở đây, đúng lúc phát hiện slug đổi.
+		setActiveTab(hash.startsWith("#review-") ? "reviews" : "description");
 	}
 
 	if (isLoading) {
@@ -210,29 +222,9 @@ const ProductDetailPage = () => {
 							</TabItem>
 						))}
 					</Tabs>
-
 					<div className='max-w-3xl py-8 text-sm leading-relaxed text-ink/80'>
-						{activeTab === "description" && <p>{product.description || "Chưa có mô tả cho sản phẩm này."}</p>}
-						{activeTab === "specs" && (
-							<ul className='space-y-2'>
-								<li className='flex justify-between border-b border-border py-2'>
-									<span className='text-muted'>Danh mục</span>
-									<span className='font-medium text-ink'>{product.category?.name ?? "Chưa phân loại"}</span>
-								</li>
-								<li className='flex justify-between border-b border-border py-2'>
-									<span className='text-muted'>Mã SKU</span>
-									<span className='font-medium text-ink'>{selectedSku?.sku ?? "—"}</span>
-								</li>
-								<li className='flex justify-between border-b border-border py-2'>
-									<span className='text-muted'>Tình trạng</span>
-									<span className='font-medium text-ink'>{isUnavailableCombination ? "Không có sẵn" : inStock ? "Còn hàng" : "Hết hàng"}</span>
-								</li>
-								<li className='flex justify-between py-2'>
-									<span className='text-muted'>Bảo hành</span>
-									<span className='font-medium text-ink'>12 tháng chính hãng</span>
-								</li>
-							</ul>
-						)}
+						{activeTab === "description" && <ProductDescriptionTab description={product.description} />}
+						{activeTab === "specs" && <ProductSpecsTab categoryName={product.category?.name} sku={selectedSku?.sku} inStock={inStock} isUnavailableCombination={isUnavailableCombination} />}
 						{activeTab === "reviews" && <ProductReviewsTab productId={product.id} />}
 					</div>
 				</div>
