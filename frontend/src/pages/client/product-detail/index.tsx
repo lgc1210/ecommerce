@@ -119,11 +119,11 @@ const ProductDetailPage = () => {
 		if (!isAuthenticated) toast.success("Đã thêm vào giỏ hàng.");
 	};
 
-	const handleBuyNow = () => {
-		if (!isAuthenticated) return;
-		handleAddToCart();
-		navigate(paths.client.payment);
-	};
+	// const handleBuyNow = () => {
+	// 	if (!isAuthenticated) return;
+	// 	handleAddToCart();
+	// 	navigate(paths.client.payment);
+	// };
 
 	return (
 		<div>
@@ -203,11 +203,11 @@ const ProductDetailPage = () => {
 						<div className='mt-8 flex flex-wrap items-center gap-2 select-none'>
 							<QuantityStepper value={quantity} max={selectedSku?.stockQuantity ?? 1} disabled={!selectedSku || !inStock} onChange={setQuantity} />
 							<div className='flex flex-wrap gap-2'>
-								{isAuthenticated && (
+								{/* {isAuthenticated && (
 									<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleBuyNow}>
 										{isMutating ? "Đang di chuyển qua trang thanh toán..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Mua ngay"}
 									</Button>
-								)}
+								)} */}
 								<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
 									{isMutating ? "Đang thêm..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Thêm vào giỏ"}
 								</Button>
