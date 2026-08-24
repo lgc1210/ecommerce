@@ -42,6 +42,9 @@ const permissions = Object.freeze({
 	notification: {
 		broadcast: "notification:broadcast",
 	},
+	transport: {
+		manage: "transport:manage",
+	},
 } as const);
 
 export default permissions;

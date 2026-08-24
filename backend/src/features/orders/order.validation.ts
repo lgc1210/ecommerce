@@ -80,3 +80,7 @@ export const GhnWebhookSchema = z.object({
 		Status: z.string().min(1, { message: "Status không được để trống." }),
 	}),
 });
+
+export type CreateOrderInput = z.infer<typeof CreateOrderSchema>["body"];
+export type ListOwnOrdersParams = z.infer<typeof ListOwnOrdersQuerySchema>["query"];
+export type ListOrdersAdminParams = z.infer<typeof ListOrdersAdminQuerySchema>["query"];

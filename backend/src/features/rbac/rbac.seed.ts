@@ -35,6 +35,7 @@ export const permissionSeed = async () => {
 	await rbacService.createPermission("payment", "manage", "Update payment status manually (e.g., mark as paid, refunded, failed).");
 	await rbacService.createPermission("dashboard", "read", "View admin dashboard overview, revenue charts, and system statistics.");
 	await rbacService.createPermission("notification", "broadcast", "Send system/promotion notifications to one or more users (Admin/Manager).");
+	await rbacService.createPermission("transport", "manage", "Managing GHN transport services.");
 	console.log("Seeding: Permissions created successfully");
 };
 

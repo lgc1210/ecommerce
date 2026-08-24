@@ -311,3 +311,10 @@ export const ClockIcon = (props: SVGProps<SVGSVGElement>) => (
 		<path d='M12 7v5l3.5 2' />
 	</svg>
 );
+
+export const SendIcon = (props: SVGProps<SVGSVGElement>) => (
+	<svg {...base} {...props}>
+		<path d='m3 3 18 9-18 9 4.2-9L3 3Z' />
+		<path d='M7.2 12H21' />
+	</svg>
+);

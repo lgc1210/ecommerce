@@ -21,5 +21,4 @@ export const parseBooleanParam = (searchParams: URLSearchParams, key: string): b
 };
 
 /** Trả nguyên chuỗi (ép kiểu literal union T), thiếu param -> undefined. Dùng cho filter dạng enum (sort, status, discountType...). */
-export const parseEnumParam = <T extends string>(searchParams: URLSearchParams, key: string): T | undefined =>
-	(searchParams.get(key) as T | null) ?? undefined;
+export const parseEnumParam = <T extends string>(searchParams: URLSearchParams, key: string): T | undefined => (searchParams.get(key) as T | null) ?? undefined;

@@ -18,6 +18,7 @@ import type { AdminProductListItem, CreateProductPayload, UpdateProductPayload }
 import { getPriceRange, getTotalStock } from "../../../features/admin/product/utils";
 import StatusBadge from "../../../features/admin/product/components/status-badge";
 import ProductFormModal from "../../../features/admin/product/components/product-form-modal";
+import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
@@ -131,11 +132,7 @@ const AdminProductPage = () => {
 					</thead>
 					<tbody>
 						{isLoading ? (
-							<tr>
-								<td colSpan={6} className='px-5 py-8 text-center text-muted'>
-									Đang tải...
-								</td>
-							</tr>
+							<SkeletonTableRows rows={5} columns={6} />
 						) : products.length === 0 ? (
 							<tr>
 								<td colSpan={6} className='px-5 py-8 text-center text-muted'>

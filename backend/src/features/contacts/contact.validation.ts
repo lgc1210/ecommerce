@@ -49,3 +49,8 @@ export const UpdateContactStatusSchema = z.object({
 		status: contactStatusEnum,
 	}),
 });
+
+export type CreateContactInput = z.infer<typeof CreateContactSchema>["body"];
+export type ListOwnContactsParams = z.infer<typeof ListOwnContactsQuerySchema>["query"];
+export type ListContactsParams = z.infer<typeof ListContactsQuerySchema>["query"];
+export type UpdateContactStatusInput = z.infer<typeof UpdateContactStatusSchema>["body"];

@@ -2,29 +2,17 @@ import prisma from "../../config/prisma.js";
 import type { ContactStatus } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
 import { isValidContactStatusTransition } from "./contact.utils.js";
-
-interface CreateContactInput {
-	name: string;
-	email: string;
-	subject?: string;
-	message: string;
-}
-
-interface ListOwnContactsParams {
-	page?: string;
-	limit?: string;
-}
-
-interface ListContactsParams {
-	page?: string;
-	limit?: string;
-	status?: string;
-	search?: string;
-	userId?: string;
-}
+import notificationService from "../notifications/notification.service.js";
+import type { CreateContactInput, ListContactsParams, ListOwnContactsParams } from "./contact.validation.js";
 
 const contactWithUserInclude = {
-	user: { select: { id: true, name: true, email: true } },
+	user: {
+		select: {
+			id: true,
+			name: true,
+			email: true,
+		},
+	},
 };
 
 class ContactService {
@@ -33,7 +21,7 @@ class ContactService {
 	// ==========================================
 	/** userId = null nếu khách gửi liên hệ mà chưa đăng nhập (guest submission) */
 	async createContact(userId: number | null, data: CreateContactInput) {
-		return prisma.contact.create({
+		const contact = await prisma.contact.create({
 			data: {
 				userId: userId ?? null,
 				name: data.name,
@@ -42,6 +30,13 @@ class ContactService {
 				message: data.message,
 			},
 		});
+
+		// "Liên hệ mới" — bắn cho admin/manager ngay sau khi lưu liên hệ thành công. Best-effort:
+		// không được phép làm hỏng luồng gửi liên hệ của khách (kể cả khách chưa đăng nhập) nếu
+		// bắn thông báo lỗi.
+		await notificationService.notifyAdminNewContact(contact.id, contact.name, contact.subject);
+
+		return contact;
 	}
 
 	// ==========================================

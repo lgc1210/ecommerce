@@ -7,12 +7,7 @@ import Popup from "../../../components/popup";
 import { CloseIcon, PlusIcon, SearchIcon, ShieldIcon } from "../../../components/icons";
 import Pagination from "../../../components/pagination";
 import permissions from "../../../configs/constants/permissions";
-import {
-	useCreateUser,
-	useUpdateUserRole,
-	useUpdateUserStatus,
-	useUsersQuery,
-} from "../../../features/admin/user/hooks";
+import { useCreateUser, useUpdateUserRole, useUpdateUserStatus, useUsersQuery } from "../../../features/admin/user/hooks";
 import type { AdminUser } from "../../../features/admin/user/types";
 import { getAvatarInitials } from "../../../utils/avatar-generator";
 import useListQueryParams from "../../../hooks/useListQueryParams";
@@ -21,6 +16,7 @@ import { useRolesQuery } from "../../../features/admin/rbac/hooks/useRbac";
 import AdminTitle from "../../../components/admin-title";
 import StatusBadge from "../../../features/admin/user/components/status-badge";
 import CreateUserModal from "../../../features/admin/user/components/create-user-modal";
+import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
@@ -42,10 +38,9 @@ const PAGE_SIZE = 10;
  * (vd. manager) sẽ chỉ xem được danh sách, không sửa được.
  */
 const AdminUserPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const roleId = parseNumberParam(searchParams, "roleId");
 	const isActive = parseBooleanParam(searchParams, "isActive");
@@ -64,10 +59,7 @@ const AdminUserPage = () => {
 
 	const handleConfirmStatusChange = () => {
 		if (!pendingStatusUser) return;
-		updateUserStatus.mutate(
-			{ id: pendingStatusUser.id, isActive: !pendingStatusUser.isActive },
-			{ onSuccess: () => setPendingStatusUser(null) },
-		);
+		updateUserStatus.mutate({ id: pendingStatusUser.id, isActive: !pendingStatusUser.isActive }, { onSuccess: () => setPendingStatusUser(null) });
 	};
 
 	return (
@@ -134,11 +126,7 @@ const AdminUserPage = () => {
 					</thead>
 					<tbody>
 						{isLoading ? (
-							<tr>
-								<td colSpan={4} className='px-5 py-8 text-center text-muted'>
-									Đang tải...
-								</td>
-							</tr>
+							<SkeletonTableRows rows={PAGE_SIZE} columns={4} />
 						) : users.length === 0 ? (
 							<tr>
 								<td colSpan={4} className='px-5 py-8 text-center text-muted'>
@@ -150,15 +138,10 @@ const AdminUserPage = () => {
 								<tr key={user.id} className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<div className='flex items-center gap-3'>
-											<span className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-bold text-primary-dark'>
-												{getAvatarInitials(user.name)}
-											</span>
+											<span className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-bold text-primary-dark'>{getAvatarInitials(user.name)}</span>
 											<div className='min-w-0'>
 												<p className='truncate font-semibold text-ink'>{user.name}</p>
-												<a
-													href={`mailto:${user.email}`}
-													className='truncate text-xs text-muted hover:underline'
-													title='Nhấn để gửi mail'>
+												<a href={`mailto:${user.email}`} className='truncate text-xs text-muted hover:underline' title='Nhấn để gửi mail'>
 													{user.email}
 												</a>
 											</div>

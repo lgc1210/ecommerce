@@ -78,6 +78,7 @@ enum NotificationType {
   stock
   system
   review
+  contact
 }
 
 enum DurationUnit {

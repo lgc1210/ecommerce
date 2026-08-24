@@ -1,7 +1,7 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
-import type { NotificationType, OrderStatus } from "../../generated/prisma/index.js";
-import type { NotificationPayload } from "./notification.validation.js";
+import type { OrderStatus } from "../../generated/prisma/index.js";
+import type { BroadcastNotificationInput, ListOwnNotificationsParams, NotificationPayload } from "./notification.validation.js";
 import { activeChannels } from "./channels/channel.registry.js";
 import {
 	buildOrderPlacedNotification,
@@ -10,22 +10,13 @@ import {
 	buildPaymentFailedNotification,
 	buildPaymentRefundedNotification,
 	buildReviewRepliedNotification,
+	buildAdminNewOrderContent,
+	buildAdminLowStockContent,
+	buildAdminPaymentFailedContent,
+	buildAdminNewReviewContent,
+	buildAdminSystemAlertContent,
+	buildAdminNewContactContent,
 } from "./notification.utils.js";
-
-interface ListOwnNotificationsParams {
-	page?: string;
-	limit?: string;
-	isRead?: string;
-	type?: string;
-}
-
-interface BroadcastInput {
-	type: NotificationType;
-	title: string;
-	message: string;
-	actionUrl?: string;
-	imageUrl?: string;
-}
 
 /** Số user xử lý mỗi vòng lặp khi broadcast — vừa đủ nhỏ để 1 câu INSERT không phình to bất thường, vừa đủ lớn để không tốn quá nhiều round-trip DB. */
 const BROADCAST_BATCH_SIZE = 500;
@@ -130,6 +121,56 @@ class NotificationService {
 	}
 
 	// ==========================================
+	// Admin: thông báo NỘI BỘ tới staff khi có sự kiện cần theo dõi/xử lý — khác với
+	// broadcastToAllCustomers() bên dưới (broadcast tới CUSTOMER). Mỗi sự kiện tạo 1 dòng
+	// notification RIÊNG cho từng staff nhận được (dùng chung cơ chế dispatch()/channel như phía
+	// customer), không dùng chung 1 dòng cho nhiều người.
+	//
+	// Người nhận được xác định theo PERMISSION (RBAC đã có sẵn), KHÔNG hardcode role name — xem
+	// getUserIdsWithPermission(). Permission chọn cho mỗi sự kiện PHẢI là permission staff-only
+	// (không được trùng với bất kỳ permission nào customer cũng có, vd "order:read" — customer
+	// dùng permission đó để xem đơn hàng CỦA CHÍNH HỌ), nếu không khách hàng sẽ vô tình nhận được
+	// thông báo nội bộ. Xem rbac.seed.ts để biết permission nào đang gán cho role nào.
+	//
+	// Muốn thêm sự kiện admin mới: thêm 1 hàm buildAdmin*Content ở notification.utils.ts rồi thêm
+	// 1 hàm notifyAdmin* mỏng ở đây, gọi notifyAdmins() kèm đúng permission staff-only phù hợp.
+	// ==========================================
+	/** "Đơn hàng mới" — gọi ngay sau khi checkout() tạo đơn thành công. Nhận: ai có quyền xử lý đơn ("order:update"). */
+	async notifyAdminNewOrder(orderId: number, orderNumber: string, totalAmount: number): Promise<void> {
+		await this.notifyAdmins(buildAdminNewOrderContent(orderId, orderNumber, totalAmount), { resource: "order", name: "update" });
+	}
+
+	/** "Tồn kho thấp" — gọi khi 1 SKU giảm xuống bằng/dưới LOW_STOCK_THRESHOLD. Nhận: ai quản lý kho ("inventory:update"). */
+	async notifyAdminLowStock(skuId: number, skuLabel: string, productId: number, productName: string, stockQuantity: number): Promise<void> {
+		await this.notifyAdmins(buildAdminLowStockContent(skuId, skuLabel, productId, productName, stockQuantity), { resource: "inventory", name: "update" });
+	}
+
+	/** "Thanh toán lỗi" — gọi khi 1 giao dịch chuyển sang trạng thái "failed". Nhận: ai xem được thanh toán ("payment:read"). */
+	async notifyAdminPaymentFailed(orderId: number, orderNumber: string): Promise<void> {
+		await this.notifyAdmins(buildAdminPaymentFailedContent(orderId, orderNumber), { resource: "payment", name: "read" });
+	}
+
+	/** "Khách hàng đánh giá" — gọi ngay sau khi khách tạo 1 đánh giá mới. Nhận: ai kiểm duyệt đánh giá ("review:update"). */
+	async notifyAdminNewReview(reviewId: number, productName: string, rating: number): Promise<void> {
+		await this.notifyAdmins(buildAdminNewReviewContent(reviewId, productName, rating), { resource: "review", name: "update" });
+	}
+
+	/**
+	 * "Cảnh báo hệ thống" — dùng cho sự cố kỹ thuật cần admin theo dõi (title/message tự soạn theo
+	 * từng nơi gọi). Chưa có permission "system:manage" riêng trong RBAC hiện tại nên tạm dùng
+	 * "dashboard:read" — permission tổng quan gần nhất mà chỉ staff mới có. Nếu sau này RBAC có
+	 * permission dành riêng cho vận hành hệ thống, nên đổi lại cho đúng ngữ nghĩa hơn.
+	 */
+	async notifyAdminSystemAlert(title: string, message: string): Promise<void> {
+		await this.notifyAdmins(buildAdminSystemAlertContent(title, message), { resource: "dashboard", name: "read" });
+	}
+
+	/** "Liên hệ mới" — gọi ngay sau khi có người gửi form liên hệ. Nhận: ai xử lý liên hệ ("contact:manage" — KHÔNG phải "contact:create", đó là quyền của customer). */
+	async notifyAdminNewContact(contactId: number, name: string, subject?: string | null): Promise<void> {
+		await this.notifyAdmins(buildAdminNewContactContent(contactId, name, subject), { resource: "contact", name: "manage" });
+	}
+
+	// ==========================================
 	// Admin: broadcast thông báo hệ thống/khuyến mãi tới TOÀN BỘ customer đang hoạt động
 	// ==========================================
 	/**
@@ -149,7 +190,7 @@ class NotificationService {
 	 *    chuyển sang xử lý nền (queue + trả response ngay, cập nhật tiến độ riêng) — CHƯA cần
 	 *    thiết ở quy mô hiện tại nên không dựng thêm hạ tầng đó bây giờ.
 	 */
-	async broadcastToAllCustomers(data: BroadcastInput): Promise<{ sentCount: number }> {
+	async broadcastToAllCustomers(data: BroadcastNotificationInput): Promise<{ sentCount: number }> {
 		let sentCount = 0;
 		let cursorId: number | undefined;
 
@@ -187,6 +228,39 @@ class NotificationService {
 	// ==========================================
 	// Helpers
 	// ==========================================
+	/**
+	 * Điền userId theo từng staff có `permission` truyền vào rồi dispatch() 1 lượt — dùng chung cho
+	 * mọi hàm notifyAdmin*() ở trên. Số lượng staff khớp 1 permission trong thực tế rất nhỏ (vài
+	 * chục nhân viên là cùng) nên KHÔNG cần xử lý theo batch/cursor như broadcastToAllCustomers()
+	 * (dành cho lượng customer có thể lên tới hàng trăm nghìn).
+	 */
+	private async notifyAdmins(content: Omit<NotificationPayload, "userId">, permission: { resource: string; name: string }): Promise<void> {
+		const recipientIds = await this.getUserIdsWithPermission(permission.resource, permission.name);
+		if (recipientIds.length === 0) return;
+
+		await this.dispatch(recipientIds.map((userId) => ({ userId, ...content })));
+	}
+
+	/**
+	 * Tìm mọi user (đang active) mà ROLE của họ được gán permission (resource, name) — tái sử dụng
+	 * ĐÚNG hệ thống RBAC hiện có (Role -> RolePermission -> Permission) thay vì hardcode role name
+	 * ("admin"/"manager"). Nhờ vậy, sau này thêm role mới (vd "support") và gán cho nó permission
+	 * phù hợp thì role đó TỰ ĐỘNG nhận đúng loại thông báo tương ứng — không cần sửa file này.
+	 *
+	 * LƯU Ý: permission truyền vào PHẢI là permission staff-only (không được customer cũng có, vd
+	 * "order:read") — xem comment ở từng hàm notifyAdmin* phía trên để biết vì sao chọn permission đó.
+	 */
+	private async getUserIdsWithPermission(resource: string, name: string): Promise<number[]> {
+		const users = await prisma.user.findMany({
+			where: {
+				isActive: true,
+				role: { permissions: { some: { permission: { resource, name } } } },
+			},
+			select: { id: true },
+		});
+		return users.map((u) => u.id);
+	}
+
 	private async getOwnNotificationOrThrow(userId: number, id: number) {
 		const notification = await prisma.notification.findUnique({ where: { id } });
 		if (!notification || notification.userId !== userId) {

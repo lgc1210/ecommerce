@@ -73,57 +73,53 @@ const ReviewsTab = () => {
 			)}
 
 			{/* Đánh giá của tôi */}
-			<div>
-				<h3 className='mb-3 text-sm font-semibold text-ink'>Đánh giá của tôi</h3>
-
-				{myReviews.length === 0 ? (
-					<div className='rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted'>
-						<StarIcon className='mx-auto mb-2 h-6 w-6 text-muted' />
-						Bạn chưa viết đánh giá nào.
-					</div>
-				) : (
-					<div className='space-y-3'>
-						{myReviews.map((review) => {
-							const canEdit = review.editCount < MAX_REVIEW_EDIT_COUNT;
-							return (
-								<div key={review.id} className='rounded-2xl border border-border bg-surface p-5'>
-									<div className='flex flex-wrap items-start justify-between gap-3'>
-										<div>
-											<p className='font-semibold text-ink'>{review.product.name}</p>
-											<div className='mt-1.5 flex flex-wrap items-center gap-2'>
-												<StarRating rating={review.rating} size='sm' />
-												{review.createdAt && <span className='text-xs text-muted'>{formatDate(review.createdAt)}</span>}
-												{!canEdit && <span className='text-xs text-muted'>· Đã chỉnh sửa, không thể sửa thêm</span>}
-												{!review.isVisible && <span className='rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600'>Đang bị ẩn</span>}
-											</div>
-										</div>
-										<div className='flex items-center gap-1'>
-											{canEdit && (
-												<button type='button' onClick={() => setEditingReview(review)} aria-label='Sửa đánh giá' className='rounded-lg p-2 text-muted hover:bg-cream-soft hover:text-ink'>
-													<PencilIcon className='h-4 w-4' />
-												</button>
-											)}
-											<button type='button' onClick={() => setDeletingReview(review)} aria-label='Xóa đánh giá' className='rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600'>
-												<TrashIcon className='h-4 w-4' />
-											</button>
+			{myReviews.length === 0 ? (
+				<div className='rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted'>
+					<StarIcon className='mx-auto mb-2 h-6 w-6 text-muted' />
+					Bạn chưa viết đánh giá nào.
+				</div>
+			) : (
+				<div className='space-y-3'>
+					{myReviews.map((review) => {
+						const canEdit = review.editCount < MAX_REVIEW_EDIT_COUNT;
+						return (
+							<div key={review.id} className='rounded-2xl border border-border bg-surface p-5'>
+								<div className='flex flex-wrap items-start justify-between gap-3'>
+									<div>
+										<p className='font-semibold text-ink'>{review.product.name}</p>
+										<div className='mt-1.5 flex flex-wrap items-center gap-2'>
+											<StarRating rating={review.rating} size='sm' />
+											{review.createdAt && <span className='text-xs text-muted'>{formatDate(review.createdAt)}</span>}
+											{!canEdit && <span className='text-xs text-muted'>· Đã chỉnh sửa, không thể sửa thêm</span>}
+											{!review.isVisible && <span className='rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600'>Đang bị ẩn</span>}
 										</div>
 									</div>
-									{review.comment && <p className='mt-2 text-sm text-ink/80'>{review.comment}</p>}
-
-									{review.reply && (
-										<div className='mt-3 ml-4 rounded-xl border-l-2 border-primary bg-cream-soft p-3'>
-											<p className='text-xs font-semibold text-primary-dark'>Phản hồi từ Shop</p>
-											<p className='mt-1 text-sm text-ink/80'>{review.reply.replyContent}</p>
-										</div>
-									)}
+									<div className='flex items-center gap-1'>
+										{canEdit && (
+											<button type='button' onClick={() => setEditingReview(review)} aria-label='Sửa đánh giá' className='rounded-lg p-2 text-muted hover:bg-cream-soft hover:text-ink'>
+												<PencilIcon className='h-4 w-4' />
+											</button>
+										)}
+										<button type='button' onClick={() => setDeletingReview(review)} aria-label='Xóa đánh giá' className='rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600'>
+											<TrashIcon className='h-4 w-4' />
+										</button>
+									</div>
 								</div>
-							);
-						})}
+								{review.comment && <p className='mt-2 text-sm text-ink/80'>{review.comment}</p>}
 
-						{myReviewsData && <Pagination total={myReviewsData.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoadingMyReviews} />}
-					</div>
-				)}
-			</div>
+								{review.reply && (
+									<div className='mt-3 ml-4 rounded-xl border-l-2 border-primary bg-cream-soft p-3'>
+										<p className='text-xs font-semibold text-primary-dark'>Phản hồi từ Shop</p>
+										<p className='mt-1 text-sm text-ink/80'>{review.reply.replyContent}</p>
+									</div>
+								)}
+							</div>
+						);
+					})}
+
+					{myReviewsData && <Pagination total={myReviewsData.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoadingMyReviews} />}
+				</div>
+			)}
 
 			{reviewingItem && <ReviewFormModal target={{ mode: "create", item: reviewingItem }} onClose={() => setReviewingItem(null)} />}
 			{editingReview && <ReviewFormModal target={{ mode: "edit", review: editingReview }} onClose={() => setEditingReview(null)} />}

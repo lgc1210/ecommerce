@@ -337,7 +337,7 @@ CREATE TABLE `contacts` (
 CREATE TABLE `notifications` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
-    `type` ENUM('order', 'payment', 'promotion', 'stock', 'system', 'review') NOT NULL,
+    `type` ENUM('order', 'payment', 'promotion', 'stock', 'system', 'review', 'contact') NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `message` TEXT NOT NULL,
     `is_read` BOOLEAN NOT NULL DEFAULT false,

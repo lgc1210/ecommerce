@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../components/breadcrumb";
 import Button from "../../../components/button";
@@ -26,6 +26,7 @@ const tabs = [
 ] as const;
 
 const ProductDetailPage = () => {
+	const navigate = useNavigate();
 	const { slug } = useParams<{ slug: string }>();
 	const { hash } = useLocation();
 	const { data: product, isLoading, isError } = useProductBySlugQuery(slug);
@@ -118,6 +119,12 @@ const ProductDetailPage = () => {
 		if (!isAuthenticated) toast.success("Đã thêm vào giỏ hàng.");
 	};
 
+	const handleBuyNow = () => {
+		if (!isAuthenticated) return;
+		handleAddToCart();
+		navigate(paths.client.payment);
+	};
+
 	return (
 		<div>
 			<BreadCrumb title={product.name} />
@@ -195,9 +202,16 @@ const ProductDetailPage = () => {
 
 						<div className='mt-8 flex flex-wrap items-center gap-2 select-none'>
 							<QuantityStepper value={quantity} max={selectedSku?.stockQuantity ?? 1} disabled={!selectedSku || !inStock} onChange={setQuantity} />
-							<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
-								{isMutating ? "Đang thêm..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Thêm vào giỏ"}
-							</Button>
+							<div className='flex flex-wrap gap-2'>
+								{isAuthenticated && (
+									<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleBuyNow}>
+										{isMutating ? "Đang di chuyển qua trang thanh toán..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Mua ngay"}
+									</Button>
+								)}
+								<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
+									{isMutating ? "Đang thêm..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Thêm vào giỏ"}
+								</Button>
+							</div>
 						</div>
 
 						<div className='mt-8 grid gap-3 border-t border-border pt-6 sm:grid-cols-2'>

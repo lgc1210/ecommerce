@@ -3,11 +3,11 @@ import { BellIcon } from "../../../../../components/icons";
 import paths from "../../../../../configs/constants/paths";
 import { useAuth } from "../../../../auth/hooks/useAuth";
 import { useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../notification/hooks";
-import { NOTIFICATION_TYPE_ICON } from "../../../notification/constants";
 import { resolveNotificationLink, timeAgo } from "../../../notification/utils";
 import type { Notification } from "../../../notification/types";
 import HoverPreview from "../../../../../shared/components/hover-preview";
 import NotificationBellSkeleton from "./skeleton";
+import { NOTIFICATION_TYPE_ICON } from "../../../../../shared/constants/notification";
 
 const RECENT_LIMIT = 5;
 

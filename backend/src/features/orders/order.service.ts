@@ -5,28 +5,8 @@ import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "
 import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus } from "./order.utils.js";
 import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
 import notificationService from "../notifications/notification.service.js";
-
-interface CreateOrderInput {
-	shippingAddressId: number;
-	paymentMethod: PaymentMethod;
-	couponCode?: string;
-}
-
-interface ListOwnOrdersParams {
-	page?: string;
-	limit?: string;
-	status?: string;
-}
-
-interface ListOrdersAdminParams {
-	page?: string;
-	limit?: string;
-	status?: string;
-	userId?: string;
-	search?: string;
-	dateFrom?: string;
-	dateTo?: string;
-}
+import { env } from "../../config/dotenv.js";
+import type { CreateOrderInput, ListOrdersAdminParams, ListOwnOrdersParams } from "./order.validation.js";
 
 const orderItemInclude = {
 	items: {
@@ -99,6 +79,10 @@ class OrderService {
 		const shippingFee = await this.computeShippingFeeForCart(address, cart.items, subtotalAmount);
 		const totalAmount = Math.max(0, subtotalAmount - discountAmount + shippingFee);
 
+		// Gom các SKU rơi xuống bằng/dưới LOW_STOCK_THRESHOLD sau khi trừ kho trong transaction bên
+		// dưới — thông báo admin thực sự được bắn SAU KHI transaction commit (xem cuối hàm).
+		const lowStockSkus: Array<{ skuId: number; skuLabel: string; productId: number; productName: string; stockQuantity: number }> = [];
+
 		const order = await prisma.$transaction(
 			async (tx) => {
 				// Xoá các cart item đã đọc ở loadValidatedCartForCheckout NGAY ĐẦU transaction (trước
@@ -122,6 +106,25 @@ class OrderService {
 					});
 					if (updated.count === 0) {
 						throw new Error(`BadRequest: Sản phẩm "${item.productSku.sku}" vừa hết hàng, vui lòng thử lại.`);
+					}
+
+					// Đọc lại tồn kho SAU khi trừ để phát hiện "tồn kho thấp" — chỉ gom lại ở đây, việc
+					// bắn thông báo thật sự diễn ra SAU KHI transaction commit thành công (xem dưới
+					// notifyAdminLowStock), tránh giữ transaction lâu hơn cần thiết vì việc phụ này.
+					const skuAfterDecrement = await tx.productSku.findUnique({
+						where: { id: item.productSkuId },
+						select: { stockQuantity: true },
+					});
+					// productId nullable trên schema (SKU mồ côi, không còn gắn với product nào) — bỏ qua
+					// thông báo "tồn kho thấp" cho trường hợp hiếm này vì không có trang admin nào để dẫn tới.
+					if (skuAfterDecrement && skuAfterDecrement.stockQuantity <= env.LOW_STOCK_THRESHOLD && item.productSku.productId) {
+						lowStockSkus.push({
+							skuId: item.productSkuId,
+							skuLabel: item.productSku.sku,
+							productId: item.productSku.productId,
+							productName: item.productSku.product?.name ?? "Sản phẩm",
+							stockQuantity: skuAfterDecrement.stockQuantity,
+						});
 					}
 				}
 
@@ -218,6 +221,13 @@ class OrderService {
 
 		if (order.userId) {
 			await notificationService.notifyOrderPlaced(order.userId, order.id, order.orderNumber);
+		}
+
+		// Thông báo nội bộ cho admin/manager — best-effort, KHÔNG được phép làm fail checkout đã
+		// thành công (tương tự tinh thần try/catch riêng của từng channel ở notification.service.ts).
+		await notificationService.notifyAdminNewOrder(order.id, order.orderNumber, totalAmount);
+		for (const sku of lowStockSkus) {
+			await notificationService.notifyAdminLowStock(sku.skuId, sku.skuLabel, sku.productId, sku.productName, sku.stockQuantity);
 		}
 
 		return order;

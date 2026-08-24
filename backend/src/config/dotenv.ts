@@ -92,6 +92,14 @@ const envSchema = z.object({
 		.transform((val) => parseInt(val, 10)),
 	// Lịch chạy job dọn đơn quá hạn ở trên, dạng cron. Mặc định chạy mỗi giờ.
 	PENDING_ORDER_CLEANUP_CRON: z.string().default("0 * * * *"),
+
+	// Ngưỡng tồn kho để bắn thông báo "Tồn kho thấp" tới admin/manager — khi 1 SKU giảm xuống
+	// BẰNG hoặc DƯỚI ngưỡng này (sau khi trừ kho lúc đặt hàng) thì thông báo được tạo. Có default
+	// nên không bắt buộc khai báo trong .env.
+	LOW_STOCK_THRESHOLD: z
+		.string()
+		.default("5")
+		.transform((val) => parseInt(val, 10)),
 });
 
 // 3. Validate process.env variables against our Zod schema structural definition

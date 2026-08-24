@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Pagination from "../../../components/pagination";
@@ -15,6 +16,7 @@ import PaymentStatusBadge from "../../../features/admin/order/components/payment
 import OrderDetailModal from "../../../features/admin/order/components/order-detail-modal";
 import OrderStatusBadge from "../../../features/admin/order/components/order-status-badge";
 import { formatDate } from "../../../utils";
+import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
@@ -57,6 +59,33 @@ const AdminOrderPage = () => {
 
 	const orders = data?.data ?? [];
 	const pagination = data?.pagination;
+
+	// Tự động mở modal chi tiết nếu vào trang này TỪ 1 THÔNG BÁO (bấm ở chuông admin) và bộ lọc
+	// "search" (backend search theo orderNumber, xem order.service.ts) chỉ ra ĐÚNG 1 kết quả — vì
+	// orderNumber là unique nên trường hợp còn lại (0 hoặc >1 kết quả) không nên tự mở gì cả.
+	// CHỈ áp dụng khi đến từ notification (location.state.fromNotification), KHÔNG áp dụng khi admin
+	// tự gõ tìm kiếm thủ công — nếu không, mỗi lần search ra đúng 1 dòng modal sẽ tự bật lên, gây
+	// bất ngờ khó chịu ngoài ý muốn. Xem notification-bell (admin) -> handleItemClick.
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+
+	const notificationOrder = fromNotification && orders.length === 1 ? orders[0] : null;
+
+	const newestOrder = orders.find((order) => order.id === selectedOrderId);
+
+	const activeOrderId = newestOrder?.id ?? notificationOrder?.id;
+
+	const handleCloseOrderModal = () => {
+		setSelectedOrderId(null);
+		if (fromNotification) {
+			navigate(`${location.pathname}${location.search}`, {
+				replace: true,
+				state: null,
+			});
+		}
+	};
 
 	return (
 		<div className='space-y-6'>
@@ -108,11 +137,7 @@ const AdminOrderPage = () => {
 					</thead>
 					<tbody>
 						{isLoading ? (
-							<tr>
-								<td colSpan={6} className='px-5 py-8 text-center text-muted'>
-									Đang tải...
-								</td>
-							</tr>
+							<SkeletonTableRows rows={PAGE_SIZE} columns={6} />
 						) : orders.length === 0 ? (
 							<tr>
 								<td colSpan={6} className='px-5 py-8 text-center text-muted'>
@@ -156,7 +181,7 @@ const AdminOrderPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{selectedOrderId !== null && <OrderDetailModal orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />}
+			{activeOrderId && <OrderDetailModal orderId={activeOrderId} onClose={handleCloseOrderModal} />}
 		</div>
 	);
 };

@@ -9,15 +9,13 @@ import { NotificationType } from "../../generated/prisma/index.js";
 // ==========================================
 export const NotificationPayloadSchema = z.object({
 	userId: z.number().int().positive(),
-	type: z.enum([NotificationType.order, NotificationType.payment, NotificationType.promotion, NotificationType.stock, NotificationType.system, NotificationType.review]),
+	type: z.enum([NotificationType.order, NotificationType.payment, NotificationType.promotion, NotificationType.stock, NotificationType.system, NotificationType.review, NotificationType.contact]),
 	title: z.string().min(1).max(255),
 	message: z.string().min(1),
 	actionUrl: z.string().max(255).optional(),
 	referenceId: z.string().max(50).optional(),
 	imageUrl: z.string().max(255).optional(),
 });
-
-export type NotificationPayload = z.infer<typeof NotificationPayloadSchema>;
 
 // ==========================================
 // Customer (self-service)
@@ -27,7 +25,9 @@ export const ListOwnNotificationsQuerySchema = z.object({
 		page: z.string().regex(/^\d+$/).optional(),
 		limit: z.string().regex(/^\d+$/).optional(),
 		isRead: z.enum(["true", "false"]).optional(),
-		type: z.enum([NotificationType.order, NotificationType.payment, NotificationType.promotion, NotificationType.stock, NotificationType.system]).optional(),
+		type: z
+			.enum([NotificationType.order, NotificationType.payment, NotificationType.promotion, NotificationType.stock, NotificationType.system, NotificationType.review, NotificationType.contact])
+			.optional(),
 	}),
 });
 
@@ -48,3 +48,7 @@ export const BroadcastNotificationSchema = z.object({
 		imageUrl: z.string().max(255).optional(),
 	}),
 });
+
+export type NotificationPayload = z.infer<typeof NotificationPayloadSchema>;
+export type BroadcastNotificationInput = z.infer<typeof BroadcastNotificationSchema>["body"];
+export type ListOwnNotificationsParams = z.infer<typeof ListOwnNotificationsQuerySchema>["query"];

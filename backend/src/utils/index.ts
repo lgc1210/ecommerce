@@ -2,7 +2,7 @@ export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 100;
 
 /** Parse & chuẩn hóa tham số phân trang từ query string, có giới hạn an toàn */
-export function parsePagination(query: { page?: string; limit?: string }) {
+export function parsePagination(query: { page?: string | undefined; limit?: string | undefined }) {
 	const page = Math.max(1, parseInt(query.page ?? "1", 10) || 1);
 	const rawLimit = parseInt(query.limit ?? String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE;
 	const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, rawLimit));

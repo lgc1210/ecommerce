@@ -55,3 +55,5 @@ export const UpdatePaymentStatusSchema = z.object({
 		transactionId: z.string().min(1).max(255).optional(),
 	}),
 });
+
+export type ListPaymentsAdminParams = z.infer<typeof ListPaymentsAdminQuerySchema>["query"];

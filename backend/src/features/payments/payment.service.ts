@@ -3,16 +3,8 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prism
 import { parsePagination } from "../../utils/index.js";
 import { isValidPaymentStatusTransition } from "./payment.utils.js";
 import orderService from "../orders/order.service.js";
-
-interface ListPaymentsAdminParams {
-	page?: string;
-	limit?: string;
-	status?: string;
-	method?: string;
-	search?: string;
-	dateFrom?: string;
-	dateTo?: string;
-}
+import notificationService from "../notifications/notification.service.js";
+import type { ListPaymentsAdminParams } from "./payment.validation.js";
 
 const paymentDetailInclude = {
 	order: {
@@ -151,7 +143,7 @@ class PaymentService {
 	// Helpers
 	// ==========================================
 	private async transitionStatus(
-		payment: { id: number; paymentStatus: string; order: { id: number; couponId: number | null; orderStatus: string } },
+		payment: { id: number; paymentStatus: string; order: { id: number; orderNumber: string; couponId: number | null; orderStatus: string } },
 		nextStatus: PaymentStatus,
 		transactionId?: string,
 	) {
@@ -213,7 +205,24 @@ class PaymentService {
 				await orderService.createShipmentAfterPayment(payment.order.id);
 			} catch (error: any) {
 				console.error(`[payment] Tạo vận đơn GHN sau khi thanh toán thành công thất bại cho orderId=${payment.order.id}:`, error?.message ?? error);
+				// Tiền đã thu thật nhưng chưa tạo được vận đơn -> cần admin can thiệp thủ công. Bọc
+				// try/catch riêng: bắn thông báo thất bại KHÔNG được phép làm hỏng luồng thanh toán
+				// chính đã thành công (cùng tinh thần với dispatch() ở notification.service.ts).
+				try {
+					await notificationService.notifyAdminSystemAlert(
+						"Lỗi tạo vận đơn GHN",
+						`Đơn hàng ${payment.order.orderNumber} đã thanh toán thành công nhưng tạo vận đơn GHN thất bại. Cần kiểm tra và tạo vận đơn thủ công.`,
+					);
+				} catch (notifyError) {
+					console.error(`[payment] Bắn cảnh báo hệ thống cho lỗi tạo vận đơn GHN cũng thất bại:`, notifyError);
+				}
 			}
+		}
+
+		// "Thanh toán lỗi" — bắn cho admin/manager mỗi khi 1 giao dịch chuyển sang "failed" (IPN
+		// gateway báo thất bại hoặc staff tự cập nhật thủ công). Best-effort, không rollback payment.
+		if (nextStatus === PaymentStatus.failed) {
+			await notificationService.notifyAdminPaymentFailed(payment.order.id, payment.order.orderNumber);
 		}
 
 		return result;

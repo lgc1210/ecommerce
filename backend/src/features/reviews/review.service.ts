@@ -144,7 +144,10 @@ class ReviewService {
 	async createReview(userId: number, data: CreateReviewInput) {
 		const orderItem = await prisma.orderItem.findUnique({
 			where: { id: data.orderItemId },
-			include: { order: { select: { userId: true, orderStatus: true, deliveredAt: true } }, productSku: { select: { productId: true } } },
+			include: {
+				order: { select: { userId: true, orderStatus: true, deliveredAt: true } },
+				productSku: { select: { productId: true, product: { select: { name: true } } } },
+			},
 		});
 
 		if (!orderItem || orderItem.order.userId !== userId) {
@@ -165,7 +168,7 @@ class ReviewService {
 			throw new Error("Conflict: Bạn đã đánh giá sản phẩm này rồi. Hãy chỉnh sửa đánh giá hiện có thay vì tạo mới.");
 		}
 
-		return prisma.review.create({
+		const review = await prisma.review.create({
 			data: {
 				userId,
 				productId: orderItem.productSku.productId,
@@ -175,6 +178,12 @@ class ReviewService {
 			},
 			include: reviewWithUserInclude,
 		});
+
+		// "Khách hàng đánh giá" — bắn cho admin/manager ngay sau khi tạo đánh giá thành công.
+		// Best-effort: không được phép làm hỏng luồng tạo đánh giá của khách nếu bắn thông báo lỗi.
+		await notificationService.notifyAdminNewReview(review.id, orderItem.productSku.product?.name ?? "Sản phẩm", data.rating);
+
+		return review;
 	}
 
 	async updateReview(userId: number, reviewId: number, data: UpdateReviewInput) {

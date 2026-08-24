@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Pagination from "../../../components/pagination";
@@ -10,11 +11,12 @@ import { parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
 import { formatDate } from "../../../utils";
 import { usePaymentsAdminQuery } from "../../../features/admin/payment/hooks";
-import type { PaymentMethod, PaymentStatus } from "../../../features/admin/payment/types";
+import type { AdminPayment, PaymentMethod, PaymentStatus } from "../../../features/admin/payment/types";
 import { PAYMENT_METHOD_FILTER_OPTIONS } from "../../../features/admin/payment/constants";
 import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL } from "../../../features/admin/payment/utils";
 import PaymentStatusBadge from "../../../features/admin/payment/components/payment-status-badge";
 import PaymentDetailModal from "../../../features/admin/payment/components/payment-detail-modal";
+import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend.
@@ -52,13 +54,36 @@ const AdminPaymentPage = () => {
 		dateTo: dateTo ? new Date(dateTo).toISOString() : undefined,
 	});
 
-	const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
+	const [selectedPayment, setSelectedPayment] = useState<AdminPayment | null>(null);
 
 	const payments = data?.data ?? [];
 	const pagination = data?.pagination;
-	// Tìm lại object mới nhất từ danh sách (đã invalidate sau mutation) thay vì giữ snapshot cũ,
-	// để modal luôn hiển thị đúng trạng thái mới nhất — xem docstring usePaymentsAdminQuery.
-	const selectedPayment = payments.find((p) => p.id === selectedPaymentId) ?? null;
+
+	// Tự động mở modal chi tiết nếu vào trang này TỪ 1 THÔNG BÁO ("Thanh toán lỗi") và bộ lọc
+	// "search" (backend search theo orderNumber, xem payment.service.ts) chỉ ra ĐÚNG 1 kết quả.
+	// CHỈ áp dụng khi đến từ notification, không áp dụng khi admin tự gõ tìm kiếm thủ công — xem
+	// comment tương tự ở pages/admin/order/index.tsx.
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	// Kiểm tra xem khi người dùng tới trang này có kèm theo {state: fromNotification} hay không?
+	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+
+	const notificationPayment = fromNotification && data?.data.length === 1 ? payments[0] : null;
+
+	const newestPayment = payments.find((payment) => payment.id === selectedPayment?.id);
+
+	const activePayment = newestPayment ?? notificationPayment;
+
+	const handleClosePaymentModal = () => {
+		setSelectedPayment(null);
+		if (fromNotification) {
+			navigate(`${location.pathname}${location.search}`, {
+				replace: true,
+				state: null,
+			});
+		}
+	};
 
 	return (
 		<div className='space-y-6'>
@@ -116,11 +141,7 @@ const AdminPaymentPage = () => {
 					</thead>
 					<tbody>
 						{isLoading ? (
-							<tr>
-								<td colSpan={6} className='px-5 py-8 text-center text-muted'>
-									Đang tải...
-								</td>
-							</tr>
+							<SkeletonTableRows rows={PAGE_SIZE} columns={6} />
 						) : payments.length === 0 ? (
 							<tr>
 								<td colSpan={6} className='px-5 py-8 text-center text-muted'>
@@ -129,7 +150,7 @@ const AdminPaymentPage = () => {
 							</tr>
 						) : (
 							payments.map((payment) => (
-								<tr key={payment.id} onClick={() => setSelectedPaymentId(payment.id)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr key={payment.id} onClick={() => setSelectedPayment(payment)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5 font-semibold text-ink'>{payment.order.orderNumber}</td>
 									<td className='px-5 py-3.5'>
 										<p className='font-medium text-ink'>{payment.order.user?.name ?? "Khách vãng lai"}</p>
@@ -152,7 +173,7 @@ const AdminPaymentPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{selectedPayment && <PaymentDetailModal payment={selectedPayment} onClose={() => setSelectedPaymentId(null)} />}
+			{activePayment && <PaymentDetailModal payment={activePayment} onClose={handleClosePaymentModal} />}
 		</div>
 	);
 };

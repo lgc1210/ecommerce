@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Popup from "../../../components/popup";
@@ -14,6 +15,7 @@ import StatusBadge from "../../../features/admin/contact/components/status-badge
 import ContactDetailModal from "../../../features/admin/contact/components/contact-detail-modal";
 import Button from "../../../components/button";
 import { formatDate } from "../../../utils";
+import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
@@ -31,10 +33,9 @@ const PAGE_SIZE = 10;
  * chia sẻ được.
  */
 const AdminContactPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const status = parseEnumParam<ContactStatus>(searchParams, "status");
 
@@ -48,8 +49,44 @@ const AdminContactPage = () => {
 	const contacts = data?.data ?? [];
 	const pagination = data?.pagination;
 
+	// Tự động mở modal chi tiết nếu vào trang này TỪ 1 THÔNG BÁO ("Liên hệ mới") và bộ lọc "search"
+	// (backend search theo tên/email/chủ đề, xem contact.service.ts) chỉ ra ĐÚNG 1 kết quả. CHỈ áp
+	// dụng khi đến từ notification, không áp dụng khi admin tự gõ tìm kiếm thủ công — xem comment
+	// tương tự ở pages/admin/order/index.tsx.
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+
+	// Derived value:
+	// Nếu notification dẫn admin tới trang này và search chỉ trả về đúng 1 contact,
+	// contact đó sẽ được tự động dùng làm contact đang active.
+	//
+	// Không cần useEffect + setSelectedContact() vì đây chỉ là derived state từ
+	// location.state + data đã có từ React Query.
+	const notificationContact = fromNotification && data?.data.length === 1 ? contacts[0] : null;
+
+	// selectedContact được ưu tiên vì đây là contact admin chủ động chọn.
+	// Nếu admin chưa chọn contact nào thì mới dùng contact từ notification.
+	const activeContact = selectedContact ?? notificationContact;
+
+	const handleCloseContactModal = () => {
+		setSelectedContact(null);
+
+		// Nếu modal hiện tại được mở từ notification thì phải xóa flag
+		// khỏi history state. Nếu không, notificationContact sẽ được
+		// derive lại ngay sau khi selectedContact = null và modal sẽ mở lại.
+		if (fromNotification) {
+			navigate(`${location.pathname}${location.search}`, {
+				replace: true,
+				state: null,
+			});
+		}
+	};
+
 	const handleConfirmDelete = () => {
 		if (!deletingContact) return;
+
 		deleteContact.mutate(deletingContact.id, {
 			onSuccess: () => {
 				setDeletingContact(null);
@@ -71,12 +108,14 @@ const AdminContactPage = () => {
 					onChange={(e) => setSearchInput(e.target.value)}
 					rightElement={<SearchIcon className='h-4 w-4 text-muted' />}
 				/>
+
 				<FormSelect
 					value={status ?? ""}
 					onChange={(e) => setFilter("status", e.target.value || undefined)}
 					placeholder='Tất cả trạng thái'
 					options={Object.entries(CONTACT_STATUS_LABEL).map(([value, label]) => ({ value, label }))}
 				/>
+
 				{hasActiveFilters(["status"]) && (
 					<Button
 						type='button'
@@ -103,13 +142,10 @@ const AdminContactPage = () => {
 							<th className='px-5 py-3.5'>Ngày gửi</th>
 						</tr>
 					</thead>
+
 					<tbody>
 						{isLoading ? (
-							<tr>
-								<td colSpan={5} className='px-5 py-8 text-center text-muted'>
-									Đang tải...
-								</td>
-							</tr>
+							<SkeletonTableRows rows={PAGE_SIZE} columns={5} />
 						) : contacts.length === 0 ? (
 							<tr>
 								<td colSpan={5} className='px-5 py-8 text-center text-muted'>
@@ -118,29 +154,26 @@ const AdminContactPage = () => {
 							</tr>
 						) : (
 							contacts.map((contact) => (
-								<tr
-									key={contact.id}
-									onClick={() => setSelectedContact(contact)}
-									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr key={contact.id} onClick={() => setSelectedContact(contact)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{contact.name}</p>
 										<p className='truncate text-xs text-muted'>{contact.email}</p>
 									</td>
+
 									<td className='px-5 py-3.5'>
 										{contact.user ? (
-											<span className='inline-flex items-center rounded-full bg-primary-light px-2.5 py-1 text-xs truncate font-semibold text-primary-dark'>
-												Tài khoản #{contact.user.id}
-											</span>
+											<span className='inline-flex items-center rounded-full bg-primary-light px-2.5 py-1 text-xs truncate font-semibold text-primary-dark'>Tài khoản #{contact.user.id}</span>
 										) : (
-											<span className='inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-xs truncate text-ink/60'>
-												Khách vãng lai
-											</span>
+											<span className='inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-xs truncate text-ink/60'>Khách vãng lai</span>
 										)}
 									</td>
+
 									<td className='max-w-70 truncate px-5 py-3.5 text-ink/80'>{contact.subject || "—"}</td>
+
 									<td className='px-5 py-3.5'>
 										<StatusBadge status={contact.status} />
 									</td>
+
 									<td className='px-5 py-3.5 text-ink/70'>{formatDate(contact.createdAt)}</td>
 								</tr>
 							))
@@ -153,18 +186,27 @@ const AdminContactPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{selectedContact && (
+			{activeContact && (
 				<ContactDetailModal
-					contact={selectedContact}
-					onClose={() => setSelectedContact(null)}
+					contact={activeContact}
+					onClose={handleCloseContactModal}
 					isUpdatingStatus={updateContactStatus.isPending}
 					onChangeStatus={(status) =>
 						updateContactStatus.mutate(
-							{ id: selectedContact.id, status },
-							{ onSuccess: () => setSelectedContact((prev) => (prev ? { ...prev, status } : prev)) },
+							{
+								id: activeContact.id,
+								status,
+							},
+							{
+								onSuccess: () =>
+									setSelectedContact((prev) => ({
+										...(prev ?? activeContact),
+										status,
+									})),
+							},
 						)
 					}
-					onRequestDelete={() => setDeletingContact(selectedContact)}
+					onRequestDelete={() => setDeletingContact(activeContact)}
 				/>
 			)}
 

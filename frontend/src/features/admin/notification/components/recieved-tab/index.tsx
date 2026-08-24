@@ -1,24 +1,31 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { BellIcon, CheckIcon, TrashIcon } from "../../../../../../components/icons";
-import Pagination from "../../../../../../components/pagination";
-import Button from "../../../../../../components/button";
-import Popup from "../../../../../../components/popup";
-import { formatDate } from "../../../../../../utils";
-import { useDeleteAllReadNotifications, useDeleteNotification, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../../notification/hooks";
-import { resolveNotificationLink } from "../../../../notification/utils";
-import NotificationsTabSkeleton from "./skeleton";
-import { NOTIFICATION_TYPE_ICON, NOTIFICATION_TYPE_LABEL } from "../../../../../../shared/constants/notification";
+import { BellIcon, CheckIcon, TrashIcon } from "../../../../../components/icons";
+import Pagination from "../../../../../components/pagination";
+import Button from "../../../../../components/button";
+import Popup from "../../../../../components/popup";
+import { formatDate } from "../../../../../utils";
+import { useDeleteAllReadNotifications, useDeleteNotification, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../../client/notification/hooks";
+import ReceivedTabSkeleton from "./skeleton";
+import { NOTIFICATION_TYPE_ICON, NOTIFICATION_TYPE_LABEL } from "../../../../../shared/constants/notification";
 
 const PAGE_SIZE = 10;
 
 /**
- * Tab "Quản lý thông báo" trong trang tài khoản — dùng GET /notifications (self-service, chỉ
- * cần đăng nhập). Khác với dropdown chuông ở header (chỉ xem nhanh 5 thông báo gần nhất, không
- * xóa được), tab này là nơi quản lý đầy đủ: đánh dấu đã đọc từng cái/tất cả, xóa từng cái, và
- * xóa hàng loạt toàn bộ thông báo đã đọc.
+ * Tab "Thông báo của tôi" trong trang /admin/notification — cùng GET /notifications self-service
+ * mà dropdown chuông admin dùng (xem notification-bell), chỉ khác là xem ĐẦY ĐỦ + phân trang +
+ * quản lý (đánh dấu đã đọc/xóa), thay vì chỉ 5 thông báo gần nhất.
+ *
+ * Cố tình KHÔNG viết lại từ đầu: gần như nguyên trạng cấu trúc của
+ * features/client/me/components/account/notifications-tab (tab tương ứng bên phía customer) —
+ * cùng 1 tập hook (useMyNotificationsQuery, useMark...AsRead, useDelete...), chỉ khác 2 điểm:
+ *  1) Không dùng resolveNotificationLink() — actionUrl backend trả cho thông báo admin đã là URL
+ *     THẬT trên frontend (vd "/admin/order?search=...", "/admin/product/45"), Link thẳng vào đó.
+ *  2) Link "Xem chi tiết" kèm state={{ fromNotification: true }} — để trang đích (order/payment/
+ *     contact) biết mà tự mở modal khi filter "search" chỉ ra đúng 1 kết quả (xem
+ *     pages/admin/order/index.tsx và notification-bell (admin) để hiểu rõ cơ chế này).
  */
-const NotificationsTab = () => {
+const ReceivedTab = () => {
 	const [searchParams] = useSearchParams();
 	const page = Number(searchParams.get("page")) || 1;
 	const limit = Number(searchParams.get("limit")) || PAGE_SIZE;
@@ -42,13 +49,13 @@ const NotificationsTab = () => {
 		deleteMutation.mutate(id, { onSettled: () => setDeletingId(null) });
 	};
 
-	if (isLoading) return <NotificationsTabSkeleton />;
+	if (isLoading) return <ReceivedTabSkeleton />;
 
 	if (notifications.length === 0) {
 		return (
 			<div className='rounded-2xl border border-dashed border-border py-12 text-center text-sm text-muted'>
 				<BellIcon className='mx-auto mb-2 h-6 w-6 text-muted' />
-				Bạn chưa có thông báo nào.
+				Chưa có thông báo nào.
 			</div>
 		);
 	}
@@ -99,19 +106,15 @@ const NotificationsTab = () => {
 								<p className='mt-2 text-sm text-ink/80'>{notification.message}</p>
 
 								<div className='mt-3 flex items-center gap-4'>
-									{notification.actionUrl &&
-										(() => {
-											const { to, state } = resolveNotificationLink(notification.actionUrl);
-											return (
-												<Link
-													to={to}
-													state={state}
-													onClick={() => !notification.isRead && markAsReadMutation.mutate(notification.id)}
-													className='text-xs font-semibold text-primary-dark hover:underline'>
-													Xem chi tiết
-												</Link>
-											);
-										})()}
+									{notification.actionUrl && (
+										<Link
+											to={notification.actionUrl}
+											state={{ fromNotification: true }}
+											onClick={() => !notification.isRead && markAsReadMutation.mutate(notification.id)}
+											className='text-xs font-semibold text-primary-dark hover:underline'>
+											Xem chi tiết
+										</Link>
+									)}
 									{!notification.isRead && (
 										<button
 											type='button'
@@ -154,4 +157,4 @@ const NotificationsTab = () => {
 	);
 };
 
-export default NotificationsTab;
+export default ReceivedTab;

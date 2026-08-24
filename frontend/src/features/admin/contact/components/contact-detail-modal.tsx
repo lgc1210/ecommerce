@@ -24,13 +24,7 @@ const formatDate = (value: string) =>
 	});
 
 /** Modal xem chi tiết 1 liên hệ + đổi trạng thái xử lý + lối vào xóa. Không tự quản lý mở/đóng. */
-const ContactDetailModal = ({
-	contact,
-	onClose,
-	onChangeStatus,
-	onRequestDelete,
-	isUpdatingStatus,
-}: ContactDetailModalProps) => {
+const ContactDetailModal = ({ contact, onClose, onChangeStatus, onRequestDelete, isUpdatingStatus }: ContactDetailModalProps) => {
 	const [pendingStatus, setPendingStatus] = useState<ContactStatus>(contact.status);
 	const statusOptions = getNextContactStatusOptions(contact.status);
 	const hasStatusChanged = pendingStatus !== contact.status;
@@ -66,9 +60,7 @@ const ContactDetailModal = ({
 
 				<div>
 					<p className='mb-1.5 text-sm font-medium text-ink'>Nội dung</p>
-					<p className='whitespace-pre-line rounded-xl border border-border bg-surface p-4 text-sm text-ink/80'>
-						{contact.message}
-					</p>
+					<p className='whitespace-pre-line rounded-xl border border-border bg-surface p-4 text-sm text-ink/80'>{contact.message}</p>
 				</div>
 
 				<div className='flex items-end gap-3'>
@@ -79,11 +71,7 @@ const ContactDetailModal = ({
 						onChange={(e) => setPendingStatus(e.target.value as ContactStatus)}
 						options={statusOptions.map((status) => ({ value: status, label: CONTACT_STATUS_LABEL[status] }))}
 					/>
-					<Button
-						size='sm'
-						type='button'
-						disabled={!hasStatusChanged || isUpdatingStatus}
-						onClick={() => onChangeStatus(pendingStatus)}>
+					<Button size='sm' type='button' disabled={!hasStatusChanged || isUpdatingStatus} onClick={() => onChangeStatus(pendingStatus)}>
 						{isUpdatingStatus ? "Đang lưu..." : "Lưu trạng thái"}
 					</Button>
 				</div>

@@ -117,12 +117,18 @@ const ReviewDetailModal = ({ review, onClose, onRequestDelete }: ReviewDetailMod
 								{review.reply.updatedAt && <> · {formatDate(review.reply.updatedAt)}</>}
 							</p>
 							<div className='mt-2 flex gap-2'>
-								<button type='button' onClick={() => setIsEditingReply(true)} className='text-xs font-medium text-primary-dark hover:underline'>
+								<Button variant='ghost' size='sm' type='button' onClick={() => setIsEditingReply(true)} className='p-0! text-xs font-medium text-primary-dark hover:underline h-auto!'>
 									Sửa phản hồi
-								</button>
-								<button type='button' onClick={() => deleteReply.mutate(review.id)} disabled={deleteReply.isPending} className='text-xs font-medium text-red-600 hover:underline'>
+								</Button>
+								<Button
+									variant='ghost'
+									size='sm'
+									type='button'
+									onClick={() => deleteReply.mutate(review.id)}
+									disabled={deleteReply.isPending}
+									className='p-0! text-xs font-medium text-red-600! hover:underline h-auto!'>
 									Xóa phản hồi
-								</button>
+								</Button>
 							</div>
 						</div>
 					) : (
