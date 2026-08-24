@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../components/breadcrumb";
 import Button from "../../../components/button";
@@ -26,7 +26,7 @@ const tabs = [
 ] as const;
 
 const ProductDetailPage = () => {
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 	const { slug } = useParams<{ slug: string }>();
 	const { hash } = useLocation();
 	const { data: product, isLoading, isError } = useProductBySlugQuery(slug);
