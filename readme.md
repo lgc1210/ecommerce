@@ -275,6 +275,7 @@ Trang quản lý mã giảm giá
 
 Trang quản lý thông báo
 ![Ảnh giao diện quản lý thông báo](docs/images/admin/notifications.png)
+![Ảnh giao diện quản lý thông báo](docs/images/admin/notifications-2.png)
 
 Trang quản lý thanh toán
 ![Ảnh giao diện quản lý thanh toán](docs/images/admin/payments.png)
@@ -392,4 +393,5 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **Trải nghiệm người dùng**: Tiếp tục tinh chỉnh UI/UX cho cả giao diện Client và Admin.
 - **Thông báo real-time**: Hiện thông báo mới cập nhật qua polling (30s) — nâng cấp lên WebSocket để đẩy tức thời, và bổ sung thêm kênh gửi email/push (đã có sẵn interface `NotificationChannel`, chỉ cần thêm implementation mới).
 - **Chat trực tuyến**: Bổ sung tính năng hỗ trợ khách hàng realtime.
+- **Bảo hành sản phẩm**: Bổ sung tính năng quản lý bảo hành sản phẩm.
 - **AI**: Nghiên cứu và tích hợp AI vào các luồng nghiệp vụ của dự án (gợi ý sản phẩm, chatbot hỗ trợ...).
