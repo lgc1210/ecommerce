@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma.js";
 import type { AddressTag } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
+import type { ListAddressesParams } from "./user_address.validation.js";
 
 interface AdminUpdateAddressInput {
 	tag?: AddressTag;
@@ -14,15 +15,6 @@ interface AdminUpdateAddressInput {
 	districtId?: number;
 	wardCode?: string;
 	isDefault?: boolean;
-}
-
-interface ListAddressesParams {
-	page?: string;
-	limit?: string;
-	search?: string;
-	userId?: string;
-	tag?: string;
-	province?: string;
 }
 
 const addressWithOwnerInclude = {

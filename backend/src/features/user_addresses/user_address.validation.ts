@@ -45,3 +45,6 @@ export const AdminUpdateAddressSchema = z.object({
 		})
 		.refine((data) => Object.keys(data).length > 0, { message: "Cần ít nhất 1 trường để cập nhật." }),
 });
+
+export type ListAddressesParams = z.infer<typeof ListAddressesQuerySchema>["query"];
+export type AdminUpdateAddressInput = z.infer<typeof AdminUpdateAddressSchema>["body"];

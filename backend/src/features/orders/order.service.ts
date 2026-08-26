@@ -3,10 +3,33 @@ import { parsePagination } from "../../utils/index.js";
 import { normalizeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "../coupons/coupon.utils.js";
 import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
 import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus } from "./order.utils.js";
-import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
+import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "../../generated/prisma/index.js";
 import notificationService from "../notifications/notification.service.js";
 import { env } from "../../config/dotenv.js";
-import type { CreateOrderInput, ListOrdersAdminParams, ListOwnOrdersParams } from "./order.validation.js";
+import type { BuyNowInput, CreateOrderInput, ListOrdersAdminParams, ListOwnOrdersParams } from "./order.validation.js";
+
+/**
+ * Hình dạng dùng chung cho 1 dòng sản phẩm sẽ lên đơn, bất kể nguồn gốc là giỏ hàng (checkout) hay
+ * mua thẳng 1 SKU (buyNow) — cho phép tái dùng chung toàn bộ logic validate/tính tiền/tạo đơn ở
+ * processCheckout() thay vì lặp lại 2 lần.
+ */
+type CheckoutLineItem = {
+	productSkuId: number;
+	quantity: number;
+	productSku: {
+		id: number;
+		sku: string;
+		price: Prisma.Decimal;
+		variationDetails: unknown;
+		stockQuantity: number;
+		weightGram: number;
+		lengthCm: number;
+		widthCm: number;
+		heightCm: number;
+		productId: number | null;
+		product: { name: string; isActive: boolean } | null;
+	};
+};
 
 const orderItemInclude = {
 	items: {
@@ -47,12 +70,78 @@ class OrderService {
 	async checkout(userId: number, data: CreateOrderInput, userEmail?: string | null) {
 		const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, data.shippingAddressId);
 
+		return this.processCheckout({
+			userId,
+			userEmail,
+			address,
+			items: cart.items,
+			subtotalAmount,
+			couponCode: data.couponCode,
+			shippingAddressId: data.shippingAddressId,
+			paymentMethod: data.paymentMethod,
+			// Xoá đúng các cart item đã đọc ở trên trong lúc tạo đơn (xem giải thích chi tiết trong
+			// processCheckout) — đây LÀ giỏ hàng thật của khách nên phải dọn sau khi đặt hàng.
+			cartCleanup: { cartId: cart.id, cartItemIds: cart.items.map((item) => item.id) },
+		});
+	}
+
+	/**
+	 * Mua ngay: khách bấm "Mua ngay" ở trang chi tiết sản phẩm -> tạo đơn thẳng với ĐÚNG 1 SKU +
+	 * số lượng được chọn, KHÔNG đụng tới giỏ hàng hiện có của khách (không đọc, không xoá, không
+	 * thêm gì vào giỏ). Toàn bộ phần còn lại (validate tồn kho, áp coupon, trừ kho, tạo vận đơn
+	 * COD, thông báo...) dùng chung processCheckout() với checkout() từ giỏ hàng.
+	 */
+	async buyNow(userId: number, data: BuyNowInput, userEmail?: string | null) {
+		const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(userId, data.shippingAddressId, data.productSkuId, data.quantity);
+
+		return this.processCheckout({
+			userId,
+			userEmail,
+			address,
+			items,
+			subtotalAmount,
+			couponCode: data.couponCode,
+			shippingAddressId: data.shippingAddressId,
+			paymentMethod: data.paymentMethod,
+			// Không có giỏ hàng nào liên quan -> không cần bước dọn giỏ hàng trong transaction. Đổi
+			// lại, PHẢI có idempotencyKey để tự làm gate chống double-submit (xem processCheckout()).
+			cartCleanup: null,
+			idempotencyKey: data.idempotencyKey,
+		});
+	}
+
+	/**
+	 * Lõi dùng chung cho checkout() (từ giỏ hàng) và buyNow() (mua thẳng 1 SKU): validate lại tồn
+	 * kho trong transaction, áp coupon, trừ kho, tạo đơn + payment, tạo vận đơn GHN ngay nếu COD.
+	 * Chống double-submit bằng 1 trong 2 cơ chế tuỳ nguồn gốc đơn: `cartCleanup` (xoá cart item —
+	 * dùng cho checkout() từ giỏ hàng) hoặc `idempotencyKey` (insert vào bảng gate riêng — dùng cho
+	 * buyNow(), không có giỏ hàng để làm gate). Xem comment chi tiết ngay đầu transaction bên dưới.
+	 */
+	private async processCheckout(params: {
+		userId: number;
+		userEmail?: string | null | undefined;
+		address: { districtId: number; wardCode: string; recipientName: string; phoneNumber: string; addressLine: string };
+		items: CheckoutLineItem[];
+		subtotalAmount: number;
+		couponCode?: string | undefined;
+		shippingAddressId: number;
+		paymentMethod: PaymentMethod;
+		cartCleanup: { cartId: number; cartItemIds: number[] } | null;
+		/**
+		 * Gate chống double-submit cho buyNow (không có giỏ hàng để làm gate như checkout() thường —
+		 * xem CheckoutIdempotencyKey trong schema.prisma). undefined/null với checkout() từ giỏ hàng
+		 * vì cartCleanup đã tự đảm nhiệm vai trò này rồi.
+		 */
+		idempotencyKey?: string | undefined;
+	}) {
+		const { userId, userEmail, address, items, subtotalAmount, couponCode, shippingAddressId, paymentMethod, cartCleanup, idempotencyKey } = params;
+
 		let couponId: number | null = null;
 		let couponUsageLimit: number | null = null;
 		let discountAmount = 0;
 
-		if (data.couponCode) {
-			const coupon = await prisma.coupon.findUnique({ where: { code: normalizeCouponCode(data.couponCode) } });
+		if (couponCode) {
+			const coupon = await prisma.coupon.findUnique({ where: { code: normalizeCouponCode(couponCode) } });
 			if (!coupon) {
 				throw new Error("NotFound: Mã giảm giá không tồn tại.");
 			}
@@ -76,7 +165,7 @@ class OrderService {
 			discountAmount = computeDiscountAmount(coupon, subtotalAmount);
 		}
 
-		const shippingFee = await this.computeShippingFeeForCart(address, cart.items, subtotalAmount);
+		const shippingFee = await this.computeShippingFeeForCart(address, items, subtotalAmount);
 		const totalAmount = Math.max(0, subtotalAmount - discountAmount + shippingFee);
 
 		// Gom các SKU rơi xuống bằng/dưới LOW_STOCK_THRESHOLD sau khi trừ kho trong transaction bên
@@ -85,6 +174,24 @@ class OrderService {
 
 		const order = await prisma.$transaction(
 			async (tx) => {
+				// Chặn double-submit cho buyNow NGAY ĐẦU transaction (trước mọi thao tác khác, kể cả
+				// cartCleanup) — insert (userId, key) vào bảng gate riêng; unique constraint (userId,
+				// key) sẽ tự chặn nếu request thứ 2 cùng key lọt vào transaction (double click nhanh
+				// trước khi FE kịp disable nút, hoặc client tự động retry do mất mạng). Ném lỗi ở đây
+				// rollback toàn bộ transaction ngay lập tức, KHÔNG kịp đụng tới tồn kho/coupon —
+				// tương tự tinh thần cartCleanup bên dưới nhưng dùng insert thay vì delete làm gate vì
+				// buyNow không có tài nguyên "giỏ hàng" sẵn có để xoá.
+				if (idempotencyKey) {
+					try {
+						await tx.checkoutIdempotencyKey.create({ data: { userId, key: idempotencyKey } });
+					} catch (error) {
+						if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+							throw new Error("BadRequest: Yêu cầu đặt hàng này đã được xử lý (hoặc đang được xử lý), vui lòng kiểm tra lại đơn hàng của bạn.");
+						}
+						throw error;
+					}
+				}
+
 				// Xoá các cart item đã đọc ở loadValidatedCartForCheckout NGAY ĐẦU transaction (trước
 				// cả bước trừ kho) để: (1) giỏ hàng trống sau khi đặt hàng thành công — tránh việc
 				// khách bấm "Đặt hàng" thêm lần nữa (do mạng chậm, chưa thấy phản hồi) tạo ra 1 đơn
@@ -92,14 +199,19 @@ class OrderService {
 				// checkout chạy gần như đồng thời: request nào vào transaction trước sẽ xoá đủ số cart
 				// item mong đợi; request còn lại xoá được ÍT HƠN (vì đã bị xoá trước đó) -> phát hiện
 				// ngay và rollback toàn bộ, không đụng tới tồn kho/coupon, tránh tạo 2 đơn trùng nhau.
-				const cartItemIds = cart.items.map((item) => item.id);
-				const deletedCartItems = await tx.cartItem.deleteMany({ where: { id: { in: cartItemIds }, cartId: cart.id } });
-				if (deletedCartItems.count !== cartItemIds.length) {
-					throw new Error("BadRequest: Giỏ hàng này vừa được đặt hàng ở 1 yêu cầu khác, vui lòng kiểm tra lại đơn hàng của bạn.");
+				//
+				// "Mua ngay" (buyNow) KHÔNG đụng tới giỏ hàng nên cartCleanup = null, bỏ qua bước này
+				// hoàn toàn — cơ chế chống double-submit tương đương cho buyNow là bước insert
+				// idempotencyKey ở TRÊN (chạy trước cả bước này).
+				if (cartCleanup) {
+					const deletedCartItems = await tx.cartItem.deleteMany({ where: { id: { in: cartCleanup.cartItemIds }, cartId: cartCleanup.cartId } });
+					if (deletedCartItems.count !== cartCleanup.cartItemIds.length) {
+						throw new Error("BadRequest: Giỏ hàng này vừa được đặt hàng ở 1 yêu cầu khác, vui lòng kiểm tra lại đơn hàng của bạn.");
+					}
 				}
 
 				// Trừ tồn kho từng SKU, kiểm tra lại 1 lần nữa trong transaction để tránh race condition (2 request đặt hàng cùng lúc)
-				for (const item of cart.items) {
+				for (const item of items) {
 					const updated = await tx.productSku.updateMany({
 						where: { id: item.productSkuId, stockQuantity: { gte: item.quantity } },
 						data: { stockQuantity: { decrement: item.quantity } },
@@ -150,7 +262,7 @@ class OrderService {
 				const createdOrder = await tx.order.create({
 					data: {
 						userId,
-						shippingAddressId: data.shippingAddressId,
+						shippingAddressId,
 						couponId,
 						orderNumber: generateOrderNumber(),
 						subtotalAmount,
@@ -159,7 +271,7 @@ class OrderService {
 						totalAmount,
 						orderStatus: OrderStatus.pending,
 						items: {
-							create: cart.items.map((item) => ({
+							create: items.map((item) => ({
 								productSkuId: item.productSkuId,
 								quantity: item.quantity,
 								priceAtPurchase: item.productSku.price,
@@ -168,7 +280,7 @@ class OrderService {
 						},
 						payment: {
 							create: {
-								paymentMethod: data.paymentMethod,
+								paymentMethod,
 								paymentStatus: PaymentStatus.pending,
 								amount: totalAmount,
 							},
@@ -189,8 +301,8 @@ class OrderService {
 				// "completed" (xem payment.service.ts -> createShipmentAfterPayment bên dưới). Nếu
 				// thanh toán thất bại, đơn vẫn ở "pending" (không có vận đơn "ảo" nào cả) để khách có
 				// thể thử thanh toán lại (payment.utils.ts cho phép failed -> pending).
-				if (data.paymentMethod === PaymentMethod.cod) {
-					const cartPackage = computeCartPackage(cart.items);
+				if (paymentMethod === PaymentMethod.cod) {
+					const cartPackage = computeCartPackage(items);
 					const shipment = await createShippingOrder({
 						clientOrderCode: createdOrder.orderNumber,
 						toName: address.recipientName,
@@ -200,7 +312,7 @@ class OrderService {
 						toDistrictId: address.districtId,
 						codAmount: totalAmount,
 						insuranceValue: subtotalAmount,
-						items: cart.items.map((item) => ({
+						items: items.map((item) => ({
 							name: item.productSku.product?.name ?? item.productSku.sku,
 							quantity: item.quantity,
 						})),
@@ -240,6 +352,17 @@ class OrderService {
 	async previewShippingFee(userId: number, shippingAddressId: number) {
 		const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, shippingAddressId);
 		const shippingFee = await this.computeShippingFeeForCart(address, cart.items, subtotalAmount);
+		return { subtotalAmount, shippingFee };
+	}
+
+	/**
+	 * Tương tự previewShippingFee() nhưng cho trang "Mua ngay" — tính trước phí ship + tạm tính cho
+	 * đúng 1 SKU (không phải cả giỏ hàng), để trang thanh toán "mua ngay" hiển thị số tiền cho khách
+	 * TRƯỚC khi họ bấm đặt hàng (không tạo đơn, không trừ tồn kho).
+	 */
+	async previewBuyNowShippingFee(userId: number, shippingAddressId: number, productSkuId: number, quantity: number) {
+		const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(userId, shippingAddressId, productSkuId, quantity);
+		const shippingFee = await this.computeShippingFeeForCart(address, items, subtotalAmount);
 		return { subtotalAmount, shippingFee };
 	}
 
@@ -434,6 +557,18 @@ class OrderService {
 		return { scanned: staleOrders.length, cancelled: cancelledCount };
 	}
 
+	/**
+	 * Dọn các idempotency key của buyNow đã cũ (job định kỳ gọi, dùng chung lịch chạy với
+	 * cancelExpiredPendingOrders ở cronjob/index.ts). Key chỉ cần sống đủ lâu để chặn double-submit
+	 * XẢY RA GẦN NHAU (double click, client tự động retry do mất mạng) — không cần giữ vĩnh viễn,
+	 * nên xoá định kỳ tránh phình bảng vô hạn theo thời gian.
+	 */
+	async cleanupExpiredIdempotencyKeys(ttlHours: number) {
+		const cutoff = new Date(Date.now() - ttlHours * 60 * 60 * 1000);
+		const result = await prisma.checkoutIdempotencyKey.deleteMany({ where: { createdAt: { lt: cutoff } } });
+		return { deleted: result.count };
+	}
+
 	// ==========================================
 	// Helpers
 	// ==========================================
@@ -443,11 +578,7 @@ class OrderService {
 	 * lặp lại logic và đảm bảo phí ship xem trước luôn khớp với phí ship lúc đặt hàng thật.
 	 */
 	private async loadValidatedCartForCheckout(userId: number, shippingAddressId: number) {
-		const address = await prisma.userAddress.findUnique({ where: { id: shippingAddressId } });
-		if (!address || address.userId !== userId) {
-			throw new Error("NotFound: Địa chỉ giao hàng không tồn tại hoặc không thuộc về bạn.");
-		}
-
+		const address = await this.loadOwnedShippingAddress(userId, shippingAddressId);
 		const cart = await prisma.cart.findUnique({
 			where: { userId },
 			include: {
@@ -484,6 +615,44 @@ class OrderService {
 		const subtotalAmount = cart.items.reduce((sum, item) => sum + Number(item.productSku.price) * item.quantity, 0);
 
 		return { address, cart, subtotalAmount };
+	}
+
+	/**
+	 * "Mua ngay": kiểm tra địa chỉ giao hàng + validate ĐÚNG 1 SKU (còn kinh doanh, đủ tồn kho) —
+	 * hoàn toàn KHÔNG đọc/đụng tới giỏ hàng của user, khác với loadValidatedCartForCheckout() ở
+	 * trên. Trả về `items` có hình dạng giống hệt cart.items (thiếu field `id` của cart item vì
+	 * không thuộc giỏ hàng nào) để processCheckout() dùng chung logic với checkout() từ giỏ hàng.
+	 */
+	private async loadValidatedBuyNowItem(userId: number, shippingAddressId: number, productSkuId: number, quantity: number) {
+		const address = await this.loadOwnedShippingAddress(userId, shippingAddressId);
+
+		const productSku = await prisma.productSku.findUnique({
+			where: { id: productSkuId },
+			include: {
+				product: { select: { isActive: true, name: true } },
+			},
+		});
+
+		if (!productSku || (productSku.product && !productSku.product.isActive)) {
+			throw new Error("NotFound: Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.");
+		}
+		if (quantity > productSku.stockQuantity) {
+			throw new Error(`BadRequest: Sản phẩm "${productSku.sku}" chỉ còn ${productSku.stockQuantity} trong kho.`);
+		}
+
+		const items: CheckoutLineItem[] = [{ productSkuId: productSku.id, quantity, productSku }];
+		const subtotalAmount = Number(productSku.price) * quantity;
+
+		return { address, items, subtotalAmount };
+	}
+
+	/** Kiểm tra địa chỉ giao hàng tồn tại và thuộc đúng user đang đặt hàng. Dùng chung cho cả checkout từ giỏ hàng lẫn mua ngay. */
+	private async loadOwnedShippingAddress(userId: number, shippingAddressId: number) {
+		const address = await prisma.userAddress.findUnique({ where: { id: shippingAddressId } });
+		if (!address || address.userId !== userId) {
+			throw new Error("NotFound: Địa chỉ giao hàng không tồn tại hoặc không thuộc về bạn.");
+		}
+		return address;
 	}
 
 	/** Gọi GHN để tính phí vận chuyển thực tế theo địa chỉ đích + khối lượng/kích thước thật của giỏ hàng. */

@@ -14,6 +14,7 @@ import ForgotPasswordPage from "../../pages/auth/forgot-password";
 import ResetPasswordPage from "../../pages/auth/reset-password";
 import AccountPage from "../../pages/client/account";
 import PaymentResultPage from "../../pages/client/payment-result";
+import BuyNowPage from "../../pages/client/buynow";
 
 // Error pages
 import NotFoundPage from "../../pages/404";
@@ -107,6 +108,17 @@ const router = createBrowserRouter([
 				loader: requireAuthLoader,
 				Component: PaymentPage,
 				handle: { title: "Thanh toán", crumb: () => "Thanh toán" },
+			},
+			{
+				// Mua ngay (bấm ở trang chi tiết sản phẩm): đặt hàng thẳng đúng 1 SKU, không qua giỏ
+				// hàng — xem pages/client/buy-now. Cũng yêu cầu đăng nhập như /payment; SKU + số lượng
+				// được truyền qua router state (không sống sót qua redirect đăng nhập) nên nút "Mua
+				// ngay" ở trang chi tiết sản phẩm chỉ hiện khi khách đã đăng nhập sẵn — loader này chỉ
+				// là lớp bảo vệ cuối, phòng trường hợp khách tự gõ thẳng URL.
+				path: paths.client.buyNow,
+				loader: requireAuthLoader,
+				Component: BuyNowPage,
+				handle: { title: "Mua ngay", crumb: () => "Mua ngay" },
 			},
 			{
 				path: paths.client.paymentResult,

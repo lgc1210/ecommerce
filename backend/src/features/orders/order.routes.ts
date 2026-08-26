@@ -1,9 +1,23 @@
 import { Router } from "express";
-import { checkout, previewShippingFee, listOwnOrders, getOwnOrderById, cancelOwnOrder, listOrdersAdmin, getOrderById, updateOrderStatus, receiveGhnWebhook } from "./order.controller.js";
+import {
+	checkout,
+	previewShippingFee,
+	buyNow,
+	previewBuyNowShippingFee,
+	listOwnOrders,
+	getOwnOrderById,
+	cancelOwnOrder,
+	listOrdersAdmin,
+	getOrderById,
+	updateOrderStatus,
+	receiveGhnWebhook,
+} from "./order.controller.js";
 import { validate } from "../../middlewares/validate.js";
 import {
 	CreateOrderSchema,
 	PreviewShippingFeeSchema,
+	BuyNowSchema,
+	PreviewBuyNowShippingFeeSchema,
 	ListOwnOrdersQuerySchema,
 	OrderIdParamSchema,
 	ListOrdersAdminQuerySchema,
@@ -27,6 +41,9 @@ router.post("/webhooks/ghn", validate(GhnWebhookSchema), receiveGhnWebhook);
 router.post("/", authenticateJWT, requirePermission("order:create"), validate(CreateOrderSchema), checkout);
 // Tính trước phí vận chuyển GHN theo giỏ hàng + địa chỉ, để FE hiển thị cho khách trước khi đặt hàng
 router.post("/shipping-fee", authenticateJWT, requirePermission("order:create"), validate(PreviewShippingFeeSchema), previewShippingFee);
+// Mua ngay: nút "Mua ngay" ở trang chi tiết sản phẩm -> đặt hàng thẳng với đúng 1 SKU, không qua giỏ hàng
+router.post("/buy-now", authenticateJWT, requirePermission("order:create"), validate(BuyNowSchema), buyNow);
+router.post("/buy-now/shipping-fee", authenticateJWT, requirePermission("order:create"), validate(PreviewBuyNowShippingFeeSchema), previewBuyNowShippingFee);
 router.get("/me", authenticateJWT, requirePermission("order:read"), validate(ListOwnOrdersQuerySchema), listOwnOrders);
 router.get("/me/:id", authenticateJWT, requirePermission("order:read"), validate(OrderIdParamSchema), getOwnOrderById);
 router.patch("/me/:id/cancel", authenticateJWT, requirePermission("order:create"), validate(OrderIdParamSchema), cancelOwnOrder);

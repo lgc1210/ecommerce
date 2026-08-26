@@ -11,6 +11,7 @@ const paths = Object.freeze({
 		about: "/about",
 		cart: "/cart",
 		payment: "/payment",
+		buyNow: "/buy-now",
 		paymentResult: "/payment/result",
 		shop: "/shop",
 		contact: "/contact",

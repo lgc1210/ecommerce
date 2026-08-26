@@ -163,6 +163,7 @@ model User {
   messages               Message[]
   reviewReplies          ReviewReply[]
   reviewModerationLogs   ReviewModerationLog[]
+  checkoutIdempotencyKeys CheckoutIdempotencyKey[]
 
   @@index([provider, providerId])
   @@map("users")
@@ -353,6 +354,26 @@ model Coupon {
   orders           Order[]
 
   @@map("coupons")
+}
+
+/// Gate chống double-submit cho các luồng đặt hàng KHÔNG có sẵn tài nguyên tự nhiên để làm gate
+/// (giỏ hàng thật thì dùng chính việc xoá cart item làm gate — xem OrderService.checkout()). "Mua
+/// ngay" (buyNow) không đụng tới giỏ hàng nên cần bảng riêng: FE sinh 1 `key` (UUID) duy nhất mỗi
+/// lần bấm "Đặt hàng", BE insert (userId, key) làm dòng ĐẦU TIÊN trong transaction tạo đơn — nếu
+/// trùng (unique constraint) thì chặn ngay, rollback toàn bộ, không đụng tồn kho/coupon.
+model CheckoutIdempotencyKey {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  key       String   @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, key])
+  @@map("checkout_idempotency_keys")
+  // Dọn định kỳ (cron riêng, giống order.cleanup.job.ts) các key cũ quá X giờ — key chỉ cần sống đủ
+  // lâu để chặn double-submit gần nhau, không cần giữ vĩnh viễn.
+  @@index([createdAt])
 }
 
 model Order {

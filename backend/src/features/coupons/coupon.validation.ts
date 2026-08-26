@@ -95,3 +95,7 @@ export const UpdateCouponSchema = z.object({
 			path: ["expiresAt"],
 		}),
 });
+
+export type CreateCouponInput = z.infer<typeof CreateCouponSchema>["body"];
+export type UpdateCouponInput = z.infer<typeof UpdateCouponSchema>["body"];
+export type ListCouponsParams = z.infer<typeof ListCouponsQuerySchema>["query"];

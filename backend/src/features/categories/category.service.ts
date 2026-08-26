@@ -1,30 +1,7 @@
 import prisma from "../../config/prisma.js";
 import { buildCategoryTree } from "./category.utils.js";
 import { parsePagination, slugify } from "../../utils/index.js";
-
-interface CreateCategoryInput {
-	name: string;
-	slug?: string;
-	description?: string;
-	parentId?: number | null;
-	isFeatured?: boolean;
-}
-
-interface UpdateCategoryInput {
-	name?: string;
-	slug?: string;
-	description?: string;
-	parentId?: number | null;
-	isFeatured?: boolean;
-}
-
-interface ListCategoriesParams {
-	page?: string;
-	limit?: string;
-	search?: string;
-	parentId?: string;
-	tree?: string;
-}
+import type { CreateCategoryInput, ListCategoriesParams, UpdateCategoryInput } from "./category.validation.js";
 
 const categoryListInclude = {
 	_count: { select: { subcategories: true, products: true } },

@@ -22,6 +22,33 @@ export const PreviewShippingFeeSchema = z.object({
 	}),
 });
 
+// ==========================================
+// Self-service: mua ngay (bấm "Mua ngay" ở trang chi tiết sản phẩm -> thẳng qua trang thanh
+// toán chỉ với đúng 1 SKU này, không đụng tới giỏ hàng hiện có của khách)
+// ==========================================
+export const BuyNowSchema = z.object({
+	body: z.object({
+		productSkuId: z.number().int().positive({ message: "productSkuId không hợp lệ." }),
+		quantity: z.number().int().positive({ message: "Số lượng phải lớn hơn 0." }),
+		shippingAddressId: z.number().int().positive({ message: "shippingAddressId không hợp lệ." }),
+		paymentMethod: paymentMethodEnum,
+		couponCode: z.string().min(1).max(50).optional(),
+		// FE tự sinh (vd: crypto.randomUUID()) 1 LẦN DUY NHẤT khi khách bấm "Đặt hàng" ở trang mua
+		// ngay, giữ nguyên giá trị này cho tới khi request kết thúc (kể cả khi client tự động retry
+		// do mất mạng). BE dùng giá trị này làm gate chống double-submit — xem processCheckout()
+		// trong order.service.ts.
+		idempotencyKey: z.string().min(8, { message: "idempotencyKey không hợp lệ." }).max(64),
+	}),
+});
+
+export const PreviewBuyNowShippingFeeSchema = z.object({
+	body: z.object({
+		productSkuId: z.number().int().positive({ message: "productSkuId không hợp lệ." }),
+		quantity: z.number().int().positive({ message: "Số lượng phải lớn hơn 0." }),
+		shippingAddressId: z.number().int().positive({ message: "shippingAddressId không hợp lệ." }),
+	}),
+});
+
 export const ListOwnOrdersQuerySchema = z.object({
 	query: z.object({
 		page: z.string().regex(/^\d+$/).optional(),
@@ -82,5 +109,6 @@ export const GhnWebhookSchema = z.object({
 });
 
 export type CreateOrderInput = z.infer<typeof CreateOrderSchema>["body"];
+export type BuyNowInput = z.infer<typeof BuyNowSchema>["body"];
 export type ListOwnOrdersParams = z.infer<typeof ListOwnOrdersQuerySchema>["query"];
 export type ListOrdersAdminParams = z.infer<typeof ListOrdersAdminQuerySchema>["query"];

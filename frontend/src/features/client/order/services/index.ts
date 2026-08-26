@@ -1,5 +1,5 @@
 import apiClient from "../../../../configs/apis";
-import type { CreateOrderPayload, ListMyOrdersParams, MyOrderDetail, PreviewShippingFeeResult } from "../types";
+import type { BuyNowPayload, CreateOrderPayload, ListMyOrdersParams, MyOrderDetail, PreviewShippingFeeResult } from "../types";
 
 const orderService = {
 	/** Danh sách đơn hàng của chính user hiện tại (GET /orders/me), có phân trang + lọc theo trạng thái. */
@@ -24,8 +24,15 @@ const orderService = {
 	 * Tính trước phí vận chuyển GHN theo giỏ hàng hiện tại + địa chỉ đã chọn, KHÔNG tạo đơn hàng —
 	 * dùng để hiển thị phí ship ở trang thanh toán trước khi khách xác nhận đặt hàng.
 	 */
-	previewShippingFee: (shippingAddressId: number) =>
-		apiClient.post<{ data: PreviewShippingFeeResult }>("/orders/shipping-fee", { shippingAddressId }),
+	previewShippingFee: (shippingAddressId: number) => apiClient.post<{ data: PreviewShippingFeeResult }>("/orders/shipping-fee", { shippingAddressId }),
+	// ==========================================
+	// Mua ngay — bấm "Mua ngay" ở trang chi tiết sản phẩm, đặt hàng thẳng đúng 1 SKU, không qua giỏ hàng.
+	// ==========================================
+	/** Đặt hàng mua ngay thật (backend chỉ tạo đơn với ĐÚNG 1 SKU + số lượng gửi lên, không đụng giỏ hàng của user). */
+	buyNow: (payload: BuyNowPayload) => apiClient.post<{ data: MyOrderDetail }>("/orders/buy-now", payload),
+	/** Tương tự previewShippingFee() nhưng cho đúng 1 SKU của luồng mua ngay, KHÔNG tạo đơn hàng. */
+	previewBuyNowShippingFee: (params: { productSkuId: number; quantity: number; shippingAddressId: number }) =>
+		apiClient.post<{ data: PreviewShippingFeeResult }>("/orders/buy-now/shipping-fee", params),
 };
 
 export default orderService;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../components/breadcrumb";
 import Button from "../../../components/button";
@@ -10,6 +10,7 @@ import VariationSelector from "../../../features/client/product/components/varia
 import { useProductBySlugQuery } from "../../../features/client/product/hooks";
 import { collectVariationAttributes, computePriceRange, findMatchingSku, getProductThumbnail, getSkuImages, toProductCardItem } from "../../../features/client/product/utils";
 import type { VariationDetails } from "../../../features/client/product/types";
+import type { BuyNowSnapshot } from "../../../features/client/order/types";
 import { useCart } from "../../../features/client/cart/hooks";
 import ProductCard from "../../../features/client/product/components/product-card";
 import { TabItem, Tabs } from "../../../components/tabs";
@@ -26,9 +27,9 @@ const tabs = [
 ] as const;
 
 const ProductDetailPage = () => {
-	// const navigate = useNavigate();
+	const navigate = useNavigate();
 	const { slug } = useParams<{ slug: string }>();
-	const { hash } = useLocation();
+	const { hash, key: locationKey } = useLocation();
 	const { data: product, isLoading, isError } = useProductBySlugQuery(slug);
 	const { addItem, isAuthenticated, isMutating } = useCart();
 
@@ -46,8 +47,18 @@ const ProductDetailPage = () => {
 	// để tránh gây thêm 1 vòng render/paint không cần thiết (cascading renders).
 	// Xem: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
 	const [syncedSlug, setSyncedSlug] = useState<string | undefined>(undefined);
+	// Theo dõi RIÊNG "location.key" (không phải giá trị hash) đã đồng bộ gần nhất — bắt đúng trường
+	// hợp khách đang ở SẴN trang chi tiết sản phẩm này (tab bất kỳ, không phải "Đánh giá") rồi bấm 1
+	// thông báo "shop phản hồi đánh giá" trỏ TỚI CÙNG sản phẩm đang xem: slug không đổi nên khối
+	// dưới không chạy. Dùng location.key (React Router cấp 1 key MỚI cho MỖI lần điều hướng, kể cả
+	// khi điều hướng tới URL giống hệt URL hiện tại) thay vì so sánh giá trị hash — vì nếu khách đã
+	// từng bấm đúng notification này 1 lần (hash đã là "#review-x" từ trước), rồi tự đổi sang tab
+	// khác, rồi bấm LẠI đúng notification đó, hash gửi tới sẽ giống hệt hash hiện tại (không đổi
+	// giá trị) nên so hash sẽ bỏ lỡ lần bấm thứ 2 này — so key mới bắt được mọi lần điều hướng.
+	const [syncedLocationKey, setSyncedLocationKey] = useState<string | undefined>(undefined);
 	if (product && product.slug !== syncedSlug) {
 		setSyncedSlug(product.slug);
+		setSyncedLocationKey(locationKey);
 		setSelected({});
 		setActiveImage(0);
 		setQuantity(1);
@@ -56,6 +67,14 @@ const ProductDetailPage = () => {
 		// pattern "/product/:slug", không remount), useState lazy-init phía trên KHÔNG chạy lại —
 		// phải đồng bộ activeTab ở đây, đúng lúc phát hiện slug đổi.
 		setActiveTab(hash.startsWith("#review-") ? "reviews" : "description");
+	} else if (product && locationKey !== syncedLocationKey) {
+		setSyncedLocationKey(locationKey);
+		// CHỈ ép sang tab "Đánh giá" khi lần điều hướng này trỏ tới 1 review — không tự ý đổi tab
+		// trong các trường hợp khác (vd điều hướng nội bộ khác không liên quan tới review), tránh
+		// giật tab ngoài ý muốn của khách đang thao tác trên trang.
+		if (hash.startsWith("#review-")) {
+			setActiveTab("reviews");
+		}
 	}
 
 	if (isLoading) {
@@ -119,11 +138,28 @@ const ProductDetailPage = () => {
 		if (!isAuthenticated) toast.success("Đã thêm vào giỏ hàng.");
 	};
 
-	// const handleBuyNow = () => {
-	// 	if (!isAuthenticated) return;
-	// 	handleAddToCart();
-	// 	navigate(paths.client.payment);
-	// };
+	/**
+	 * "Mua ngay" — đặt hàng thẳng đúng SKU + số lượng đang chọn, KHÔNG thêm vào giỏ hàng (khác hẳn
+	 * "Thêm vào giỏ" ở trên). Truyền snapshot qua router state sang trang /buy-now — xem giải thích
+	 * đầy đủ ở BuyNowPage. Chỉ hiện nút này khi đã đăng nhập (xem JSX bên dưới) vì router state
+	 * không sống sót qua redirect đăng nhập.
+	 */
+	const handleBuyNow = () => {
+		if (!selectedSku || !inStock) return;
+		const snapshot: BuyNowSnapshot = {
+			productSkuId: selectedSku.id,
+			productSlug: product.slug,
+			productName: product.name,
+			image: gallery[0] ?? getProductThumbnail(product),
+			sku: selectedSku.sku,
+			variationDetails: selectedSku.variationDetails,
+			price: Number(selectedSku.price),
+			oldPrice: Number(selectedSku.oldPrice ?? 0) || null,
+			stockQuantity: selectedSku.stockQuantity,
+			quantity,
+		};
+		navigate(paths.client.buyNow, { state: snapshot, viewTransition: true });
+	};
 
 	return (
 		<div>
@@ -203,11 +239,11 @@ const ProductDetailPage = () => {
 						<div className='mt-8 flex flex-wrap items-center gap-2 select-none'>
 							<QuantityStepper value={quantity} max={selectedSku?.stockQuantity ?? 1} disabled={!selectedSku || !inStock} onChange={setQuantity} />
 							<div className='flex flex-wrap gap-2'>
-								{/* {isAuthenticated && (
-									<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleBuyNow}>
-										{isMutating ? "Đang di chuyển qua trang thanh toán..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Mua ngay"}
+								{isAuthenticated && (
+									<Button type='button' variant='outline' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleBuyNow}>
+										{hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Mua ngay"}
 									</Button>
-								)} */}
+								)}
 								<Button type='button' disabled={!inStock || isMutating || !hasSelectedAllAttributes} onClick={handleAddToCart} icon={<CartIcon className='h-4 w-4' />} iconPosition='left'>
 									{isMutating ? "Đang thêm..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Thêm vào giỏ"}
 								</Button>

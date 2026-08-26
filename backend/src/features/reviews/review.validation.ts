@@ -95,3 +95,6 @@ export type CreateReviewInput = z.infer<typeof CreateReviewSchema>["body"];
 export type UpdateReviewInput = z.infer<typeof UpdateReviewSchema>["body"];
 export type ModerateReviewInput = z.infer<typeof ModerateReviewSchema>["body"];
 export type CreateReviewReplyInput = z.infer<typeof CreateReviewReplySchema>["body"];
+export type ListReviewsByProductParams = z.infer<typeof ListReviewsByProductQuerySchema>["query"];
+export type ListMyReviewsParams = z.infer<typeof ListMyReviewsQuerySchema>["query"];
+export type ListReviewsAdminParams = z.infer<typeof ListReviewsAdminQuerySchema>["query"];

@@ -4,38 +4,7 @@ import { parsePagination } from "../../utils/index.js";
 import { WELCOME_COUPON } from "./coupon.constant.js";
 import { normalizeCouponCode, normalizeEmail, generateWelcomeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "./coupon.utils.js";
 import { DiscountType } from "../../generated/prisma/index.js";
-
-interface CreateCouponInput {
-	code: string;
-	discountType: DiscountType;
-	discountValue: number;
-	minOrderValue?: number;
-	maxDiscountValue?: number | null;
-	startsAt: string;
-	expiresAt: string;
-	usageLimit?: number | null;
-	isActive?: boolean;
-}
-
-interface UpdateCouponInput {
-	code?: string;
-	discountType?: DiscountType;
-	discountValue?: number;
-	minOrderValue?: number;
-	maxDiscountValue?: number | null;
-	startsAt?: string;
-	expiresAt?: string;
-	usageLimit?: number | null;
-	isActive?: boolean;
-}
-
-interface ListCouponsParams {
-	page?: string;
-	limit?: string;
-	search?: string;
-	isActive?: string;
-	discountType?: string;
-}
+import type { CreateCouponInput, ListCouponsParams, UpdateCouponInput } from "./coupon.validation.js";
 
 class CouponService {
 	// ==========================================

@@ -4,7 +4,15 @@ import { reviewSort } from "./review.constant.js";
 import { roundRating } from "./review.utils.js";
 import { OrderStatus } from "../../generated/prisma/index.js";
 import notificationService from "../notifications/notification.service.js";
-import type { CreateReviewInput, UpdateReviewInput, ModerateReviewInput, CreateReviewReplyInput } from "./review.validation.js";
+import type {
+	CreateReviewInput,
+	UpdateReviewInput,
+	ModerateReviewInput,
+	CreateReviewReplyInput,
+	ListReviewsByProductParams,
+	ListMyReviewsParams,
+	ListReviewsAdminParams,
+} from "./review.validation.js";
 
 /** Số ngày kể từ khi đơn hàng "delivered" mà user còn được phép viết đánh giá. */
 const REVIEW_ELIGIBLE_WINDOW_DAYS = 30;
@@ -16,28 +24,6 @@ function isWithinReviewWindow(deliveredAt: Date | null): boolean {
 	if (!deliveredAt) return false;
 	const deadline = new Date(deliveredAt.getTime() + REVIEW_ELIGIBLE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 	return new Date() <= deadline;
-}
-
-interface ListReviewsByProductParams {
-	page?: string;
-	limit?: string;
-	rating?: string;
-	sort?: string;
-}
-
-interface ListMyReviewsParams {
-	page?: string;
-	limit?: string;
-}
-
-interface ListReviewsAdminParams {
-	page?: string;
-	limit?: string;
-	productId?: string;
-	userId?: string;
-	rating?: string;
-	isVisible?: string;
-	search?: string;
 }
 
 const reviewWithUserInclude = {
