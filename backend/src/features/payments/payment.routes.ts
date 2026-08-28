@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getOwnPayment, confirmOwnPayment, listPaymentsAdmin, getPaymentById, updatePaymentStatus } from "./payment.controller.js";
+import { getOwnPayment, confirmOwnPayment, listPaymentsAdmin, getPaymentById, updatePaymentStatus, changeOwnPaymentMethod } from "./payment.controller.js";
 import { createPaymentUrl, handleVnpayReturn, handleVnpayIpn, handleZalopayCallback } from "./payment-gateway.controller.js";
 import { validate } from "../../middlewares/validate.js";
-import { OwnPaymentParamSchema, ConfirmOwnPaymentSchema, ListPaymentsAdminQuerySchema, PaymentIdParamSchema, UpdatePaymentStatusSchema } from "./payment.validation.js";
+import { OwnPaymentParamSchema, ConfirmOwnPaymentSchema, ListPaymentsAdminQuerySchema, PaymentIdParamSchema, UpdatePaymentStatusSchema, ChangeOwnPaymentMethodSchema } from "./payment.validation.js";
 import { authenticateJWT } from "../../middlewares/authenticate.js";
 import { requirePermission } from "../../middlewares/rbac.js";
 
@@ -23,6 +23,12 @@ router.post("/zalopay/callback", handleZalopayCallback);
 // ==========================================
 router.get("/me/:orderId", authenticateJWT, requirePermission("order:read"), validate(OwnPaymentParamSchema), getOwnPayment);
 router.post("/me/:orderId/confirm", authenticateJWT, requirePermission("order:create"), validate(ConfirmOwnPaymentSchema), confirmOwnPayment);
+
+// MỚI — đổi phương thức thanh toán cho đơn của chính mình — chỉ khi đơn còn "pending" và (COD, hoặc
+// online nhưng chưa thanh toán thành công). Dùng "order:create" (không phải "payment:manage" — quyền
+// đó chỉ admin có) vì đây là thao tác tự phục vụ của khách trên đơn hàng của chính họ.
+router.patch("/me/:orderId/method", authenticateJWT, requirePermission("order:create"), validate(ChangeOwnPaymentMethodSchema), changeOwnPaymentMethod);
+
 // Tạo URL thanh toán qua cổng online (VNPay/ZaloPay/...) cho đơn của chính mình — gateway suy ra
 // từ payment.paymentMethod đã chốt lúc checkout, khách không tự chọn lại ở bước này.
 router.post("/me/:orderId/pay", authenticateJWT, requirePermission("order:create"), validate(OwnPaymentParamSchema), createPaymentUrl);

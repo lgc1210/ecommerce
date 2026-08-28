@@ -16,15 +16,22 @@ export const getOwnPayment = async (req: AuthenticatedRequest, res: Response, ne
 	}
 };
 
-export const confirmOwnPayment = async (
-	req: AuthenticatedRequest,
-	res: Response,
-	next: NextFunction,
-): Promise<void> => {
+export const confirmOwnPayment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const orderId = Number(req.params.orderId);
 		const payment = await paymentService.confirmOwnPayment(req.user!.id, orderId, req.body.transactionId);
 		res.status(200).json({ message: "Xác nhận thanh toán thành công.", data: payment });
+	} catch (error) {
+		handleServiceError(error, res, next);
+	}
+};
+
+/** Khách đổi phương thức thanh toán cho đơn của chính mình — chỉ khi đơn còn "pending" và chưa thanh toán online thành công (xem payment.service.ts -> changeOwnPaymentMethod). */
+export const changeOwnPaymentMethod = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+	try {
+		const orderId = Number(req.params.orderId);
+		const payment = await paymentService.changeOwnPaymentMethod(req.user!.id, orderId, req.body.paymentMethod);
+		res.status(200).json({ message: "Đã đổi phương thức thanh toán.", data: payment });
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}

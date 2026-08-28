@@ -100,6 +100,11 @@ const envSchema = z.object({
 		.string()
 		.default("5")
 		.transform((val) => parseInt(val, 10)),
+
+	// MỚI — Job định kỳ retry tạo vận đơn GHN cho các đơn đã thanh toán online "completed" nhưng
+	// vẫn chưa có ghnOrderCode (lần tạo lúc IPN xử lý trước đó thất bại, vd GHN timeout tạm thời —
+	// xem order.service.ts -> retryPendingGhnShipments()). Mặc định chạy mỗi 15 phút.
+	GHN_SHIPMENT_RETRY_CRON: z.string().default("*/15 * * * *"),
 });
 
 // 3. Validate process.env variables against our Zod schema structural definition

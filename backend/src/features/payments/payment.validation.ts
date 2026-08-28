@@ -3,7 +3,7 @@ import { PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
 import { numericIdString } from "../../shared/validation.js";
 
 const paymentStatusEnum = z.enum([PaymentStatus.pending, PaymentStatus.completed, PaymentStatus.failed, PaymentStatus.refunded]);
-const paymentMethodEnum = z.enum([PaymentMethod.cod, PaymentMethod.vnpay, PaymentMethod.momo, PaymentMethod.stripe, PaymentMethod.paypal]);
+const paymentMethodEnum = z.enum([PaymentMethod.cod, PaymentMethod.vnpay, PaymentMethod.zalopay, PaymentMethod.momo, PaymentMethod.stripe, PaymentMethod.paypal]);
 
 // ==========================================
 // Self-service: xem & xác nhận thanh toán đơn của chính mình
@@ -16,6 +16,19 @@ export const ConfirmOwnPaymentSchema = z.object({
 	params: z.object({ orderId: numericIdString }),
 	body: z.object({
 		transactionId: z.string().min(1).max(255).optional(),
+	}),
+});
+
+/**
+ * Đổi phương thức thanh toán cho đơn của chính khách — dùng ĐẦY ĐỦ danh sách PaymentMethod (kể cả
+ * zalopay, khác với `paymentMethodEnum` phía trên đang thiếu zalopay) để khớp với danh sách khách
+ * chọn lúc checkout (xem order.validation.ts). service tự kiểm tra điều kiện được phép đổi hay không.
+ */
+
+export const ChangeOwnPaymentMethodSchema = z.object({
+	params: z.object({ orderId: numericIdString }),
+	body: z.object({
+		paymentMethod: paymentMethodEnum,
 	}),
 });
 

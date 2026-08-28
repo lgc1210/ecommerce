@@ -399,8 +399,72 @@ class OrderService {
 		if (order.orderStatus !== OrderStatus.pending) {
 			throw new Error('BadRequest: Chỉ có thể hủy đơn hàng khi đơn đang ở trạng thái "pending".');
 		}
-
 		return this.transitionOrderStatus(order, OrderStatus.cancelled);
+	}
+
+	/**
+	 * Tạo vận đơn GHN thật SAU KHI thanh toán online đã "completed" (gọi từ payment.service.ts, hoặc
+	 * từ retryPendingGhnShipments() bên dưới nếu lần gọi lúc IPN trước đó thất bại). Không thu COD vì
+	 * tiền đã thu qua cổng thanh toán.
+	 */
+	async createShipmentAfterPayment(orderId: number) {
+		await this.createGhnShipmentForOrder(orderId, false);
+	}
+
+	/**
+	 * MỚI — Tạo vận đơn GHN thu hộ COD cho 1 đơn đang "pending" — dùng khi khách đổi phương thức
+	 * thanh toán từ online sang COD (xem payment.service.ts -> changeOwnPaymentMethod()). Đơn online
+	 * chưa thanh toán thì CHƯA từng có vận đơn nào (chỉ tạo sau khi "completed", xem
+	 * createShipmentAfterPayment) nên gọi thẳng hàm này là an toàn, không đụng vận đơn cũ nào.
+	 */
+	async createCodShipmentForOrder(orderId: number) {
+		await this.createGhnShipmentForOrder(orderId, true);
+	}
+
+	/**
+	 * MỚI — Hủy vận đơn GHN thu hộ COD đã tạo sẵn lúc checkout() + xoá ghnOrderCode/ghnStatus khỏi
+	 * đơn — dùng khi khách đổi phương thức thanh toán từ COD sang thanh toán online (xem
+	 * payment.service.ts -> changeOwnPaymentMethod()). PHẢI hủy vận đơn COD cũ trước khi cho đổi, nếu
+	 * không GHN vẫn thu hộ tiền mặt lúc giao dù khách đã trả tiền qua cổng online. Nếu GHN từ chối hủy
+	 * (đã lấy hàng/đang giao) thì ném lỗi lên cho caller, KHÔNG cho đổi phương thức thanh toán nữa —
+	 * giữ đồng bộ với vận đơn thật đang chạy bên GHN (cùng tinh thần với transitionOrderStatus() -> hủy đơn).
+	 */
+	async cancelCodShipmentForPaymentMethodChange(orderId: number, ghnOrderCode: string): Promise<void> {
+		await cancelShippingOrder(ghnOrderCode);
+		await prisma.order.update({ where: { id: orderId }, data: { ghnOrderCode: null, ghnStatus: null } });
+	}
+
+	/**
+	 * MỚI — Job định kỳ (xem cronjob/index.ts): quét các đơn đã thanh toán online "completed" nhưng
+	 * vẫn chưa có vận đơn GHN — tức lần tạo vận đơn lúc IPN xử lý thành công trước đó đã thất bại (vd
+	 * lỗi tạm thời phía GHN như timeout nội bộ "context deadline exceeded", xem payment.service.ts ->
+	 * transitionStatus). Bổ sung cho lớp retry-tức-thời đã có sẵn trong ghn.service.ts (chỉ cứu được
+	 * lỗi thoáng qua trong vài giây); job này xử lý các lỗi kéo dài hơn (GHN gián đoạn nhiều phút/giờ)
+	 * mà retry tức thời không cứu được, tránh phải chờ admin can thiệp thủ công cho MỌI trường hợp.
+	 * Không nhắm tới đơn "cancelled" (đã hoàn tiền/hủy thì không cần vận đơn nữa).
+	 */
+	async retryPendingGhnShipments() {
+		const staleOrders = await prisma.order.findMany({
+			where: {
+				ghnOrderCode: null,
+				orderStatus: { not: OrderStatus.cancelled },
+				payment: { paymentStatus: PaymentStatus.completed },
+			},
+			select: { id: true, orderNumber: true },
+		});
+
+		let succeeded = 0;
+		for (const order of staleOrders) {
+			try {
+				await this.createShipmentAfterPayment(order.id);
+				succeeded++;
+				console.log(`[ghn-retry] Đã tạo lại vận đơn GHN thành công cho đơn ${order.orderNumber}.`);
+			} catch (error: any) {
+				console.error(`[ghn-retry] Vẫn chưa tạo được vận đơn GHN cho đơn ${order.orderNumber}:`, error?.message ?? error);
+			}
+		}
+
+		return { scanned: staleOrders.length, succeeded };
 	}
 
 	// ==========================================
@@ -472,53 +536,6 @@ class OrderService {
 		} else {
 			await prisma.order.update({ where: { id: order.id }, data: { ghnStatus } });
 		}
-	}
-
-	// ==========================================
-	// Được gọi từ payment.service.ts sau khi có kết quả thanh toán online (IPN)
-	// ==========================================
-	/**
-	 * Tạo vận đơn GHN thật SAU KHI thanh toán online đã "completed" (gọi từ payment.service.ts).
-	 * Idempotent: bỏ qua nếu đơn đã có ghnOrderCode (IPN có thể gọi lại nhiều lần). Không thu COD
-	 * vì tiền đã thu qua cổng thanh toán. Lỗi ở đây KHÔNG được rollback thanh toán (tiền đã thu
-	 * thật) — ném lỗi để caller tự log lại, xử lý thủ công (không có transaction bao ngoài).
-	 */
-	async createShipmentAfterPayment(orderId: number) {
-		const order = await prisma.order.findUnique({
-			where: { id: orderId },
-			include: { ...orderItemInclude, shippingAddress: true },
-		});
-		if (!order || order.ghnOrderCode) return;
-
-		if (!order.shippingAddress) {
-			throw new Error(`Config: Đơn hàng #${order.orderNumber} không còn địa chỉ giao hàng hợp lệ, không thể tạo vận đơn.`);
-		}
-		const items = order.items.filter((item): item is typeof item & { productSku: NonNullable<typeof item.productSku> } => item.productSku !== null);
-		if (items.length !== order.items.length) {
-			throw new Error(`Config: Đơn hàng #${order.orderNumber} có sản phẩm đã bị xóa khỏi hệ thống, không thể tự tạo vận đơn.`);
-		}
-
-		const cartPackage = computeCartPackage(items);
-		const shipment = await createShippingOrder({
-			clientOrderCode: order.orderNumber,
-			toName: order.shippingAddress.recipientName,
-			toPhone: order.shippingAddress.phoneNumber,
-			toAddress: order.shippingAddress.addressLine,
-			toWardCode: order.shippingAddress.wardCode,
-			toDistrictId: order.shippingAddress.districtId,
-			codAmount: 0,
-			insuranceValue: Number(order.subtotalAmount),
-			items: items.map((item) => ({
-				name: item.productSku.product?.name ?? item.productSku.sku,
-				quantity: item.quantity,
-			})),
-			...cartPackage,
-		});
-
-		await prisma.order.update({
-			where: { id: order.id },
-			data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
-		});
 	}
 
 	/**
@@ -710,6 +727,7 @@ class OrderService {
 						});
 					}
 				}
+
 				if (order.couponId) {
 					await tx.coupon.update({
 						where: { id: order.couponId },
@@ -756,6 +774,57 @@ class OrderService {
 			throw new Error("NotFound: Đơn hàng không tồn tại.");
 		}
 		return order;
+	}
+
+	// ==========================================
+	// Được gọi từ payment.service.ts sau khi có kết quả thanh toán online (IPN), hoặc khi khách đổi
+	// phương thức thanh toán (xem thêm createCodShipmentForOrder/cancelCodShipmentForPaymentMethodChange)
+	// ==========================================
+
+	/**
+	 * Lõi dùng chung để tạo vận đơn GHN thật cho 1 đơn đã tồn tại (KHÔNG phải lúc checkout — lúc đó
+	 * dùng nhánh riêng trong processCheckout() vì cần chạy chung transaction với trừ kho). Idempotent:
+	 * bỏ qua nếu đơn đã có ghnOrderCode (IPN/retry job có thể gọi lại nhiều lần). `collectCod` quyết
+	 * định GHN có thu hộ tiền mặt lúc giao hay không — false cho đơn đã thanh toán online, true cho
+	 * đơn COD (tiền chưa thu, GHN thu hộ khi giao). Lỗi ở đây KHÔNG có transaction bao ngoài — caller
+	 * tự quyết định xử lý lỗi thế nào (xem createShipmentAfterPayment/createCodShipmentForOrder).
+	 */
+	private async createGhnShipmentForOrder(orderId: number, collectCod: boolean) {
+		const order = await prisma.order.findUnique({
+			where: { id: orderId },
+			include: { ...orderItemInclude, shippingAddress: true },
+		});
+		if (!order || order.ghnOrderCode) return; // idempotent
+
+		if (!order.shippingAddress) {
+			throw new Error(`Config: Đơn hàng #${order.orderNumber} không còn địa chỉ giao hàng hợp lệ, không thể tạo vận đơn.`);
+		}
+		const items = order.items.filter((item): item is typeof item & { productSku: NonNullable<typeof item.productSku> } => item.productSku !== null);
+		if (items.length !== order.items.length) {
+			throw new Error(`Config: Đơn hàng #${order.orderNumber} có sản phẩm đã bị xóa khỏi hệ thống, không thể tự tạo vận đơn.`);
+		}
+
+		const cartPackage = computeCartPackage(items);
+		const shipment = await createShippingOrder({
+			clientOrderCode: order.orderNumber,
+			toName: order.shippingAddress.recipientName,
+			toPhone: order.shippingAddress.phoneNumber,
+			toAddress: order.shippingAddress.addressLine,
+			toWardCode: order.shippingAddress.wardCode,
+			toDistrictId: order.shippingAddress.districtId,
+			codAmount: collectCod ? Number(order.totalAmount) : 0,
+			insuranceValue: Number(order.subtotalAmount),
+			items: items.map((item) => ({
+				name: item.productSku.product?.name ?? item.productSku.sku,
+				quantity: item.quantity,
+			})),
+			...cartPackage,
+		});
+
+		await prisma.order.update({
+			where: { id: order.id },
+			data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
+		});
 	}
 }
 

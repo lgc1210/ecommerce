@@ -15,7 +15,14 @@ const paymentDetailInclude = {
 			totalAmount: true,
 			userId: true,
 			couponId: true,
-			user: { select: { id: true, name: true, email: true } },
+			ghnOrderCode: true,
+			user: {
+				select: {
+					id: true,
+					name: true,
+					email: true,
+				},
+			},
 		},
 	},
 };
@@ -44,7 +51,79 @@ class PaymentService {
 		if (payment.paymentMethod === PaymentMethod.cod) {
 			throw new Error("BadRequest: Đơn hàng thanh toán khi nhận hàng (COD) không cần xác nhận thanh toán online.");
 		}
+		if (payment.order.orderStatus === OrderStatus.cancelled) {
+			throw new Error("BadRequest: Đơn hàng này đã bị hủy, không thể xác nhận thanh toán.");
+		}
 		return this.transitionStatus(payment, PaymentStatus.completed, transactionId);
+	}
+
+	/**
+	 * Khách đổi phương thức thanh toán cho đơn của chính mình — CHỈ khi đơn còn "pending" (chưa được
+	 * duyệt/xử lý) VÀ (phương thức hiện tại là COD, HOẶC là online nhưng chưa thanh toán "completed").
+	 * - COD -> online: đơn COD đã có sẵn vận đơn GHN thu hộ tiền mặt (tạo ngay lúc checkout()) -> phải
+	 *   hủy vận đơn đó trước, nếu không GHN vẫn thu COD dù khách trả tiền qua cổng online. Vận đơn thật
+	 *   sự chỉ được tạo lại sau khi thanh toán online "completed" (xem createShipmentAfterPayment()).
+	 * - online -> COD: đơn online chưa thanh toán thì CHƯA có vận đơn nào (xem checkout()) -> tạo vận
+	 *   đơn COD ngay, giống hệt nhánh COD lúc checkout(). Nếu GHN lỗi ở bước này, rollback lại đúng
+	 *   phương thức/trạng thái thanh toán cũ — không để đơn ở trạng thái "COD nhưng chưa có vận đơn"
+	 *   mập mờ, khách có thể thử đổi lại ngay.
+	 * - online -> online khác (vd vnpay -> zalopay): không đụng gì tới GHN, chỉ đổi paymentMethod.
+	 * "failed" được reset về "pending" khi đổi phương thức — đổi phương thức nghĩa là 1 lượt thử
+	 * thanh toán mới, khách cần tạo được giao dịch mới qua cổng vừa chọn (payment.utils.ts cho phép
+	 * failed -> pending).
+	 */
+	async changeOwnPaymentMethod(userId: number, orderId: number, newMethod: PaymentMethod) {
+		const payment = await this.getPaymentByOrderOrThrow(orderId);
+		if (payment.order.userId !== userId) {
+			throw new Error("NotFound: Không tìm thấy thông tin thanh toán cho đơn hàng này.");
+		}
+		if (payment.order.orderStatus !== OrderStatus.pending) {
+			throw new Error('BadRequest: Chỉ có thể đổi phương thức thanh toán khi đơn hàng đang ở trạng thái "chờ xử lý".');
+		}
+		const isCurrentlyCod = payment.paymentMethod === PaymentMethod.cod;
+		if (!isCurrentlyCod && payment.paymentStatus === PaymentStatus.completed) {
+			throw new Error("BadRequest: Đơn hàng đã thanh toán thành công, không thể đổi phương thức thanh toán.");
+		}
+		if (payment.paymentStatus === PaymentStatus.refunded) {
+			throw new Error("BadRequest: Đơn hàng đã được hoàn tiền, không thể đổi phương thức thanh toán.");
+		}
+		if (payment.paymentMethod === newMethod) {
+			return payment; // no-op, khỏi làm gì thêm
+		}
+
+		const willBeCod = newMethod === PaymentMethod.cod;
+
+		// COD -> online: hủy vận đơn COD cũ TRƯỚC. Nếu GHN từ chối hủy (đã lấy hàng) thì dừng lại ở
+		// đây luôn (ném lỗi), CHƯA đổi gì trong DB cả.
+		if (isCurrentlyCod && !willBeCod && payment.order.ghnOrderCode) {
+			await orderService.cancelCodShipmentForPaymentMethodChange(payment.order.id, payment.order.ghnOrderCode);
+		}
+
+		const updated = await prisma.payment.update({
+			where: { id: payment.id },
+			data: {
+				paymentMethod: newMethod,
+				...(payment.paymentStatus === PaymentStatus.failed ? { paymentStatus: PaymentStatus.pending } : {}),
+			},
+			include: paymentDetailInclude,
+		});
+
+		// online -> COD: đơn online chưa thanh toán thì chưa có vận đơn nào -> tạo vận đơn COD ngay.
+		if (!isCurrentlyCod && willBeCod) {
+			try {
+				await orderService.createCodShipmentForOrder(payment.order.id);
+			} catch (error) {
+				// Tạo vận đơn COD thất bại -> rollback lại đúng phương thức/trạng thái thanh toán cũ,
+				// không để đơn "kẹt" ở COD mà không có vận đơn nào.
+				await prisma.payment.update({
+					where: { id: payment.id },
+					data: { paymentMethod: payment.paymentMethod, paymentStatus: payment.paymentStatus },
+				});
+				throw error;
+			}
+		}
+
+		return updated;
 	}
 
 	// ==========================================
@@ -61,6 +140,13 @@ class PaymentService {
 		}
 		if (payment.paymentStatus === PaymentStatus.completed || payment.paymentStatus === PaymentStatus.refunded) {
 			throw new Error(`BadRequest: Đơn hàng này đã ở trạng thái thanh toán "${payment.paymentStatus}", không thể tạo giao dịch mới.`);
+		}
+		// Đơn hủy thì paymentStatus bị chuyển về "failed" (xem
+		// order.service.ts -> transitionOrderStatus), mà "failed" KHÔNG nằm trong check phía trên
+		// (failed -> pending vẫn hợp lệ để retry thanh toán bình thường) nên trước đây lọt qua được,
+		// khách vẫn tạo được URL thanh toán mới cho 1 đơn đã hủy (tồn kho đã hoàn, vận đơn GHN đã hủy).
+		if (payment.order.orderStatus === OrderStatus.cancelled) {
+			throw new Error("BadRequest: Đơn hàng này đã bị hủy, không thể thanh toán. Vui lòng đặt lại đơn hàng mới.");
 		}
 		return payment;
 	}
@@ -143,7 +229,11 @@ class PaymentService {
 	// Helpers
 	// ==========================================
 	private async transitionStatus(
-		payment: { id: number; paymentStatus: string; order: { id: number; orderNumber: string; couponId: number | null; orderStatus: string } },
+		payment: {
+			id: number;
+			paymentStatus: string;
+			order: { id: number; orderNumber: string; userId: number | null; couponId: number | null; orderStatus: string };
+		},
 		nextStatus: PaymentStatus,
 		transactionId?: string,
 	) {
@@ -151,6 +241,15 @@ class PaymentService {
 
 		if (!isValidPaymentStatusTransition(currentStatus, nextStatus)) {
 			throw new Error(`BadRequest: Không thể chuyển trạng thái thanh toán từ "${currentStatus}" sang "${nextStatus}".`);
+		}
+
+		// MỚI — phòng thủ thêm 1 lớp nữa (ngoài check ở getGatewayPaymentContext/confirmOwnPayment):
+		// đơn đã bị hủy thì KHÔNG được phép hoàn tất thanh toán trong bất kỳ trường hợp nào, kể cả khi
+		// 1 IPN hợp lệ tới muộn (race condition: khách hủy đơn đúng lúc IPN đang bay tới) hoặc staff
+		// cập nhật thủ công nhầm. Không áp dụng cho "failed"/"refunded" vì đơn hủy vẫn hợp lệ chuyển
+		// các trạng thái đó (dọn payment "pending" mồ côi, hoặc hoàn tiền 1 đơn lỡ đã completed trước hủy).
+		if (nextStatus === PaymentStatus.completed && payment.order.orderStatus === OrderStatus.cancelled) {
+			throw new Error("BadRequest: Đơn hàng này đã bị hủy, không thể hoàn tất thanh toán.");
 		}
 
 		const result = await prisma.$transaction(async (tx) => {
@@ -223,6 +322,23 @@ class PaymentService {
 		// gateway báo thất bại hoặc staff tự cập nhật thủ công). Best-effort, không rollback payment.
 		if (nextStatus === PaymentStatus.failed) {
 			await notificationService.notifyAdminPaymentFailed(payment.order.id, payment.order.orderNumber);
+		}
+
+		// MỚI — thông báo cho CHÍNH KHÁCH biết kết quả thanh toán. Trước đây các hàm
+		// notifyPaymentCompleted/notifyPaymentFailed/notifyPaymentRefunded (notification.service.ts)
+		// đã được viết sẵn nhưng CHƯA TỪNG được gọi ở đâu, nên khách hàng không hề nhận được thông báo
+		// "Thanh toán thành công/thất bại/Hoàn tiền" — thông báo duy nhất họ thấy là "Đặt hàng thành
+		// công" bắn lúc tạo đơn (checkout(), TRƯỚC khi thanh toán), dễ gây hiểu lầm là đơn đã thanh
+		// toán xong dù DB vẫn "pending". Best-effort (try/catch riêng trong dispatch() của
+		// notification.service), không được phép làm fail luồng thanh toán chính.
+		if (payment.order.userId) {
+			if (nextStatus === PaymentStatus.completed) {
+				await notificationService.notifyPaymentCompleted(payment.order.userId, payment.order.id, payment.order.orderNumber);
+			} else if (nextStatus === PaymentStatus.failed) {
+				await notificationService.notifyPaymentFailed(payment.order.userId, payment.order.id, payment.order.orderNumber);
+			} else if (nextStatus === PaymentStatus.refunded) {
+				await notificationService.notifyPaymentRefunded(payment.order.userId, payment.order.id, payment.order.orderNumber);
+			}
 		}
 
 		return result;

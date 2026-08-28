@@ -5,7 +5,8 @@ import { userSeed } from "./features/users/user.seed.js";
 import { productSeed } from "./features/products/product.seed.js";
 import { couponSeed } from "./features/coupons/coupon.seed.js";
 import { categorySeed } from "./features/categories/category.seed.js";
-import { startOrderCleanupJob } from "./cronjob/index.js";
+import { startOrderCleanupJob } from "./cronjob/order/index.js";
+import { startGhnShipmentRetryJob } from "./cronjob/payment/index.js";
 
 async function bootstrap(): Promise<void> {
 	try {
@@ -37,6 +38,8 @@ async function bootstrap(): Promise<void> {
 
 		// 2.1. Bắt đầu job nền dọn đơn "pending" thanh toán online quá hạn (xem order.cleanup.job.ts)
 		startOrderCleanupJob();
+		// 2.2. MỚI — Bắt đầu job nền retry tạo vận đơn GHN cho đơn thiếu vận đơn (xem cronjob/index.ts)
+		startGhnShipmentRetryJob();
 
 		// 3. Graceful Shutdown handlers (Ensures database connections close cleanly if server stops)
 		const handleSignal = async (signal: string) => {

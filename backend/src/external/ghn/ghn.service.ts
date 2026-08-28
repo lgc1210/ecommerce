@@ -1,5 +1,6 @@
 import { ghnClient } from "../../config/axios.js";
 import { env } from "../../config/dotenv.js";
+import { sleep } from "../../utils/index.js";
 import { GHN_MAX_INSURANCE_VALUE } from "./ghn.constant.js";
 
 interface GHNServiceOption {
@@ -116,6 +117,31 @@ interface CreateShippingOrderResult {
 	expectedDeliveryTime: string | null;
 }
 
+// Retry lỗi TẠM THỜI khi tạo vận đơn: bản thân GHN đôi khi timeout ở tầng nội bộ của họ (vd log lỗi
+// thực tế gặp phải: "Lưu dữ liệu nhạy cảm thất bại: ... context deadline exceeded (Client.Timeout
+// exceeded while awaiting headers)") — đây là lỗi thoáng qua phía GHN, không phải do dữ liệu đơn sai,
+// nên thử lại ngay thường sẽ thành công mà không cần đợi tới job dọn dẹp định kỳ (xem
+// order.service.ts -> retryPendingGhnShipments(), lớp retry thứ 2 cho các lỗi kéo dài hơn vài giây).
+const GHN_CREATE_ORDER_MAX_ATTEMPTS = 3; // 1 lần gọi gốc + tối đa 2 lần thử lại
+const GHN_CREATE_ORDER_RETRY_DELAY_MS = 1000;
+
+/**
+ * Nhận diện lỗi TẠM THỜI (đáng để thử lại) khác với lỗi NGHIỆP VỤ (dữ liệu đơn sai, địa chỉ không
+ * hợp lệ, ...) — loại sau thử lại bao nhiêu lần cũng sẽ lỗi y hệt nên không nên retry, chỉ tổ giữ
+ * request lâu hơn vô ích:
+ *  - Không có `error.response` (lỗi mạng/timeout của chính axios) -> luôn coi là tạm thời.
+ *  - GHN trả về HTTP 5xx (lỗi hạ tầng phía họ).
+ *  - Message GHN trả về khớp các cụm từ đặc trưng cho sự cố hạ tầng tạm thời (timeout nội bộ, quá
+ *    tải) — GHN vẫn trả HTTP 200 kèm code lỗi trong body cho nhiều loại lỗi, nên không thể chỉ dựa
+ *    vào status code.
+ */
+function isTransientGhnError(error: any): boolean {
+	if (!error?.response) return true;
+	if (error.response.status >= 500) return true;
+	const ghnMessage: string = error.response.data?.message ?? "";
+	return /context deadline exceeded|deadline exceeded|timeout|time out|quá tải|thử lại sau/i.test(ghnMessage);
+}
+
 /**
  * Tạo đơn vận chuyển thật bên GHN (v2/shipping-order/create) ngay sau khi đơn hàng được tạo thành
  * công trong hệ thống — 2 việc này PHẢI đi cùng nhau (xem order.service.ts checkout(), nơi hàm
@@ -140,48 +166,63 @@ export async function createShippingOrder({
 	insuranceValue,
 	items,
 }: CreateShippingOrderInput): Promise<CreateShippingOrderResult> {
-	try {
-		const serviceId = await getServiceId(toDistrictId);
+	let lastError: any;
 
-		const response = await ghnClient.post(`${env.GHN_API_URL}/v2/shipping-order/create`, {
-			client_order_code: clientOrderCode,
-			// payment_type_id: 1 = shop tự trả phí ship cho GHN (đối soát riêng với GHN hàng tháng),
-			// vì phí ship đã được thu từ khách ngay trong tổng tiền đơn hàng (Order.totalAmount).
-			payment_type_id: 1,
-			required_note: "CHOXEMHANGKHONGTHU",
-			service_id: serviceId,
-			to_name: toName,
-			to_phone: toPhone,
-			to_address: toAddress,
-			to_ward_code: toWardCode,
-			to_district_id: toDistrictId,
-			cod_amount: Math.round(codAmount),
-			insurance_value: Math.min(Math.max(insuranceValue, 0), GHN_MAX_INSURANCE_VALUE),
-			content: `Đơn hàng ${clientOrderCode}`,
-			weight: weightGram,
-			length: lengthCm,
-			width: widthCm,
-			height: heightCm,
-			items: items.map((item) => ({ name: item.name, quantity: item.quantity })),
-		});
+	// MỚI — vòng lặp retry bao quanh toàn bộ logic gọi GHN cũ (getServiceId + post create)
+	for (let attempt = 1; attempt <= GHN_CREATE_ORDER_MAX_ATTEMPTS; attempt++) {
+		try {
+			const serviceId = await getServiceId(toDistrictId);
 
-		const orderCode = response.data?.data?.order_code;
-		if (typeof orderCode !== "string" || !orderCode) {
-			throw new Error("BadRequest: Không nhận được mã vận đơn hợp lệ từ Giao Hàng Nhanh.");
+			const response = await ghnClient.post(`${env.GHN_API_URL}/v2/shipping-order/create`, {
+				client_order_code: clientOrderCode,
+				payment_type_id: 1,
+				required_note: "CHOXEMHANGKHONGTHU",
+				service_id: serviceId,
+				to_name: toName,
+				to_phone: toPhone,
+				to_address: toAddress,
+				to_ward_code: toWardCode,
+				to_district_id: toDistrictId,
+				cod_amount: Math.round(codAmount),
+				insurance_value: Math.min(Math.max(insuranceValue, 0), GHN_MAX_INSURANCE_VALUE),
+				content: `Đơn hàng ${clientOrderCode}`,
+				weight: weightGram,
+				length: lengthCm,
+				width: widthCm,
+				height: heightCm,
+				items: items.map((item) => ({ name: item.name, quantity: item.quantity })),
+			});
+
+			const orderCode = response.data?.data?.order_code;
+			if (typeof orderCode !== "string" || !orderCode) {
+				throw new Error("BadRequest: Không nhận được mã vận đơn hợp lệ từ Giao Hàng Nhanh.");
+			}
+
+			return { orderCode, expectedDeliveryTime: response.data?.data?.expected_delivery_time ?? null };
+		} catch (error: any) {
+			lastError = error;
+
+			// Lỗi đã được chuẩn hóa ở nhánh "orderCode không hợp lệ" phía trên -> lỗi nghiệp vụ rõ ràng,
+			// không phải lỗi tạm thời -> không retry.
+			const isNormalizedBusinessError = error instanceof Error && /^(BadRequest|NotFound|Config):/.test(error.message);
+
+			if (!isNormalizedBusinessError && isTransientGhnError(error) && attempt < GHN_CREATE_ORDER_MAX_ATTEMPTS) {
+				console.warn(
+					`[ghn] Tạo vận đơn thất bại tạm thời (lần ${attempt}/${GHN_CREATE_ORDER_MAX_ATTEMPTS}) cho đơn ${clientOrderCode}, thử lại sau ${GHN_CREATE_ORDER_RETRY_DELAY_MS}ms:`,
+					error?.response?.data?.message ?? error?.message ?? error,
+				);
+				await sleep(GHN_CREATE_ORDER_RETRY_DELAY_MS * attempt);
+				continue;
+			}
+			break;
 		}
-
-		return {
-			orderCode,
-			expectedDeliveryTime: response.data?.data?.expected_delivery_time ?? null,
-		};
-	} catch (error: any) {
-		if (error instanceof Error && /^(BadRequest|NotFound|Config):/.test(error.message)) {
-			throw error;
-		}
-
-		const ghnMessage = error?.response?.data?.message;
-		throw new Error(`BadRequest: Không thể tạo đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
 	}
+
+	if (lastError instanceof Error && /^(BadRequest|NotFound|Config):/.test(lastError.message)) {
+		throw lastError;
+	}
+	const ghnMessage = lastError?.response?.data?.message;
+	throw new Error(`BadRequest: Không thể tạo đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
 }
 
 /**

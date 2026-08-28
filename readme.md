@@ -220,9 +220,8 @@ Trang liên hệ
 Trang cửa hàng
 ![Ảnh giao diện trang sản phẩm](docs/images/client/shop.png)
 
-Trang sản phẩm & đánh giá
+Trang chi tiết sản phẩm & đánh giá
 ![Ảnh giao diện trang chi tiết sản phẩm](docs/images/client/product.png)
-![Ảnh giao diện đánh giá của sản phẩm](docs/images/client/review.png)
 
 Trang giỏ hàng
 ![Ảnh giao diện trang giỏ hàng](docs/images/client/cart.png)
