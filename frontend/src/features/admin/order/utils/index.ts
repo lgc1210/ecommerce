@@ -1,5 +1,4 @@
-import { ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS } from "../constants";
-import type { OrderStatus, PaymentMethod, PaymentStatus } from "../types";
+import { ORDER_STATUS, type OrderStatus } from "../../../../shared/constants/order";
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
 	[ORDER_STATUS.pending]: "Chờ xử lý",
@@ -15,29 +14,6 @@ export const ORDER_STATUS_BADGE_CLASSNAME: Record<OrderStatus, string> = {
 	[ORDER_STATUS.shipped]: "bg-violet-50 text-violet-600",
 	[ORDER_STATUS.delivered]: "bg-primary-light text-primary-dark",
 	[ORDER_STATUS.cancelled]: "bg-red-50 text-red-600",
-};
-
-export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
-	[PAYMENT_METHOD.cod]: "Thanh toán khi nhận hàng",
-	[PAYMENT_METHOD.vnpay]: "VNPay",
-	[PAYMENT_METHOD.zalopay]: "ZaloPay",
-	[PAYMENT_METHOD.momo]: "MoMo",
-	[PAYMENT_METHOD.stripe]: "Stripe",
-	[PAYMENT_METHOD.paypal]: "PayPal",
-};
-
-export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
-	[PAYMENT_STATUS.pending]: "Chờ thanh toán",
-	[PAYMENT_STATUS.completed]: "Đã thanh toán",
-	[PAYMENT_STATUS.failed]: "Thất bại",
-	[PAYMENT_STATUS.refunded]: "Đã hoàn tiền",
-};
-
-export const PAYMENT_STATUS_BADGE_CLASSNAME: Record<PaymentStatus, string> = {
-	[PAYMENT_STATUS.pending]: "bg-amber-50 text-amber-600",
-	[PAYMENT_STATUS.completed]: "bg-primary-light text-primary-dark",
-	[PAYMENT_STATUS.failed]: "bg-red-50 text-red-600",
-	[PAYMENT_STATUS.refunded]: "bg-ink/10 text-ink/60",
 };
 
 /**

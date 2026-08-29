@@ -11,12 +11,13 @@ import { parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
 import { formatDate } from "../../../utils";
 import { usePaymentsAdminQuery } from "../../../features/admin/payment/hooks";
-import type { AdminPayment, PaymentMethod, PaymentStatus } from "../../../features/admin/payment/types";
+import type { AdminPayment } from "../../../features/admin/payment/types";
 import { PAYMENT_METHOD_FILTER_OPTIONS } from "../../../features/admin/payment/constants";
 import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL } from "../../../features/admin/payment/utils";
 import PaymentStatusBadge from "../../../features/admin/payment/components/payment-status-badge";
 import PaymentDetailModal from "../../../features/admin/payment/components/payment-detail-modal";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
+import type { PaymentMethod, PaymentStatus } from "../../../shared/constants/payment";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend.

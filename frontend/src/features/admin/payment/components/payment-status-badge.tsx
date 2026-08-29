@@ -1,4 +1,4 @@
-import type { PaymentStatus } from "../types";
+import type { PaymentStatus } from "../../../../shared/constants/payment";
 import { PAYMENT_STATUS_BADGE_CLASSNAME, PAYMENT_STATUS_LABEL } from "../utils";
 
 const PaymentStatusBadge = ({ status }: { status: PaymentStatus }) => (

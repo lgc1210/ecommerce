@@ -431,7 +431,10 @@ class OrderService {
 	 */
 	async cancelCodShipmentForPaymentMethodChange(orderId: number, ghnOrderCode: string): Promise<void> {
 		await cancelShippingOrder(ghnOrderCode);
-		await prisma.order.update({ where: { id: orderId }, data: { ghnOrderCode: null, ghnStatus: null } });
+		await prisma.order.update({
+			where: { id: orderId },
+			data: { ghnOrderCode: null, ghnStatus: null },
+		});
 	}
 
 	/**

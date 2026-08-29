@@ -1,6 +1,6 @@
 import { CreditCardIcon } from "../../../../components/icons";
 import FormRadio from "../../../../components/form-radio";
-import { PAYMENT_METHOD } from "../constants";
+import { PAYMENT_METHOD } from "../../../../shared/constants/payment";
 
 const paymentMethods: { id: string; name: string; description: string }[] = [
 	{

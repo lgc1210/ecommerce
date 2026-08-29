@@ -2,16 +2,24 @@ import Button from "../../../../../../components/button";
 import { ChevronRightIcon, MapPinIcon } from "../../../../../../components/icons";
 import { formatCurrency } from "../../../../../../utils/currency";
 import { useCancelMyOrder, useMyOrderDetailQuery } from "../../../../order/hooks";
-import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../../../admin/order/utils";
+import { ORDER_STATUS_LABEL } from "../../../../../admin/order/utils";
 import OrderStatusBadge from "../../../../../admin/order/components/order-status-badge";
 import PaymentStatusBadge from "../../../../../admin/order/components/payment-status-badge";
 import OrderTracking from "./order-tracking";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import paths from "../../../../../../configs/constants/paths";
-import { ONLINE_GATEWAY_METHODS } from "../../../../payment/constants";
 import { useCreatePaymentUrlMutation } from "../../../../payment/hooks";
 import { formatDate } from "../../../../../../utils";
 import OrderDetailSkeleton from "./skeleton";
+import cartService from "../../../../cart/services";
+import { CART_QUERY_KEY } from "../../../../cart/constants";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import ChangePaymentMethodModal from "../../../../payment/components/change-payment-method-modal";
+import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD, PAYMENT_STATUS, type PaymentMethod } from "../../../../../../shared/constants/payment";
+import { ORDER_STATUS, type OrderStatus } from "../../../../../../shared/constants/order";
+import { PAYMENT_METHOD_LABEL } from "../../../../../admin/payment/utils";
 
 /** "Đen / M" — trả về null nếu sản phẩm không có snapshot biến thể. */
 const formatVariationSnapshot = (snapshot: Record<string, string> | null): string | null => {
@@ -31,9 +39,13 @@ interface OrderDetailProps {
  * state cục bộ ở component cha OrdersTab).
  */
 const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
+	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const { data: order, isLoading } = useMyOrderDetailQuery(orderId);
 	const cancelOrder = useCancelMyOrder();
 	const createPaymentUrl = useCreatePaymentUrlMutation();
+	const [isReordering, setIsReordering] = useState(false);
+	const [showChangeMethodModal, setShowChangeMethodModal] = useState(false);
 
 	const handlePayNow = () => {
 		createPaymentUrl.mutate(orderId, {
@@ -42,6 +54,51 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 			},
 		});
 	};
+
+	/**
+	 * "Đặt lại" cho đơn đã hủy — đơn hủy KHÔNG thể thanh toán lại (BE chặn hẳn ở
+	 * payment.service.ts -> getGatewayPaymentContext), nên lối duy nhất để mua lại là tạo đơn MỚI.
+	 * Thay vì cần 1 endpoint riêng ở BE, tự thêm lại từng sản phẩm vào giỏ hàng hiện tại (product
+	 * đã bị xoá hoặc hết hàng thì bỏ qua, không chặn cả thao tác) rồi điều hướng sang trang giỏ
+	 * hàng để khách tự xác nhận lại trước khi đặt.
+	 */
+	const handleReorder = async () => {
+		if (!order) return;
+		setIsReordering(true);
+		let addedCount = 0;
+		let skippedCount = 0;
+
+		for (const item of order.items) {
+			if (!item.productSkuId) {
+				skippedCount++;
+				continue;
+			}
+			try {
+				await cartService.addItem({ productSkuId: item.productSkuId, quantity: item.quantity });
+				addedCount++;
+			} catch {
+				skippedCount++;
+			}
+		}
+
+		queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
+		setIsReordering(false);
+
+		if (addedCount === 0) {
+			toast.error("Không thể đặt lại đơn hàng này — các sản phẩm không còn khả dụng.");
+			return;
+		}
+		toast.success(skippedCount > 0 ? `Đã thêm ${addedCount} sản phẩm vào giỏ hàng (${skippedCount} sản phẩm không còn khả dụng).` : `Đã thêm ${addedCount} sản phẩm vào giỏ hàng.`);
+		navigate(paths.client.cart);
+	};
+
+	/**
+	 * Cho phép mở modal đổi phương thức thanh toán — mirror ĐÚNG điều kiện BE tự kiểm tra ở
+	 * payment.service.ts -> changeOwnPaymentMethod() (đơn còn "pending" và (đang COD, hoặc đang
+	 * online nhưng chưa thanh toán "completed")). FE chỉ dùng để ẨN nút cho gọn UX, BE vẫn là nơi
+	 * validate thật sự.
+	 */
+	const canChangePaymentMethod = !!order && order.orderStatus === "pending" && !!order.payment && (order.payment.paymentMethod === PAYMENT_METHOD.cod || order.payment.paymentStatus !== "completed");
 
 	return (
 		<div>
@@ -144,29 +201,52 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 						<div className='space-y-3 rounded-2xl border border-border bg-surface p-5 text-sm'>
 							<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>Thanh toán</p>
 							<div className='flex items-center justify-between'>
-								<span className='text-ink/80'>{PAYMENT_METHOD_LABEL[order.payment.paymentMethod]}</span>
+								<span className='text-ink/80'>{PAYMENT_METHOD_LABEL[order.payment.paymentMethod as PaymentMethod]}</span>
 								<PaymentStatusBadge status={order.payment.paymentStatus} />
 							</div>
 
-							{/* Đơn thanh toán qua cổng online (VNPay/ZaloPay) nhưng chưa/không thành công ->
-							    cho khách thử lại ngay tại đây thay vì phải đặt lại đơn từ đầu. */}
-							{ONLINE_GATEWAY_METHODS.includes(order.payment.paymentMethod) && (order.payment.paymentStatus === "pending" || order.payment.paymentStatus === "failed") && (
-								<Button variant='outline' size='sm' className='w-full cursor-pointer!' disabled={createPaymentUrl.isPending} onClick={handlePayNow}>
-									{createPaymentUrl.isPending ? "Đang chuyển hướng..." : "Thanh toán ngay"}
+							{/* SỬA — thêm điều kiện `order.orderStatus !== "cancelled"` phía trước (trước đây chỉ check
+		    					paymentStatus, không check orderStatus, nên đơn đã hủy vẫn hiện nút "Thanh toán ngay" dù
+		    					BE giờ đã chặn hẳn ở payment.service.ts -> getGatewayPaymentContext). */}
+							{order.orderStatus !== ORDER_STATUS.cancelled &&
+								ONLINE_GATEWAY_METHODS.includes(order.payment.paymentMethod) &&
+								(order.payment.paymentStatus === PAYMENT_STATUS.pending || order.payment.paymentStatus === PAYMENT_STATUS.failed) && (
+									<Button variant='outline' size='sm' className='w-full cursor-pointer!' disabled={createPaymentUrl.isPending} onClick={handlePayNow}>
+										{createPaymentUrl.isPending ? "Đang chuyển hướng..." : "Thanh toán ngay"}
+									</Button>
+								)}
+
+							{/* MỚI — Đổi phương thức thanh toán */}
+							{canChangePaymentMethod && (
+								<Button variant='outline' size='sm' className='w-full cursor-pointer!' onClick={() => setShowChangeMethodModal(true)}>
+									Đổi phương thức thanh toán
 								</Button>
 							)}
 						</div>
 					)}
 
-					{order.orderStatus === "pending" && (
+					{order.orderStatus === ORDER_STATUS.pending && (
 						<div className='flex justify-end'>
 							<Button variant='outline' size='sm' disabled={cancelOrder.isPending} onClick={() => cancelOrder.mutate(order.id)}>
-								{cancelOrder.isPending ? "Đang hủy..." : `Hủy đơn (${ORDER_STATUS_LABEL[order.orderStatus]})`}
+								{cancelOrder.isPending ? "Đang hủy..." : `Hủy đơn (${ORDER_STATUS_LABEL[order.orderStatus as OrderStatus]})`}
+							</Button>
+						</div>
+					)}
+
+					{/* MỚI — toàn bộ block này */}
+					{/* Đơn đã hủy không thể thanh toán lại (xem block "Thanh toán" phía trên) -> lối duy nhất để
+   						mua lại cùng sản phẩm là tạo đơn MỚI, xem handleReorder(). */}
+					{order.orderStatus === ORDER_STATUS.cancelled && (
+						<div className='flex justify-end'>
+							<Button variant='outline' size='sm' disabled={isReordering} onClick={handleReorder}>
+								{isReordering ? "Đang thêm vào giỏ hàng..." : "Đặt lại"}
 							</Button>
 						</div>
 					)}
 				</div>
 			)}
+
+			{showChangeMethodModal && order?.payment && <ChangePaymentMethodModal orderId={order.id} currentMethod={order.payment.paymentMethod} onClose={() => setShowChangeMethodModal(false)} />}
 		</div>
 	);
 };

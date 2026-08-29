@@ -1,9 +1,6 @@
+import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 import type { Pagination } from "../../../../types";
 import type { OrderStatus } from "../../order/types";
-import type { PAYMENT_METHOD, PAYMENT_STATUS } from "../constants";
-
-export type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
-export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 
 /**
  * Đơn hàng gắn với 1 payment (paymentDetailInclude ở backend/payment.service.ts)

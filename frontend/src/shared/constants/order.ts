@@ -6,17 +6,4 @@ export const ORDER_STATUS = Object.freeze({
 	cancelled: "cancelled",
 } as const);
 
-export const PAYMENT_METHOD = Object.freeze({
-	cod: "cod",
-	vnpay: "vnpay",
-	momo: "momo",
-	stripe: "stripe",
-	paypal: "paypal",
-} as const);
-
-export const PAYMENT_STATUS = Object.freeze({
-	pending: "pending",
-	completed: "completed",
-	failed: "failed",
-	refunded: "refunded",
-} as const);
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];

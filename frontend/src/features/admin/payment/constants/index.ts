@@ -1,23 +1,4 @@
-/**
- * Khớp với Prisma enum PaymentMethod (schema.prisma) + PAYMENT_METHOD ở
- * backend/src/features/payments/payment.constant.ts — đầy đủ 6 phương thức
- * mà 1 bản ghi payment thực tế có thể mang.
- */
-export const PAYMENT_METHOD = Object.freeze({
-	cod: "cod",
-	vnpay: "vnpay",
-	zalopay: "zalopay",
-	momo: "momo",
-	stripe: "stripe",
-	paypal: "paypal",
-} as const);
-
-export const PAYMENT_STATUS = Object.freeze({
-	pending: "pending",
-	completed: "completed",
-	failed: "failed",
-	refunded: "refunded",
-} as const);
+import { PAYMENT_METHOD } from "../../../../shared/constants/payment";
 
 /**
  * CHÚ Ý: `paymentMethodEnum` dùng để validate query `method` ở
@@ -31,4 +12,4 @@ export const PAYMENT_STATUS = Object.freeze({
  * (badge/label trong bảng, modal chi tiết) vẫn dùng đủ PAYMENT_METHOD_LABEL cho
  * cả 6 giá trị vì payment thật có thể là zalopay.
  */
-export const PAYMENT_METHOD_FILTER_OPTIONS = [PAYMENT_METHOD.cod, PAYMENT_METHOD.vnpay, PAYMENT_METHOD.momo, PAYMENT_METHOD.stripe, PAYMENT_METHOD.paypal] as const;
+export const PAYMENT_METHOD_FILTER_OPTIONS = [PAYMENT_METHOD.cod, PAYMENT_METHOD.vnpay, PAYMENT_METHOD.zalopay, PAYMENT_METHOD.momo, PAYMENT_METHOD.stripe, PAYMENT_METHOD.paypal] as const;

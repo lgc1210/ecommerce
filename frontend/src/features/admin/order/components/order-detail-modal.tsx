@@ -5,11 +5,13 @@ import Button from "../../../../components/button";
 import { MailIcon, MapPinIcon, PhoneIcon, UserIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 import { useOrderDetailQuery, useUpdateOrderStatus } from "../hooks";
-import type { AdminOrderDetail, OrderStatus } from "../types";
-import { getNextOrderStatusOptions, isTerminalOrderStatus, ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../utils";
+import type { AdminOrderDetail } from "../types";
+import { getNextOrderStatusOptions, isTerminalOrderStatus, ORDER_STATUS_LABEL } from "../utils";
 import OrderStatusBadge from "./order-status-badge";
 import PaymentStatusBadge from "./payment-status-badge";
 import { formatDate } from "../../../../utils";
+import type { OrderStatus } from "../../../../shared/constants/order";
+import { PAYMENT_METHOD_LABEL } from "../../payment/utils";
 
 interface OrderDetailModalProps {
 	orderId: number;

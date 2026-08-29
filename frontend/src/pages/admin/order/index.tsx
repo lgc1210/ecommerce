@@ -10,13 +10,14 @@ import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
 import { useOrdersAdminQuery } from "../../../features/admin/order/hooks";
-import type { OrderStatus } from "../../../features/admin/order/types";
-import { ORDER_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "../../../features/admin/order/utils";
+import { ORDER_STATUS_LABEL } from "../../../features/admin/order/utils";
 import PaymentStatusBadge from "../../../features/admin/order/components/payment-status-badge";
 import OrderDetailModal from "../../../features/admin/order/components/order-detail-modal";
 import OrderStatusBadge from "../../../features/admin/order/components/order-status-badge";
 import { formatDate } from "../../../utils";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
+import type { OrderStatus } from "../../../shared/constants/order";
+import { PAYMENT_METHOD_LABEL } from "../../../features/admin/payment/utils";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang

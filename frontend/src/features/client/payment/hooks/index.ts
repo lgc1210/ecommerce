@@ -1,9 +1,9 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import paymentGatewayService from "../services";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "../../../../utils/api";
-import { PAYMENT_STATUS } from "../../../admin/order/constants";
-import { ONLINE_GATEWAY_METHODS } from "../constants";
+import { ONLINE_GATEWAY_METHODS, PAYMENT_STATUS, type PaymentMethod } from "../../../../shared/constants/payment";
+import { MY_ORDERS_QUERY_KEY } from "../../order/hooks";
 
 /** Tạo URL thanh toán qua cổng online (VNPay/ZaloPay/...) cho 1 đơn hàng. KHÔNG tự redirect ở đây
  * — nơi gọi (trang thanh toán / chi tiết đơn) tự quyết định điều hướng để dễ kiểm soát UX. */
@@ -12,6 +12,28 @@ export const useCreatePaymentUrlMutation = () => {
 		mutationFn: (orderId: number) => paymentGatewayService.createPaymentUrl(orderId),
 		onError: (error) => {
 			toast.error(getApiErrorMessage(error, "Không thể tạo giao dịch thanh toán, vui lòng thử lại."));
+		},
+	});
+};
+
+/**
+ * Đổi phương thức thanh toán cho đơn của chính mình — chỉ hợp lệ khi đơn còn "pending" và
+ * (đang COD, hoặc đang online nhưng chưa thanh toán "completed", xem BE payment.service.ts ->
+ * changeOwnPaymentMethod). Invalidate cả query chi tiết đơn (đổi payment.paymentMethod ngay
+ * trong OwnPaymentDetail) lẫn danh sách đơn (badge trạng thanh toán trong list cũng phải cập nhật).
+ */
+export const useChangeOwnPaymentMethodMutation = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: PaymentMethod }) => paymentGatewayService.changePaymentMethod(orderId, paymentMethod),
+		onSuccess: (_res, { orderId }) => {
+			queryClient.invalidateQueries({ queryKey: [...MY_ORDERS_QUERY_KEY, "detail", orderId] });
+			queryClient.invalidateQueries({ queryKey: MY_ORDERS_QUERY_KEY });
+			toast.success("Đã đổi phương thức thanh toán.");
+		},
+		onError: (error) => {
+			toast.error(getApiErrorMessage(error, "Không thể đổi phương thức thanh toán, vui lòng thử lại."));
 		},
 	});
 };

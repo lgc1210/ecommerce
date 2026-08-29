@@ -5,7 +5,6 @@ import BreadCrumb from "../../../components/breadcrumb";
 import Button from "../../../components/button";
 import paths from "../../../configs/constants/paths";
 import { CartIcon } from "../../../components/icons";
-import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD } from "../../../features/client/payment/constants";
 import { useCreatePaymentUrlMutation } from "../../../features/client/payment/hooks";
 import { useCart } from "../../../features/client/cart/hooks";
 import { usePreviewShippingFeeQuery, useCreateOrderMutation } from "../../../features/client/order/hooks";
@@ -18,6 +17,7 @@ import CheckoutPaymentMethodSection from "../../../features/client/payment/compo
 import CheckoutDiscountSection from "../../../features/client/payment/components/checkout-discount-section";
 import CheckoutSummarySection from "../../../features/client/payment/components/checkout-summary-section";
 import PaymentPageSkeleton from "./skeleton";
+import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD } from "../../../shared/constants/payment";
 
 const PaymentPage = () => {
 	const navigate = useNavigate();

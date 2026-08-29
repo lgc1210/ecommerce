@@ -1,5 +1,4 @@
-import { PAYMENT_METHOD, PAYMENT_STATUS } from "../constants";
-import type { PaymentMethod, PaymentStatus } from "../types";
+import { PAYMENT_METHOD, PAYMENT_STATUS, type PaymentMethod, type PaymentStatus } from "../../../../shared/constants/payment";
 
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
 	[PAYMENT_METHOD.cod]: "Thanh toán khi nhận hàng",

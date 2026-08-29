@@ -1,9 +1,7 @@
+import type { OrderStatus } from "../../../../shared/constants/order";
+import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 import type { Pagination } from "../../../../types";
-import type { ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS } from "../constants";
-
-export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
-export type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
-export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+import type { DiscountType } from "../../coupon/types";
 
 /**
  * 1 đơn hàng trong bảng danh sách (orderListInclude ở backend): chỉ có thông tin
@@ -61,7 +59,7 @@ export interface AdminOrderShippingAddress {
 export interface AdminOrderCoupon {
 	id: number;
 	code: string;
-	discountType: "fixed" | "percentage";
+	discountType: DiscountType;
 	discountValue: string;
 }
 

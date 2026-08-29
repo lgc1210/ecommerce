@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import type { EChartsOption } from "echarts";
 import EChart from "./echart";
-import { ORDER_STATUS } from "../../order/constants";
 import { ORDER_STATUS_LABEL } from "../../order/utils";
 import type { OrderStatus } from "../../order/types";
+import { ORDER_STATUS } from "../../../../shared/constants/order";
 
 interface OrderStatusChartProps {
 	ordersByStatus: Record<OrderStatus, number> | undefined;
@@ -21,10 +21,7 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
 
 /** Biểu đồ tròn (donut) thể hiện tỷ trọng đơn hàng theo trạng thái, lấy từ DashboardOverview.ordersByStatus. */
 const OrderStatusChart = ({ ordersByStatus, isLoading }: OrderStatusChartProps) => {
-	const total = useMemo(
-		() => Object.values(ordersByStatus ?? {}).reduce((sum, count) => sum + count, 0),
-		[ordersByStatus],
-	);
+	const total = useMemo(() => Object.values(ordersByStatus ?? {}).reduce((sum, count) => sum + count, 0), [ordersByStatus]);
 
 	const option = useMemo<EChartsOption>(() => {
 		const statuses = Object.keys(ORDER_STATUS) as OrderStatus[];

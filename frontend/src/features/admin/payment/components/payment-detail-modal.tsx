@@ -7,10 +7,11 @@ import { MailIcon, UserIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 import { formatDate } from "../../../../utils";
 import { useUpdatePaymentStatus } from "../hooks";
-import type { AdminPayment, PaymentStatus } from "../types";
+import type { AdminPayment } from "../types";
 import { getNextPaymentStatusOptions, isTerminalPaymentStatus, PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL } from "../utils";
 import PaymentStatusBadge from "./payment-status-badge";
 import OrderStatusBadge from "../../order/components/order-status-badge";
+import type { PaymentStatus } from "../../../../shared/constants/payment";
 
 interface PaymentDetailModalProps {
 	payment: AdminPayment;

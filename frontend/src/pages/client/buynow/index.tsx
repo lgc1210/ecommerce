@@ -5,7 +5,6 @@ import BreadCrumb from "../../../components/breadcrumb";
 import Button from "../../../components/button";
 import paths from "../../../configs/constants/paths";
 import { CartIcon } from "../../../components/icons";
-import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD } from "../../../features/client/payment/constants";
 import { useCreatePaymentUrlMutation } from "../../../features/client/payment/hooks";
 import { usePreviewBuyNowShippingFeeQuery, useBuyNowMutation } from "../../../features/client/order/hooks";
 import type { BuyNowSnapshot, PaymentMethod } from "../../../features/client/order/types";
@@ -17,6 +16,7 @@ import CheckoutDeliveryMethodSection from "../../../features/client/payment/comp
 import CheckoutPaymentMethodSection from "../../../features/client/payment/components/checkout-payment-method-section";
 import CheckoutDiscountSection from "../../../features/client/payment/components/checkout-discount-section";
 import CheckoutSummarySection from "../../../features/client/payment/components/checkout-summary-section";
+import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD } from "../../../shared/constants/payment";
 
 /**
  * Trang thanh toán cho luồng "Mua ngay" (bấm ở trang chi tiết sản phẩm) — đặt hàng thẳng ĐÚNG 1
