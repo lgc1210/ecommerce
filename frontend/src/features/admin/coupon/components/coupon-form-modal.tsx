@@ -4,8 +4,9 @@ import FormControl from "../../../../components/form-control";
 import FormSelect from "../../../../components/form-select";
 import FormCheckbox from "../../../../components/form-checkbox";
 import Button from "../../../../components/button";
-import type { AdminCoupon, CreateCouponPayload, DiscountType, UpdateCouponPayload } from "../types";
+import type { AdminCoupon, CreateCouponPayload, UpdateCouponPayload } from "../types";
 import { DISCOUNT_TYPE_LABEL, fromDatetimeLocalValue, toDatetimeLocalValue } from "../utils";
+import type { DiscountType } from "../../../../shared/constants/coupon";
 
 interface CouponFormModalProps {
 	coupon?: AdminCoupon;
@@ -46,9 +47,7 @@ const CouponFormModal = ({ coupon, onClose, onSubmit, isSubmitting }: CouponForm
 	const [discountType, setDiscountType] = useState<DiscountType>(coupon?.discountType ?? "percentage");
 	const [discountValue, setDiscountValue] = useState(coupon ? String(Number(coupon.discountValue)) : "");
 	const [minOrderValue, setMinOrderValue] = useState(coupon ? String(Number(coupon.minOrderValue)) : "0");
-	const [maxDiscountValue, setMaxDiscountValue] = useState(
-		coupon?.maxDiscountValue ? String(Number(coupon.maxDiscountValue)) : "",
-	);
+	const [maxDiscountValue, setMaxDiscountValue] = useState(coupon?.maxDiscountValue ? String(Number(coupon.maxDiscountValue)) : "");
 	const [startsAt, setStartsAt] = useState(coupon ? toDatetimeLocalValue(coupon.startsAt) : defaultStartsAt());
 	const [expiresAt, setExpiresAt] = useState(coupon ? toDatetimeLocalValue(coupon.expiresAt) : defaultExpiresAt());
 	const [usageLimit, setUsageLimit] = useState(coupon?.usageLimit != null ? String(coupon.usageLimit) : "");
@@ -119,10 +118,7 @@ const CouponFormModal = ({ coupon, onClose, onSubmit, isSubmitting }: CouponForm
 	};
 
 	return (
-		<ModalShell
-			title={isEditing ? "Sửa mã giảm giá" : "Thêm mã giảm giá"}
-			onClose={onClose}
-			maxWidthClassName='max-w-xl'>
+		<ModalShell title={isEditing ? "Sửa mã giảm giá" : "Thêm mã giảm giá"} onClose={onClose} maxWidthClassName='max-w-xl'>
 			<form onSubmit={handleSubmit} className='space-y-4'>
 				<FormControl
 					label='Mã giảm giá'
@@ -149,14 +145,7 @@ const CouponFormModal = ({ coupon, onClose, onSubmit, isSubmitting }: CouponForm
 					/>
 				</div>
 				<div className='grid gap-4 sm:grid-cols-2'>
-					<FormControl
-						label='Đơn hàng tối thiểu (đ)'
-						type='number'
-						step='any'
-						value={minOrderValue}
-						onChange={(e) => setMinOrderValue(e.target.value)}
-						error={errors.minOrderValue}
-					/>
+					<FormControl label='Đơn hàng tối thiểu (đ)' type='number' step='any' value={minOrderValue} onChange={(e) => setMinOrderValue(e.target.value)} error={errors.minOrderValue} />
 					<FormControl
 						label='Mức giảm tối đa (đ)'
 						type='number'
@@ -169,35 +158,11 @@ const CouponFormModal = ({ coupon, onClose, onSubmit, isSubmitting }: CouponForm
 					/>
 				</div>
 				<div className='grid gap-4 sm:grid-cols-2'>
-					<FormControl
-						label='Bắt đầu'
-						type='datetime-local'
-						value={startsAt}
-						onChange={(e) => setStartsAt(e.target.value)}
-						error={errors.startsAt}
-					/>
-					<FormControl
-						label='Hết hạn'
-						type='datetime-local'
-						value={expiresAt}
-						onChange={(e) => setExpiresAt(e.target.value)}
-						error={errors.expiresAt}
-					/>
+					<FormControl label='Bắt đầu' type='datetime-local' value={startsAt} onChange={(e) => setStartsAt(e.target.value)} error={errors.startsAt} />
+					<FormControl label='Hết hạn' type='datetime-local' value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} error={errors.expiresAt} />
 				</div>
-				<FormControl
-					label='Giới hạn lượt sử dụng'
-					type='number'
-					step='any'
-					value={usageLimit}
-					onChange={(e) => setUsageLimit(e.target.value)}
-					placeholder='Không giới hạn'
-					error={errors.usageLimit}
-				/>
-				<FormCheckbox
-					label='Kích hoạt mã giảm giá này ngay'
-					checked={isActive}
-					onChange={(e) => setIsActive(e.target.checked)}
-				/>
+				<FormControl label='Giới hạn lượt sử dụng' type='number' step='any' value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} placeholder='Không giới hạn' error={errors.usageLimit} />
+				<FormCheckbox label='Kích hoạt mã giảm giá này ngay' checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
 				<div className='flex justify-end gap-2 pt-2'>
 					<Button type='button' variant='outline' size='sm' onClick={onClose}>
 						Hủy

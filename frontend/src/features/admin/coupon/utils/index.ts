@@ -1,5 +1,6 @@
-import type { AdminCoupon, DiscountType } from "../types";
+import type { AdminCoupon } from "../types";
 import { COUPON_DISPLAY_STATUS } from "../consts";
+import type { DiscountType } from "../../../../shared/constants/coupon";
 
 export const DISCOUNT_TYPE_LABEL: Record<DiscountType, string> = {
 	fixed: "Số tiền cố định",

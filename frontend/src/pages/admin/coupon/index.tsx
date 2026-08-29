@@ -9,27 +9,15 @@ import { CloseIcon, PencilIcon, PlusIcon, SearchIcon, TrashIcon } from "../../..
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseBooleanParam, parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
-import {
-	useCouponsQuery,
-	useCreateCoupon,
-	useDeleteCoupon,
-	useUpdateCoupon,
-} from "../../../features/admin/coupon/hooks";
-import type {
-	AdminCoupon,
-	CreateCouponPayload,
-	DiscountType,
-	UpdateCouponPayload,
-} from "../../../features/admin/coupon/types";
+import { useCouponsQuery, useCreateCoupon, useDeleteCoupon, useUpdateCoupon } from "../../../features/admin/coupon/hooks";
+import type { AdminCoupon, CreateCouponPayload, UpdateCouponPayload } from "../../../features/admin/coupon/types";
 import { DISCOUNT_TYPE_LABEL } from "../../../features/admin/coupon/utils";
 import StatusBadge from "../../../features/admin/coupon/components/status-badge";
 import CouponFormModal from "../../../features/admin/coupon/components/coupon-form-modal";
 import { formatDate } from "../../../utils";
+import type { DiscountType } from "../../../shared/constants/coupon";
 
-const formatDiscount = (coupon: AdminCoupon) =>
-	coupon.discountType === "percentage"
-		? `${Number(coupon.discountValue)}%`
-		: formatCurrency(Number(coupon.discountValue));
+const formatDiscount = (coupon: AdminCoupon) => (coupon.discountType === "percentage" ? `${Number(coupon.discountValue)}%` : formatCurrency(Number(coupon.discountValue)));
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend, dẫn tới các trang
@@ -44,10 +32,9 @@ const PAGE_SIZE = 10;
  * này không cần bọc thêm <Can> cho từng nút, vào được trang là có đủ quyền thao tác.
  */
 const AdminCouponPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const isActive = parseBooleanParam(searchParams, "isActive");
 	const discountType = parseEnumParam<DiscountType>(searchParams, "discountType");
@@ -110,10 +97,7 @@ const AdminCouponPage = () => {
 					options={Object.entries(DISCOUNT_TYPE_LABEL).map(([value, label]) => ({ value, label }))}
 				/>
 				{hasActiveFilters(["isActive", "discountType"]) && (
-					<button
-						type='button'
-						onClick={clearFilters}
-						className='flex h-12 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:text-ink cursor-pointer'>
+					<button type='button' onClick={clearFilters} className='flex h-12 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:text-ink cursor-pointer'>
 						<CloseIcon className='h-4 w-4' />
 						Xóa bộ lọc
 					</button>
@@ -179,9 +163,7 @@ const AdminCouponPage = () => {
 												disabled={coupon.usedCount > 0}
 												onClick={() => setDeletingCoupon(coupon)}
 												className='flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted cursor-pointer'
-												title={
-													coupon.usedCount > 0 ? "Đã được dùng trong đơn hàng, hãy vô hiệu hóa thay vì xóa" : "Xóa"
-												}>
+												title={coupon.usedCount > 0 ? "Đã được dùng trong đơn hàng, hãy vô hiệu hóa thay vì xóa" : "Xóa"}>
 												<TrashIcon className='h-4 w-4' />
 											</button>
 										</div>
@@ -197,14 +179,7 @@ const AdminCouponPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{formState && (
-				<CouponFormModal
-					coupon={formState.coupon}
-					onClose={() => setFormState(null)}
-					onSubmit={handleSubmitForm}
-					isSubmitting={createCoupon.isPending || updateCoupon.isPending}
-				/>
-			)}
+			{formState && <CouponFormModal coupon={formState.coupon} onClose={() => setFormState(null)} onSubmit={handleSubmitForm} isSubmitting={createCoupon.isPending || updateCoupon.isPending} />}
 
 			{deletingCoupon && (
 				<Popup
