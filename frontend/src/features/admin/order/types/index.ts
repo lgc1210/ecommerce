@@ -1,7 +1,7 @@
+import type { DiscountType } from "../../../../shared/constants/coupon";
 import type { OrderStatus } from "../../../../shared/constants/order";
 import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 import type { Pagination } from "../../../../types";
-import type { DiscountType } from "../../coupon/types";
 
 /**
  * 1 đơn hàng trong bảng danh sách (orderListInclude ở backend): chỉ có thông tin

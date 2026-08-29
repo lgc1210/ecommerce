@@ -1,7 +1,7 @@
+import type { DiscountType } from "../../../../shared/constants/coupon";
 import type { OrderStatus } from "../../../../shared/constants/order";
 import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 import type { Pagination } from "../../../../types";
-import type { DISCOUNT_TYPE } from "../constants";
 
 // Tái dùng type OrderStatus/PaymentMethod/PaymentStatus từ feature admin/order vì
 // cùng phản ánh 1 enum duy nhất ở backend (Prisma OrderStatus/PaymentMethod/PaymentStatus)
@@ -59,8 +59,6 @@ export interface MyOrderShippingAddress {
 	districtName: string;
 	provinceName: string;
 }
-
-export type DiscountType = (typeof DISCOUNT_TYPE)[keyof typeof DISCOUNT_TYPE];
 
 export interface MyOrderCoupon {
 	id: number;

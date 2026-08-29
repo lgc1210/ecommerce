@@ -1,6 +1,5 @@
-import type { OrderStatus } from "../../../../order/types";
 import { BoxIcon, CheckIcon, ClockIcon, TruckIcon, XIcon } from "../../../../../../components/icons";
-import { ORDER_STATUS } from "../../../../../../shared/constants/order";
+import { ORDER_STATUS, type OrderStatus } from "../../../../../../shared/constants/order";
 
 const STEPS: { status: OrderStatus; label: string; icon: typeof ClockIcon }[] = [
 	{ status: ORDER_STATUS.pending, label: "Chờ xử lý", icon: ClockIcon },

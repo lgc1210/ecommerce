@@ -1,4 +1,5 @@
-import type { OrderStatus, PaymentMethod, PaymentStatus } from "../../order/types";
+import type { OrderStatus } from "../../../../shared/constants/order";
+import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 
 /** Kết quả GET /payments/me/:orderId (paymentDetailInclude ở backend) — đầy đủ hơn MyOrderPayment
  * (vốn chỉ là bản rút gọn lồng trong MyOrderDetail), có kèm theo thông tin đơn hàng liên quan. */

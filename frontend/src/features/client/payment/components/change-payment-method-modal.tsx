@@ -3,8 +3,7 @@ import ModalShell from "../../../../components/modal-shell";
 import Button from "../../../../components/button";
 import FormRadio from "../../../../components/form-radio";
 import { useChangeOwnPaymentMethodMutation } from "../hooks";
-import type { PaymentMethod } from "../../order/types";
-import { PAYMENT_METHOD } from "../../../../shared/constants/payment";
+import { PAYMENT_METHOD, type PaymentMethod } from "../../../../shared/constants/payment";
 
 const changeablePaymentMethods: { id: PaymentMethod; name: string; description: string }[] = [
 	{ id: PAYMENT_METHOD.cod, name: "Thanh toán khi nhận hàng (COD)", description: "Thanh toán bằng tiền mặt khi nhận hàng" },

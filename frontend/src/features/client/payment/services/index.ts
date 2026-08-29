@@ -1,5 +1,5 @@
 import apiClient from "../../../../configs/apis";
-import type { PaymentMethod } from "../../order/types";
+import type { PaymentMethod } from "../../../../shared/constants/payment";
 import type { OwnPaymentDetail } from "../types";
 
 const paymentGatewayService = {
