@@ -1,11 +1,11 @@
+import type { OrderStatus } from "../../../../shared/constants/order";
+import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 import type { Pagination } from "../../../../types";
-import type { OrderStatus, PaymentMethod, PaymentStatus } from "../../../admin/order/types";
 import type { DISCOUNT_TYPE } from "../constants";
 
 // Tái dùng type OrderStatus/PaymentMethod/PaymentStatus từ feature admin/order vì
 // cùng phản ánh 1 enum duy nhất ở backend (Prisma OrderStatus/PaymentMethod/PaymentStatus)
 // — tránh định nghĩa trùng lặp 2 lần dễ bị lệch nếu backend đổi enum.
-export type { OrderStatus, PaymentMethod, PaymentStatus };
 
 /**
  * 1 đơn hàng trong danh sách "Đơn hàng của tôi" (orderListInclude ở backend):

@@ -2,8 +2,7 @@ import { useMemo } from "react";
 import type { EChartsOption } from "echarts";
 import EChart from "./echart";
 import { ORDER_STATUS_LABEL } from "../../order/utils";
-import type { OrderStatus } from "../../order/types";
-import { ORDER_STATUS } from "../../../../shared/constants/order";
+import { ORDER_STATUS, type OrderStatus } from "../../../../shared/constants/order";
 
 interface OrderStatusChartProps {
 	ordersByStatus: Record<OrderStatus, number> | undefined;

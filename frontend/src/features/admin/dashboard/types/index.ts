@@ -1,4 +1,5 @@
-import type { OrderStatus, PaymentMethod, PaymentStatus } from "../../order/types";
+import type { OrderStatus } from "../../../../shared/constants/order";
+import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 
 /** Khớp RevenuePeriod ở backend (dashboard.utils.ts). */
 export type RevenuePeriod = "7d" | "30d" | "12m";

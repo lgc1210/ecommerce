@@ -1,6 +1,6 @@
+import type { OrderStatus } from "../../../../shared/constants/order";
 import type { PaymentMethod, PaymentStatus } from "../../../../shared/constants/payment";
 import type { Pagination } from "../../../../types";
-import type { OrderStatus } from "../../order/types";
 
 /**
  * Đơn hàng gắn với 1 payment (paymentDetailInclude ở backend/payment.service.ts)
