@@ -37,7 +37,10 @@ const AdminNotificationBell = () => {
 	const { isAuthenticated } = useAuth();
 	const navigate = useNavigate();
 
-	const { data: listData, isLoading } = useMyNotificationsQuery({ page: 1, limit: RECENT_LIMIT }, { refetchInterval: 30_000 });
+	const { data: listData, isLoading } = useMyNotificationsQuery(
+		{ page: 1, limit: RECENT_LIMIT },
+		{ refetchInterval: 30_000 },
+	);
 	const markAsReadMutation = useMarkNotificationAsRead();
 
 	const unreadCount = listData?.unreadCount ?? 0;
@@ -62,14 +65,19 @@ const AdminNotificationBell = () => {
 	return (
 		<HoverPreview
 			trigger={
-				<button type='button' aria-label='Thông báo' aria-haspopup='dialog' className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'>
+				<Link
+					to={paths.admin.notification}
+					type='button'
+					aria-label='Thông báo'
+					aria-haspopup='dialog'
+					className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft '>
 					<BellIcon className='h-5 w-5' />
 					{unreadCount > 0 && (
 						<span className='absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-bold text-white'>
 							{unreadCount > 99 ? "99+" : unreadCount}
 						</span>
 					)}
-				</button>
+				</Link>
 			}>
 			<div className='flex items-center justify-between border-b border-border px-4 py-2.5'>
 				<span className='text-sm font-semibold text-ink'>Thông báo gần đây</span>
@@ -111,7 +119,9 @@ const AdminNotificationBell = () => {
 			</div>
 
 			{!isLoading && (
-				<Link to={paths.admin.notification} className='block text-center py-2 text-sm w-full border-t border-border font-semibold text-primary-dark hover:bg-primary-light cursor-default'>
+				<Link
+					to={paths.admin.notification}
+					className='block text-center py-2 text-sm w-full border-t border-border font-semibold text-primary-dark hover:bg-primary-light'>
 					Xem tất cả
 				</Link>
 			)}

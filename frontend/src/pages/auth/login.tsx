@@ -107,7 +107,7 @@ const LoginPage = () => {
 				disabled={loginMutation.isPending}
 			/>
 			<div className='flex items-center justify-end text-sm'>
-				<Link to={paths.auth.forgotPassword} className='font-semibold text-primary-dark hover:underline cursor-default!' viewTransition>
+				<Link to={paths.auth.forgotPassword} className='font-semibold text-primary-dark hover:underline' viewTransition>
 					Quên mật khẩu?
 				</Link>
 			</div>

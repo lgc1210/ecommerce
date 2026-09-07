@@ -44,7 +44,7 @@ const BreadCrumb = ({ title, description }: BreadCrumbProps) => {
 				<h1 className='text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>{title}</h1>
 				{description && <p className='mt-2 max-w-xl text-sm text-muted'>{description}</p>}
 				<div className='mt-4 flex items-center gap-1.5 text-sm text-muted'>
-					<Link to={paths.client.home} className='font-medium hover:text-primary-dark text-nowrap cursor-default!' viewTransition>
+					<Link to={paths.client.home} className='font-medium hover:text-primary-dark text-nowrap' viewTransition>
 						Trang chủ
 					</Link>
 					{crumbs.map((crumb, index) => {
@@ -53,7 +53,7 @@ const BreadCrumb = ({ title, description }: BreadCrumbProps) => {
 							<span key={`${crumb.label}-${index}`} className='flex items-center gap-1.5 font-medium'>
 								<ChevronRightIcon className='h-3.5 w-3.5' />
 								{!isLast && crumb.path ? (
-									<Link to={crumb.path} className='hover:text-primary-dark text-nowrap cursor-default!' viewTransition>
+									<Link to={crumb.path} className='hover:text-primary-dark text-nowrap' viewTransition>
 										{crumb.label}
 									</Link>
 								) : (

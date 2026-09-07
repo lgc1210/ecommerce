@@ -37,7 +37,7 @@ const CategoryTreeMenuNode = ({ node, depth, onSelect }: CategoryTreeMenuNodePro
 				<button
 					type='button'
 					onClick={() => onSelect(node.id)}
-					className='flex flex-1 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-ink hover:bg-cream-soft hover:not-disabled:cursor-default'>
+					className='flex flex-1 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-ink hover:bg-cream-soft hover:not-disabled:cursor-pointer'>
 					<span className='truncate'>{node.name}</span>
 					<span className='shrink-0 text-xs text-muted'>{node._count.products}</span>
 				</button>

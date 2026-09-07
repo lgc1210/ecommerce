@@ -369,12 +369,16 @@ CREATE TABLE `notifications` (
 -- CreateTable
 CREATE TABLE `conversations` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `user_one_id` INTEGER NOT NULL,
-    `user_two_id` INTEGER NOT NULL,
+    `customer_id` INTEGER NOT NULL,
+    `assigned_staff_id` INTEGER NULL,
+    `status` ENUM('open', 'resolved', 'closed') NOT NULL DEFAULT 'open',
+    `customer_last_read_message_id` INTEGER NULL,
+    `staff_last_read_message_id` INTEGER NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
 
-    UNIQUE INDEX `conversations_user_one_id_user_two_id_key`(`user_one_id`, `user_two_id`),
+    INDEX `conversations_assigned_staff_id_status_idx`(`assigned_staff_id`, `status`),
+    INDEX `conversations_customer_id_idx`(`customer_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -383,12 +387,12 @@ CREATE TABLE `messages` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `conversation_id` INTEGER NOT NULL,
     `sender_id` INTEGER NOT NULL,
-    `content` TEXT NOT NULL,
-    `is_read` BOOLEAN NOT NULL DEFAULT false,
+    `type` ENUM('text', 'image', 'system') NOT NULL DEFAULT 'text',
+    `content` TEXT NULL,
+    `attachment_url` VARCHAR(500) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `messages_conversation_id_idx`(`conversation_id`),
-    INDEX `messages_conversation_id_created_at_idx`(`conversation_id`, `created_at`),
+    INDEX `messages_conversation_id_id_idx`(`conversation_id`, `id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -497,10 +501,10 @@ ALTER TABLE `contacts` ADD CONSTRAINT `contacts_user_id_fkey` FOREIGN KEY (`user
 ALTER TABLE `notifications` ADD CONSTRAINT `notifications_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `conversations` ADD CONSTRAINT `conversations_user_one_id_fkey` FOREIGN KEY (`user_one_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `conversations` ADD CONSTRAINT `conversations_customer_id_fkey` FOREIGN KEY (`customer_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `conversations` ADD CONSTRAINT `conversations_user_two_id_fkey` FOREIGN KEY (`user_two_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `conversations` ADD CONSTRAINT `conversations_assigned_staff_id_fkey` FOREIGN KEY (`assigned_staff_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `messages` ADD CONSTRAINT `messages_conversation_id_fkey` FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -32,6 +32,7 @@ const paths = Object.freeze({
 		notification: "/admin/notifications",
 		review: "/admin/review",
 		transport: "/admin/transport",
+		conversation: "/admin/conversations",
 	},
 	errors: {
 		forbidden: "/403",

@@ -3,6 +3,7 @@ import Header from "../../features/client/header/components";
 import Footer from "../../features/client/footer/components";
 import useTitle from "../../hooks/useTitle";
 import { useResetScroll } from "../../hooks/useResetScroll";
+import ChatWidget from "../../features/client/conversation/components/chat-widget";
 
 const ClientLayout = () => {
 	useTitle();
@@ -15,6 +16,7 @@ const ClientLayout = () => {
 				<Outlet />
 			</main>
 			<Footer />
+			<ChatWidget />
 			<ScrollRestoration getKey={getScrollKey} />
 		</div>
 	);

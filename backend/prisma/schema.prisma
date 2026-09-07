@@ -92,6 +92,18 @@ enum WarrantyProviderType {
   store        // Bảo hành từ cửa hàng
 }
 
+enum ConversationStatus {
+	open
+	resolved
+	closed
+}
+
+enum MessageType {
+	text
+	image
+	system
+}
+
 // ==========================================
 // 1. IDENTITY & ACCESS MANAGEMENT (IAM)
 // ==========================================
@@ -158,12 +170,12 @@ model User {
   otps                   Otp[]
   contacts               Contact[]
   notifications          Notification[]
-  conversationsAsUserOne Conversation[] @relation("ConversationUserOne")
-  conversationsAsUserTwo Conversation[] @relation("ConversationUserTwo")
-  messages               Message[]
   reviewReplies          ReviewReply[]
-  reviewModerationLogs   ReviewModerationLog[]
-  checkoutIdempotencyKeys CheckoutIdempotencyKey[]
+  reviewModerationLogs         ReviewModerationLog[]
+  checkoutIdempotencyKeys      CheckoutIdempotencyKey[]
+  messages                     Message[]
+  conversationsAsCustomer      Conversation[] @relation("ConversationAsCustomer")
+  conversationsAsAssignedStaff Conversation[] @relation("ConversationAsAssignedStaff")
 
   @@index([provider, providerId])
   @@map("users")
@@ -580,41 +592,45 @@ model Notification {
 }
 
 // ==========================================
-// 7. CHAT 1-1 SYSTEM
+// 7. CHAT KHÁCH HÀNG - NHÂN VIÊN HỖ TRỢ (shared inbox — không phải group chat)
 // ==========================================
 
 model Conversation {
-  id          Int       @id @default(autoincrement())
-  userOneId   Int       @map("user_one_id")
-  userTwoId   Int       @map("user_two_id")
+	id              Int                @id @default(autoincrement())
+	customerId      Int                @map("customer_id") // khách hàng — cố định suốt vòng đời hội thoại
+	assignedStaffId Int?               @map("assigned_staff_id") // ai đang phụ trách chính — chỉ để routing/hiển thị, KHÔNG dùng để chặn quyền trả lời
+	status          ConversationStatus @default(open)
 
-  createdAt   DateTime? @default(now()) @map("created_at")
-  updatedAt   DateTime? @updatedAt @map("updated_at") // Cập nhật khi có tin nhắn mới (để xếp phòng chat lên đầu)
+	customerLastReadMessageId Int? @map("customer_last_read_message_id") // khách đã đọc tới tin nào
+	staffLastReadMessageId    Int? @map("staff_last_read_message_id") // "phía shop" đã đọc tới tin nào — bất kỳ staff/quản lý nào đọc cũng cập nhật chung cột này
 
-  userOne     User      @relation("ConversationUserOne", fields: [userOneId], references: [id])
-  userTwo     User      @relation("ConversationUserTwo", fields: [userTwoId], references: [id])
-  messages    Message[]
+	createdAt DateTime? @default(now()) @map("created_at")
+	updatedAt DateTime? @updatedAt @map("updated_at") // bump mỗi khi có tin nhắn mới -> dùng để sort danh sách hội thoại theo hoạt động gần nhất
 
-  @@unique([userOneId, userTwoId]) // Đảm bảo giữa 2 người chỉ có duy nhất 1 phòng chat 1-1
-  @@map("conversations")
+	customer      User      @relation("ConversationAsCustomer", fields: [customerId], references: [id])
+	assignedStaff User?     @relation("ConversationAsAssignedStaff", fields: [assignedStaffId], references: [id])
+	messages      Message[]
+
+	@@index([assignedStaffId, status]) // màn "việc của tôi", lọc theo trạng thái
+	@@index([customerId])
+	@@map("conversations")
 }
 
 model Message {
-  id             Int          @id @default(autoincrement())
-  conversationId Int          @map("conversation_id")
-  senderId       Int          @map("sender_id")
+	id             Int         @id @default(autoincrement())
+	conversationId Int         @map("conversation_id")
+	senderId       Int         @map("sender_id") // khách, staff, hoặc quản lý — độc lập với Conversation.assignedStaffId
+	type           MessageType @default(text)
+	content        String?     @db.Text
+	attachmentUrl  String?     @map("attachment_url") @db.VarChar(500)
 
-  content        String       @db.Text
-  isRead         Boolean      @default(false) @map("is_read") // Quản lý trạng thái đã đọc/chưa đọc
+	createdAt DateTime? @default(now()) @map("created_at")
 
-  createdAt      DateTime?    @default(now()) @map("created_at")
+	conversation Conversation @relation(fields: [conversationId], references: [id])
+	sender       User         @relation(fields: [senderId], references: [id])
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  sender         User         @relation(fields: [senderId], references: [id])
-
-  @@index([conversationId])
-  @@index([conversationId, createdAt]) // Tối ưu truy vấn load lịch sử chat theo thời gian
-  @@map("messages")
+	@@index([conversationId, id]) // lấy N tin nhắn gần nhất của 1 hội thoại
+	@@map("messages")
 }
 
 /// Lưu các gói/chính sách bảo hành để gán cho sản phẩm (vd: "Bảo hành 12 tháng chính hãng")

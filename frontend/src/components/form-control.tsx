@@ -1,4 +1,12 @@
-import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
+import {
+	forwardRef,
+	useId,
+	useState,
+	type InputHTMLAttributes,
+	type ReactNode,
+	type Ref,
+	type TextareaHTMLAttributes,
+} from "react";
 
 type FormControlVariant = "cream" | "surface";
 
@@ -32,7 +40,18 @@ const baseFieldClasses =
 	"w-full rounded-xl border border-border text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary-light disabled:cursor-not-allowed disabled:opacity-60";
 
 const FormControl = forwardRef<HTMLInputElement | HTMLTextAreaElement, FormControlProps>((props, ref) => {
-	const { label, error, hint, variant = "cream", wrapperClassName = "", rightElement, id, className = "", required, ...rest } = props;
+	const {
+		label,
+		error,
+		hint,
+		variant = "cream",
+		wrapperClassName = "",
+		rightElement,
+		id,
+		className = "",
+		required,
+		...rest
+	} = props;
 
 	const generatedId = useId();
 	const fieldId = id ?? generatedId;
@@ -64,7 +83,13 @@ const FormControl = forwardRef<HTMLInputElement | HTMLTextAreaElement, FormContr
 
 			<div className='relative'>
 				{isTextarea ? (
-					<textarea id={fieldId} ref={ref as Ref<HTMLTextAreaElement>} required={required} className={fieldClasses} {...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)} />
+					<textarea
+						id={fieldId}
+						ref={ref as Ref<HTMLTextAreaElement>}
+						required={required}
+						className={fieldClasses}
+						{...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)}
+					/>
 				) : (
 					<input
 						id={fieldId}
@@ -72,7 +97,13 @@ const FormControl = forwardRef<HTMLInputElement | HTMLTextAreaElement, FormContr
 						required={required}
 						className={fieldClasses}
 						{...(rest as InputHTMLAttributes<HTMLInputElement>)}
-						type={isPasswordField ? (showPassword ? "text" : "password") : (rest as InputHTMLAttributes<HTMLInputElement>).type}
+						type={
+							isPasswordField
+								? showPassword
+									? "text"
+									: "password"
+								: (rest as InputHTMLAttributes<HTMLInputElement>).type
+						}
 					/>
 				)}
 
@@ -86,10 +117,16 @@ const FormControl = forwardRef<HTMLInputElement | HTMLTextAreaElement, FormContr
 					</button>
 				)}
 
-				{!isPasswordField && rightElement && <div className='absolute right-4 top-1/2 -translate-y-1/2'>{rightElement}</div>}
+				{!isPasswordField && rightElement && (
+					<div className='absolute right-4 top-1/2 -translate-y-1/2'>{rightElement}</div>
+				)}
 			</div>
 
-			{error ? <p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p> : hint ? <p className='mt-1.5 text-xs text-muted'>{hint}</p> : null}
+			{error ? (
+				<p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>
+			) : hint ? (
+				<p className='mt-1.5 text-xs text-muted'>{hint}</p>
+			) : null}
 		</div>
 	);
 });

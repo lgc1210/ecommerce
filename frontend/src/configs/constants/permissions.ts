@@ -45,6 +45,10 @@ const permissions = Object.freeze({
 	transport: {
 		manage: "transport:manage",
 	},
+	conversation: {
+		manage: "conversation:manage",
+		create: "conversation:create",
+	},
 } as const);
 
 export default permissions;

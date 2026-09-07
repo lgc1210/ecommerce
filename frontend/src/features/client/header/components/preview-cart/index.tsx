@@ -16,7 +16,7 @@ const PreviewCart = () => {
 					to={paths.client.cart}
 					aria-label='Giỏ hàng'
 					aria-haspopup='dialog'
-					className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'
+					className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'
 					viewTransition>
 					<CartIcon className='h-5 w-5' />
 
@@ -29,7 +29,11 @@ const PreviewCart = () => {
 			}>
 			<div className='flex items-center justify-between border-b border-border px-4 py-3'>
 				<p className='font-bold text-ink'>Giỏ hàng</p>
-				{isLoading ? <CartPreviewCountSkeleton /> : <span className='text-sm text-muted'>{totalQuantity} sản phẩm</span>}
+				{isLoading ? (
+					<CartPreviewCountSkeleton />
+				) : (
+					<span className='text-sm text-muted'>{totalQuantity} sản phẩm</span>
+				)}
 			</div>
 
 			{isLoading ? (
@@ -40,11 +44,17 @@ const PreviewCart = () => {
 				<>
 					<div className='max-h-80 overflow-y-auto p-2'>
 						{items.slice(0, 4).map((item) => (
-							<Link key={item.id} to={paths.client.productDetail(item.productSlug)} className='flex gap-3 rounded-lg p-2 hover:bg-cream-soft cursor-default!' viewTransition>
+							<Link
+								key={item.id}
+								to={paths.client.productDetail(item.productSlug)}
+								className='flex gap-3 rounded-lg p-2 hover:bg-cream-soft'
+								viewTransition>
 								<img src={item.image} alt={item.productName} className='h-14 w-14 shrink-0 rounded-md object-cover' />
 								<div className='min-w-0 flex-1'>
 									<p className='truncate text-sm font-semibold text-ink'>{item.productName}</p>
-									<p className='mt-0.5 truncate text-xs text-muted'>{Object.values(item.variationDetails ?? {}).join(" · ")}</p>
+									<p className='mt-0.5 truncate text-xs text-muted'>
+										{Object.values(item.variationDetails ?? {}).join(" · ")}
+									</p>
 									<div className='mt-1 flex items-center justify-between gap-2'>
 										<span className='text-sm font-bold text-primary-dark'>{formatCurrency(item.price)}</span>
 										<span className='text-xs text-muted'>× {item.quantity}</span>
@@ -57,7 +67,7 @@ const PreviewCart = () => {
 					<div className='border-t border-border p-3'>
 						<Link
 							to={paths.client.cart}
-							className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark cursor-default!'
+							className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark'
 							viewTransition>
 							Xem giỏ hàng
 						</Link>

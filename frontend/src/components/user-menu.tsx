@@ -45,7 +45,11 @@ const defaultActions: UserMenuAction[] = [
  * truyền props user từ bên ngoài, nên có thể nhúng ở bất kỳ layout nào
  * (admin header, client account dropdown, ...).
  */
-const UserMenu = ({ actions = defaultActions, redirectAfterLogout = paths.auth.login, align = "right" }: UserMenuProps) => {
+const UserMenu = ({
+	actions = defaultActions,
+	redirectAfterLogout = paths.auth.login,
+	align = "right",
+}: UserMenuProps) => {
 	const navigate = useNavigate();
 	const [open, setOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
@@ -71,7 +75,11 @@ const UserMenu = ({ actions = defaultActions, redirectAfterLogout = paths.auth.l
 
 	if (!isAuthenticated) {
 		return (
-			<Link to={paths.auth.login} aria-label='Tài khoản' className='flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default!' viewTransition>
+			<Link
+				to={paths.auth.login}
+				aria-label='Tài khoản'
+				className='flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'
+				viewTransition>
 				<UserIcon className='h-5 w-5' />
 			</Link>
 		);
@@ -79,13 +87,19 @@ const UserMenu = ({ actions = defaultActions, redirectAfterLogout = paths.auth.l
 
 	return (
 		<div className='relative' ref={menuRef}>
-			<button type='button' onClick={() => setOpen((v) => !v)} className='flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-cream-soft hover:not-disabled:cursor-default'>
-				<span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary-dark'>{getAvatarInitials(user?.name)}</span>
+			<button
+				type='button'
+				onClick={() => setOpen((v) => !v)}
+				className='flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-cream-soft hover:not-disabled:cursor-default'>
+				<span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary-dark'>
+					{getAvatarInitials(user?.name)}
+				</span>
 				<ChevronDownIcon className={`h-4 w-4 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
 			</button>
 
 			{open && (
-				<div className={`absolute top-[calc(100%+8px)] w-52 overflow-hidden rounded-xl border border-border bg-surface shadow-lg shadow-ink/5 ${align === "right" ? "right-0" : "left-0"}`}>
+				<div
+					className={`absolute top-[calc(100%+8px)] w-52 overflow-hidden rounded-xl border border-border bg-surface shadow-lg shadow-ink/5 ${align === "right" ? "right-0" : "left-0"}`}>
 					<div className='hidden text-left sm:block px-4 py-2.5'>
 						<span className='block text-sm font-semibold leading-tight text-ink'>{user?.name ?? "..."}</span>
 						<span className='block text-xs leading-tight text-muted'>{user?.email ?? ""}</span>
@@ -100,7 +114,7 @@ const UserMenu = ({ actions = defaultActions, redirectAfterLogout = paths.auth.l
 								action.onClick();
 							}}
 							disabled={action.disabled}
-							className='flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-ink hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-60 hover:not-disabled:cursor-default'>
+							className='flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-ink hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-60 hover:not-disabled:cursor-pointer'>
 							{action.icon}
 							{action.label}
 						</button>
