@@ -22,7 +22,7 @@ const envSchema = z.object({
 	// Bật SSL khi kết nối MySQL (bắt buộc với Aiven ở production). Không bắt buộc khai
 	// báo — mặc định "false" nên MySQL local (dev) không cần cấu hình gì thêm. Đặt
 	// "true" trong .env.production (hoặc biến môi trường trên Railway) để bật.
-	DATABASE_URL: z.url({ message: "DATABASE_URL must be a valid connection string format." }),
+	DATABASE_URL: z.string().min(1, { message: "DATABASE_URL is required." }),
 	DATABASE_SSL: z
 		.string()
 		.optional()
