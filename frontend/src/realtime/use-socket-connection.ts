@@ -40,7 +40,15 @@ export const useSocketConnection = (): void => {
 			isRecovering = true;
 			queryClient
 				.refetchQueries({ queryKey: AUTH_ME_QUERY_KEY })
-				.then(() => socket.connect())
+				.then(() => {
+					const user = queryClient.getQueryData(AUTH_ME_QUERY_KEY);
+					if (user) {
+						socket.connect();
+					} else {
+						// Do not keep opening handshakes when the auth cookie is unavailable/expired.
+						socket.disconnect();
+					}
+				})
 				.catch(() => {})
 				.finally(() => {
 					isRecovering = false;
