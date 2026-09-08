@@ -24,6 +24,7 @@ export const getSocket = (): Socket => {
 		socket = io(resolveSocketUrl(), {
 			withCredentials: true,
 			autoConnect: false,
+			transports: ["websocket"],
 		});
 	}
 	return socket;
