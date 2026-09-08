@@ -20,8 +20,12 @@ const HeroSection = ({ heroSection }: HeroSectionProps) => {
 		<section className='border-b border-border bg-cream-soft'>
 			<div className='mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20'>
 				<div>
-					<span className='inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary-dark'>{heroSection.badge}</span>
-					<h1 className='mt-4 text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl'>{heroSection.title}</h1>
+					<span className='inline-block rounded-full bg-primary-light px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary-dark'>
+						{heroSection.badge}
+					</span>
+					<h1 className='mt-4 text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl'>
+						{heroSection.title}
+					</h1>
 					<div className='mt-5 max-w-md text-base leading-relaxed text-muted'>
 						<BlocksRenderer
 							content={heroSection.content}
@@ -32,10 +36,14 @@ const HeroSection = ({ heroSection }: HeroSectionProps) => {
 					</div>
 					<div className='mt-8 flex flex-wrap items-center gap-4'>
 						<Link to={paths.client.shop} viewTransition>
-							<Button icon={<ChevronRightIcon className='h-4 w-4' />}>{heroSection.btn_text}</Button>
+							<Button icon={<ChevronRightIcon className='h-4 w-4' />} className='cursor-pointer!'>
+								{heroSection.btn_text}
+							</Button>
 						</Link>
 						<Link to={paths.client.about} viewTransition>
-							<Button variant='outline'>{heroSection.btn_second_text}</Button>
+							<Button variant='outline' className='cursor-pointer!'>
+								{heroSection.btn_second_text}
+							</Button>
 						</Link>
 					</div>
 				</div>

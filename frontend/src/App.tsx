@@ -4,6 +4,8 @@ import { BellIcon, CloseIcon, ShieldCheckIcon } from "./components/icons";
 import Button from "./components/button";
 import BackToTop from "./shared/components/back-to-top";
 import { useSyncExternalStore } from "react";
+import { useSocketConnection } from "./realtime/use-socket-connection";
+import { useSupportInboxNotifications } from "./features/admin/conversation/hooks";
 
 const CustomIcon = ({ type }: { type: string }) => {
 	const iconClasses = "w-6 h-6 flex-shrink-0";
@@ -15,7 +17,12 @@ const CustomIcon = ({ type }: { type: string }) => {
 		case "error":
 			// Fallback styling for error alerts using standard semantic red
 			return (
-				<svg className={`${iconClasses} text-rose-600`} fill='none' viewBox='0 0 24 24' stroke='currentColor' strokeWidth={1.75}>
+				<svg
+					className={`${iconClasses} text-rose-600`}
+					fill='none'
+					viewBox='0 0 24 24'
+					stroke='currentColor'
+					strokeWidth={1.75}>
 					<circle cx='12' cy='12' r='9' />
 					<path strokeLinecap='round' strokeLinejoin='round' d='M12 8v4m0 4h.01' />
 				</svg>
@@ -51,6 +58,10 @@ const getSnapshot = () => {
 
 const App = () => {
 	const isMobile = useSyncExternalStore(subscribe, getSnapshot);
+
+	useSocketConnection();
+	useSupportInboxNotifications();
+
 	return (
 		<>
 			<ToastContainer

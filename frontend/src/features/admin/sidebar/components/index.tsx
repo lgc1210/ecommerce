@@ -3,6 +3,7 @@ import {
 	BellIcon,
 	BoxIcon,
 	CartIcon,
+	ChatIcon,
 	ChevronsLeftIcon,
 	CloseIcon,
 	CouponIcon,
@@ -20,6 +21,7 @@ import Overlay from "../../../../components/overlay";
 import { useAuth } from "../../../auth/hooks/useAuth";
 import permissions from "../../../../configs/constants/permissions";
 import type { ComponentType, SVGProps } from "react";
+import { useSupportInboxStore } from "../../conversation/stores";
 
 type SidebarProps = {
 	open: boolean;
@@ -57,38 +59,100 @@ const navGroups: NavGroup[] = [
 	{
 		groupLabel: "Quản lý sản phẩm",
 		items: [
-			{ to: paths.admin.product, label: "Sản phẩm", icon: BoxIcon, permission: permissions.catalog.read },
-			{ to: paths.admin.category, label: "Danh mục", icon: TagIcon, permission: permissions.catalog.read },
+			{
+				to: paths.admin.product,
+				label: "Sản phẩm",
+				icon: BoxIcon,
+				permission: permissions.catalog.read,
+			},
+			{
+				to: paths.admin.category,
+				label: "Danh mục",
+				icon: TagIcon,
+				permission: permissions.catalog.read,
+			},
 		],
 	},
 	{
 		groupLabel: "Quản lý bán hàng",
 		items: [
-			{ to: paths.admin.order, label: "Đơn hàng", icon: CartIcon, permission: permissions.order.update },
-			{ to: paths.admin.payment, label: "Thanh toán", icon: CreditCardIcon, permission: permissions.payment.read },
-			{ to: paths.admin.transport, label: "Vận chuyển", icon: TruckIcon, permission: permissions.transport.manage },
+			{
+				to: paths.admin.order,
+				label: "Đơn hàng",
+				icon: CartIcon,
+				permission: permissions.order.update,
+			},
+			{
+				to: paths.admin.payment,
+				label: "Thanh toán",
+				icon: CreditCardIcon,
+				permission: permissions.payment.read,
+			},
+			{
+				to: paths.admin.transport,
+				label: "Vận chuyển",
+				icon: TruckIcon,
+				permission: permissions.transport.manage,
+			},
 		],
 	},
 	{
 		groupLabel: "Marketing & CSKH",
 		items: [
-			{ to: paths.admin.coupon, label: "Mã giảm giá", icon: CouponIcon, permission: permissions.coupon.manage },
-			{ to: paths.admin.contact, label: "Liên hệ", icon: MailIcon, permission: permissions.contact.manage },
-			{ to: paths.admin.review, label: "Đánh giá", icon: StarIcon, permission: permissions.review.update },
-			{ to: paths.admin.notification, label: "Thông báo", icon: BellIcon, permission: permissions.notification.broadcast },
+			{
+				to: paths.admin.coupon,
+				label: "Mã giảm giá",
+				icon: CouponIcon,
+				permission: permissions.coupon.manage,
+			},
+			{
+				to: paths.admin.contact,
+				label: "Liên hệ",
+				icon: MailIcon,
+				permission: permissions.contact.manage,
+			},
+			{
+				to: paths.admin.review,
+				label: "Đánh giá",
+				icon: StarIcon,
+				permission: permissions.review.update,
+			},
+			{
+				to: paths.admin.notification,
+				label: "Thông báo",
+				icon: BellIcon,
+				permission: permissions.notification.broadcast,
+			},
+			{
+				to: paths.admin.conversation,
+				label: "Hỗ trợ khách hàng",
+				icon: ChatIcon,
+				permission: permissions.conversation.manage,
+			},
 		],
 	},
 	{
 		groupLabel: "Hệ thống",
 		items: [
-			{ to: paths.admin.user, label: "Người dùng", icon: UsersIcon, permission: permissions.user.read },
-			{ to: paths.admin.role, label: "Vai trò", icon: ShieldIcon, permission: permissions.rbac.manage },
+			{
+				to: paths.admin.user,
+				label: "Người dùng",
+				icon: UsersIcon,
+				permission: permissions.user.read,
+			},
+			{
+				to: paths.admin.role,
+				label: "Vai trò",
+				icon: ShieldIcon,
+				permission: permissions.rbac.manage,
+			},
 		],
 	},
 ];
 
 const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) => {
 	const { can } = useAuth();
+	const hasNewActivity = useSupportInboxStore((state) => state.hasNewActivity);
 
 	// Lọc các group và items dựa trên quyền của user
 	const visibleGroups = navGroups
@@ -108,9 +172,12 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 					open ? "translate-x-0" : "-translate-x-full"
 				} ${collapsed ? "lg:w-20" : "lg:w-64"}`}>
 				{/* Brand Wrapper */}
-				<div className={`flex h-16 items-center border-b border-white/10 px-5 ${collapsed ? "lg:justify-center lg:px-0" : "justify-between gap-2"}`}>
+				<div
+					className={`flex h-16 items-center border-b border-white/10 px-5 ${collapsed ? "lg:justify-center lg:px-0" : "justify-between gap-2"}`}>
 					<div className='flex items-center gap-2.5 lg:flex-0 flex-1'>
-						<span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary font-extrabold text-white'>E</span>
+						<span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary font-extrabold text-white'>
+							E
+						</span>
 						<span className={`text-lg font-bold tracking-tight text-white ${collapsed ? "lg:hidden" : ""}`}>
 							<span className='font-medium text-primary'>Admin</span>
 						</span>
@@ -132,7 +199,10 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 					{visibleGroups.map((group, groupIdx) => (
 						<div key={groupIdx} className='space-y-1'>
 							{/* Tiêu đề nhóm - Sẽ ẩn đi khi sidebar thu gọn */}
-							<p className={`px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-cream/35 ${collapsed ? "lg:hidden" : ""}`}>{group.groupLabel}</p>
+							<p
+								className={`px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-cream/35 select-none ${collapsed ? "lg:hidden" : ""}`}>
+								{group.groupLabel}
+							</p>
 
 							{/* Danh sách menu con trong nhóm */}
 							{group.items.map(({ to, label, icon: Icon, end }) => (
@@ -143,11 +213,18 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 									title={label}
 									onClick={onClose}
 									className={({ isActive }) =>
-										`group relative flex items-center gap-3 rounded-lg p-2 text-sm font-medium transition-colors cursor-default ${collapsed ? "lg:justify-center lg:px-0" : ""} ${
-											isActive ? "bg-primary text-white shadow-sm shadow-primary/30" : "text-cream/70 hover:bg-white/5 hover:text-white"
+										`group relative flex items-center gap-3 rounded-lg p-2 text-sm font-medium transition-colors ${collapsed ? "lg:justify-center lg:px-0" : ""} ${
+											isActive
+												? "bg-primary text-white shadow-sm shadow-primary/30"
+												: "text-cream/70 hover:bg-white/5 hover:text-white"
 										}`
 									}>
-									<Icon className='h-4.5 w-4.5 shrink-0' />
+									<span className='relative shrink-0'>
+										<Icon className='h-4.5 w-4.5' />
+										{to === paths.admin.conversation && hasNewActivity && (
+											<span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-ink' />
+										)}
+									</span>{" "}
 									<span className={collapsed ? "lg:hidden" : ""}>{label}</span>
 								</NavLink>
 							))}
@@ -157,7 +234,8 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 
 				{/* Footer Wrapper */}
 				<div className='border-t border-white/10 p-4 shrink-0'>
-					<div className={`rounded-lg bg-white/5 p-3.5 text-xs text-cream/60 ${collapsed ? "lg:hidden" : ""}`}>
+					<div
+						className={`rounded-lg bg-white/5 p-3.5 text-xs text-cream/60 select-none ${collapsed ? "lg:hidden" : ""}`}>
 						<p className='font-semibold text-cream/90'>Cần trợ giúp?</p>
 						<p className='mt-1 leading-relaxed'>Xem tài liệu vận hành hệ thống hoặc liên hệ đội kỹ thuật.</p>
 					</div>
@@ -170,7 +248,9 @@ const Sidebar = ({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) =
 						className={`hidden w-full items-center gap-2.5 rounded-lg p-2 text-sm font-medium text-cream/70 hover:bg-white/5 hover:text-white lg:flex cursor-default ${
 							collapsed ? "lg:justify-center" : ""
 						} ${collapsed ? "" : "mt-3"}`}>
-						<ChevronsLeftIcon className={`h-4.5 w-4.5 shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`} />
+						<ChevronsLeftIcon
+							className={`h-4.5 w-4.5 shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`}
+						/>
 						<span className={collapsed ? "lg:hidden" : ""}>Thu gọn</span>
 					</button>
 				</div>

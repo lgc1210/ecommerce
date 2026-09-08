@@ -33,6 +33,7 @@ import AdminPaymentPage from "../../pages/admin/payment";
 import AdminContactPage from "../../pages/admin/contact";
 import AdminReviewPage from "../../pages/admin/review";
 import AdminNotificationPage from "../../pages/admin/notification";
+import AdminConversationPage from "../../pages/admin/conversation";
 
 // Layouts
 import ClientLayout from "../../layouts/client";
@@ -248,6 +249,12 @@ const router = createBrowserRouter([
 				loader: requirePermissionLoader(permissions.notification.broadcast),
 				Component: AdminNotificationPage,
 				handle: { title: "Notification", crumb: () => "Notification" },
+			},
+			{
+				path: paths.admin.conversation,
+				loader: requirePermissionLoader(permissions.conversation.manage),
+				Component: AdminConversationPage,
+				handle: { title: "Hỗ trợ khách hàng", crumb: () => "Hỗ trợ khách hàng" },
 			},
 		],
 	},

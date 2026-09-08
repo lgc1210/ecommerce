@@ -7,6 +7,7 @@ import { couponSeed } from "./features/coupons/coupon.seed.js";
 import { categorySeed } from "./features/categories/category.seed.js";
 import { startOrderCleanupJob } from "./cronjob/order/index.js";
 import { startGhnShipmentRetryJob } from "./cronjob/payment/index.js";
+import { initSocketServer } from "./socket.server.js";
 
 async function bootstrap(): Promise<void> {
 	try {
@@ -31,7 +32,8 @@ async function bootstrap(): Promise<void> {
 		const server = app.listen(process.env.PORT, () => {
 			console.log(`=======================================================`);
 			console.log(`Server execution loop initialized successfully.`);
-			process.env.NODE_ENV === "development" && console.log(`Network Listening Port: http://localhost:${process.env.PORT}`);
+			process.env.NODE_ENV === "development" &&
+				console.log(`Network Listening Port: http://localhost:${process.env.PORT}`);
 			console.log(`Active App Operating Mode: [${process.env.NODE_ENV}]`);
 			console.log(`=======================================================`);
 		});
@@ -40,6 +42,8 @@ async function bootstrap(): Promise<void> {
 		startOrderCleanupJob();
 		// 2.2. MỚI — Bắt đầu job nền retry tạo vận đơn GHN cho đơn thiếu vận đơn (xem cronjob/index.ts)
 		startGhnShipmentRetryJob();
+		// 2.3. Gắn Socket.IO vào ĐÚNG http.Server này (dùng chung 1 cổng, không mở cổng mới)
+		initSocketServer(server);
 
 		// 3. Graceful Shutdown handlers (Ensures database connections close cleanly if server stops)
 		const handleSignal = async (signal: string) => {

@@ -59,7 +59,7 @@ export function verifyRefreshToken(token: string): TokenPayload {
 const baseCookieOptions: CookieOptions = {
 	httpOnly: true,
 	secure: process.env.NODE_ENV === "production",
-	sameSite: "lax",
+	sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
 	path: "/",
 	...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
 };
@@ -81,7 +81,9 @@ export function getRefreshTokenCookieOptions(): CookieOptions {
 //   liên kết danh tính người dùng giữa các hệ thống khác nhau (correlation/fingerprinting).
 //   Backend vẫn lưu providerId trong DB để phục vụ việc liên kết tài khoản (linking) khi
 //   đăng nhập Google, chỉ là không cần thiết phải trả nó ra ngoài cho bất kỳ client nào.
-export function sanitizeUser<T extends { passwordHash?: string | null; providerId?: string | null }>(user: T): Omit<T, "passwordHash" | "providerId"> {
+export function sanitizeUser<T extends { passwordHash?: string | null; providerId?: string | null }>(
+	user: T,
+): Omit<T, "passwordHash" | "providerId"> {
 	const { passwordHash, providerId, ...safeUser } = user;
 	return safeUser;
 }

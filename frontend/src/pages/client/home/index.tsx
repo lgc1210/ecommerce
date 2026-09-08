@@ -16,7 +16,11 @@ const HomePage = () => {
 	const page = data?.data;
 
 	if (isError) {
-		return <div className='flex min-h-[60vh] items-center justify-center text-center text-muted'>Không thể tải nội dung trang Giới thiệu. Vui lòng thử lại sau.</div>;
+		return (
+			<div className='flex min-h-[60vh] items-center justify-center text-center text-muted'>
+				Không thể tải nội dung trang Giới thiệu. Vui lòng thử lại sau.
+			</div>
+		);
 	}
 
 	return (

@@ -20,7 +20,10 @@ const FeaturedProductsCarouselSection = () => {
 	const featuredProducts = featuredData?.data ?? [];
 	const shouldFallback = !isFeaturedLoading && featuredProducts.length === 0;
 
-	const { data: latestData, isLoading: isLatestLoading } = useProductsQuery({ limit: HOME_PRODUCTS_LIMIT, sort: productSort.newest }, { enabled: shouldFallback });
+	const { data: latestData, isLoading: isLatestLoading } = useProductsQuery(
+		{ limit: HOME_PRODUCTS_LIMIT, sort: productSort.newest },
+		{ enabled: shouldFallback },
+	);
 	const latestProducts = latestData?.data ?? [];
 
 	const isLoading = isFeaturedLoading || (shouldFallback && isLatestLoading);
@@ -45,15 +48,21 @@ const FeaturedProductsCarouselSection = () => {
 										<p className='text-xs font-bold uppercase tracking-wider text-primary'>Giá chỉ từ</p>
 										<h3 className='mt-2 text-2xl font-extrabold sm:text-3xl'>{product.name}</h3>
 										<p className='mt-2 text-2xl font-bold text-primary'>{formatCurrency(min)}</p>
-										{product.description && <p className='mt-3 max-w-md text-sm text-cream/60'>{product.description}</p>}
+										{product.description && (
+											<p className='mt-3 max-w-md text-sm text-cream/60'>{product.description}</p>
+										)}
 									</div>
 									<Link to={paths.client.productDetail(product.slug)} className='mt-auto'>
-										<Button variant='primary' size='sm' className='mt-5'>
+										<Button variant='primary' size='sm' className='mt-5 cursor-pointer!'>
 											Xem sản phẩm
 										</Button>
 									</Link>
 								</div>
-								<img src={getProductThumbnail(product)} alt={product.name} className='h-40 w-40 shrink-0 rounded-2xl object-cover sm:h-48 sm:w-48' />
+								<img
+									src={getProductThumbnail(product)}
+									alt={product.name}
+									className='h-40 w-40 shrink-0 rounded-2xl object-cover sm:h-48 sm:w-48'
+								/>
 							</div>
 						);
 					}}

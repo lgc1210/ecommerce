@@ -15,7 +15,10 @@ const NotificationBell = () => {
 	const { isAuthenticated } = useAuth();
 	const navigate = useNavigate();
 
-	const { data: listData, isLoading } = useMyNotificationsQuery({ page: 1, limit: RECENT_LIMIT }, { refetchInterval: 30_000 });
+	const { data: listData, isLoading } = useMyNotificationsQuery(
+		{ page: 1, limit: RECENT_LIMIT },
+		{ refetchInterval: 30_000 },
+	);
 	const markAsReadMutation = useMarkNotificationAsRead();
 
 	const unreadCount = listData?.unreadCount ?? 0;
@@ -41,7 +44,7 @@ const NotificationBell = () => {
 					state={{ tab: "notifications" }}
 					aria-label='Thông báo gần đây'
 					aria-haspopup='dialog'
-					className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft cursor-default'
+					className='relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-cream-soft'
 					viewTransition>
 					<BellIcon className='h-5 w-5' />
 
@@ -96,7 +99,7 @@ const NotificationBell = () => {
 					to={paths.client.account}
 					state={{ tab: "notifications" }}
 					viewTransition
-					className='block text-center py-2 text-sm w-full border-t border-border font-semibold text-primary-dark hover:bg-primary-light cursor-default'>
+					className='block text-center py-2 text-sm w-full border-t border-border font-semibold text-primary-dark hover:bg-primary-light'>
 					Xem tất cả
 				</Link>
 			)}

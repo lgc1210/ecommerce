@@ -30,7 +30,11 @@ const AboutPage = () => {
 	}
 
 	if (isError || !page) {
-		return <div className='flex min-h-[60vh] items-center justify-center text-center text-muted'>Không thể tải nội dung trang Giới thiệu. Vui lòng thử lại sau.</div>;
+		return (
+			<div className='flex min-h-[60vh] items-center justify-center text-center text-muted'>
+				Không thể tải nội dung trang Giới thiệu. Vui lòng thử lại sau.
+			</div>
+		);
 	}
 
 	const { breadcrumb, stats_section, cta_section, story_section, value_section } = page;
@@ -44,7 +48,11 @@ const AboutPage = () => {
 			<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
 				<div className='grid items-center gap-10 lg:grid-cols-2'>
 					<div className='overflow-hidden rounded-3xl bg-cream-soft min-h-96 h-full'>
-						<img src={bannerUrl} alt={story_section.banner?.alternativeText ?? story_section.title} className='w-full h-full object-cover' />
+						<img
+							src={bannerUrl}
+							alt={story_section.banner?.alternativeText ?? story_section.title}
+							className='w-full h-full object-cover'
+						/>
 					</div>
 					<div>
 						<span className='text-xs font-bold uppercase tracking-wider text-primary-dark'>{story_section.badge}</span>
@@ -58,7 +66,7 @@ const AboutPage = () => {
 							/>
 						</div>
 						<Link to={paths.client.shop} viewTransition>
-							<Button className='mt-6'>{story_section.btn_text}</Button>
+							<Button className='mt-6 cursor-pointer!'>{story_section.btn_text}</Button>
 						</Link>
 					</div>
 				</div>
@@ -104,7 +112,9 @@ const AboutPage = () => {
 					<h2 className='text-2xl font-extrabold tracking-tight text-white sm:text-3xl'>{cta_section.title}</h2>
 					<p className='max-w-md text-sm text-white/80'>{cta_section.description}</p>
 					<Link to={paths.client.shop} viewTransition>
-						<Button variant='dark'>{cta_section.btn_text}</Button>
+						<Button variant='dark' className='cursor-pointer!'>
+							{cta_section.btn_text}
+						</Button>
 					</Link>
 				</div>
 			</section>

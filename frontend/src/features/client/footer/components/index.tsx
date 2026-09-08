@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import paths from "../../../../configs/constants/paths";
 import { formatCurrency } from "../../../../utils/currency";
-import { FacebookIcon, InstagramIcon, MailIcon, MapPinIcon, PhoneIcon, TwitterIcon } from "../../../../components/icons";
+import {
+	FacebookIcon,
+	InstagramIcon,
+	MailIcon,
+	MapPinIcon,
+	PhoneIcon,
+	TwitterIcon,
+} from "../../../../components/icons";
 import { useProductsQuery } from "../../product/hooks";
 import { toProductCardItem } from "../../product/utils";
 import { productSort } from "../../product/constants";
@@ -24,7 +31,11 @@ const contactItems = [
 		id: "address",
 		icon: <MapPinIcon className='mt-0.5 h-4 w-4 shrink-0 text-primary' />,
 		content: (
-			<a href={`https://maps.app.goo.gl/MbYgh4LnZHjBVavu6`} target='_blank' rel='noopener noreferrer' className='hover:underline'>
+			<a
+				href={`https://maps.app.goo.gl/MbYgh4LnZHjBVavu6`}
+				target='_blank'
+				rel='noopener noreferrer'
+				className='hover:underline'>
 				Toà nhà Ecommerce, Quận 8, TP. Hồ Chí Minh
 			</a>
 		),
@@ -57,13 +68,22 @@ const Footer = () => {
 				<div className='grid grid-cols-2 gap-10 md:grid-cols-4'>
 					<div className='col-span-1 md:col-span-1'>
 						<Link to={paths.client.home} className='flex items-center gap-2' viewTransition>
-							<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>E</span>
+							<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>
+								E
+							</span>
 							<span className='text-xl font-extrabold tracking-tight text-white'>Commerce</span>
 						</Link>
-						<p className='mt-4 text-sm leading-relaxed text-cream/60'>Cửa hàng phụ kiện công nghệ với những sản phẩm được tuyển chọn kỹ lưỡng, giao hàng nhanh và chính sách đổi trả rõ ràng.</p>
+						<p className='mt-4 text-sm leading-relaxed text-cream/60'>
+							Cửa hàng phụ kiện công nghệ với những sản phẩm được tuyển chọn kỹ lưỡng, giao hàng nhanh và chính sách đổi
+							trả rõ ràng.
+						</p>
 						<div className='mt-5 flex items-center gap-3'>
 							{[FacebookIcon, InstagramIcon, TwitterIcon].map((Icon, i) => (
-								<a key={i} href='#' aria-label='Mạng xã hội' className='flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-cream/70 hover:bg-primary hover:text-white'>
+								<a
+									key={i}
+									href='#'
+									aria-label='Mạng xã hội'
+									className='flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-cream/70 hover:bg-primary hover:text-white'>
 									<Icon className='h-4 w-4' />
 								</a>
 							))}
@@ -75,14 +95,14 @@ const Footer = () => {
 						<ul className='mt-4 space-y-2.5 text-sm'>
 							{quickLinks.map((link) => (
 								<li key={link.to + new Date().getTime()}>
-									<Link to={link.to} className='text-cream/70 hover:text-primary cursor-default!' viewTransition>
+									<Link to={link.to} className='text-cream/70 hover:text-primary' viewTransition>
 										{link.label}
 									</Link>
 								</li>
 							))}
 							{accountLinks.map((link) => (
 								<li key={link.to + new Date().getTime()}>
-									<Link to={link.to} className='text-cream/70 hover:text-primary cursor-default!' viewTransition>
+									<Link to={link.to} className='text-cream/70 hover:text-primary' viewTransition>
 										{link.label}
 									</Link>
 								</li>
@@ -107,10 +127,19 @@ const Footer = () => {
 						<ul className='mt-4 space-y-3'>
 							{newProducts.map((product) => (
 								<li key={product.slug}>
-									<Link to={paths.client.productDetail(product.slug)} className='flex items-center gap-3 group cursor-default!' viewTransition>
-										<img src={product.image} alt={product.name} className='h-12 w-12 shrink-0 rounded-lg object-cover' />
+									<Link
+										to={paths.client.productDetail(product.slug)}
+										className='flex items-center gap-3 group'
+										viewTransition>
+										<img
+											src={product.image}
+											alt={product.name}
+											className='h-12 w-12 shrink-0 rounded-lg object-cover'
+										/>
 										<span>
-											<span className='block line-clamp-1 text-sm text-cream/80 group-hover:text-primary'>{product.name}</span>
+											<span className='block line-clamp-1 text-sm text-cream/80 group-hover:text-primary'>
+												{product.name}
+											</span>
 											<span className='block text-xs font-semibold text-primary'>{formatCurrency(product.price)}</span>
 										</span>
 									</Link>
