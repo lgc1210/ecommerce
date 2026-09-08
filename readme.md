@@ -2,11 +2,11 @@
 
 Website thương mại điện tử (tiếng Việt) gồm 3 dự án độc lập chạy cùng nhau:
 
-| Thư mục       | Vai trò                                                                        | Công nghệ chính                                                                       |
-| ------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `backend/`    | REST API nghiệp vụ chính (auth, sản phẩm, đơn hàng, thanh toán, vận chuyển...) | Node.js, Express 5, Prisma ORM, MySQL                                                 |
-| `frontend/`   | Web app cho khách hàng (client) và trang quản trị (admin)                      | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, Zustand, React Router v7 |
-| `strapi-cms/` | CMS phụ trợ, quản lý nội dung tĩnh cho các trang marketing                     | Strapi 5                                                                              |
+| Thư mục       | Vai trò                                                                                              | Công nghệ chính                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `backend/`    | REST API nghiệp vụ chính (auth, sản phẩm, đơn hàng, thanh toán, vận chuyển, chat hỗ trợ realtime...) | Node.js, Express 5, Prisma ORM, MySQL, Socket.IO                                      |
+| `frontend/`   | Web app cho khách hàng (client) và trang quản trị (admin)                                            | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, Zustand, React Router v7 |
+| `strapi-cms/` | CMS phụ trợ, quản lý nội dung tĩnh cho các trang marketing                                           | Strapi 5                                                                              |
 
 ---
 
@@ -30,9 +30,10 @@ Website thương mại điện tử (tiếng Việt) gồm 3 dự án độc l�
 Sơ đồ kiến trúc tổng thể
 ![Sơ đồ kiến trúc tổng thể](docs/images/project-structure/architecture.svg)
 
-- **`frontend`** gọi hai API độc lập song song:
+- **`frontend`** gọi hai API độc lập song song, cộng thêm 1 kết nối realtime:
   - `apiClient` (axios, `withCredentials: true`) → `backend` cho toàn bộ nghiệp vụ (auth, giỏ hàng, đơn hàng...), có interceptor tự động refresh access token khi gặp `401`.
   - `strapiClient` (axios riêng biệt) → `strapi-cms` chỉ để lấy nội dung các trang tĩnh (Home, About, Contact, Shop banner).
+  - Socket.IO client → `backend` (cùng origin/cổng với REST) cho chat hỗ trợ khách hàng realtime — xác thực qua cookie JWT lúc handshake, không đi qua `apiClient` (xem 2.9, 3.6).
 - **`backend`** là nguồn sự thật duy nhất cho dữ liệu giao dịch (user, sản phẩm, đơn hàng, thanh toán...) và tự tích hợp trực tiếp với các dịch vụ bên thứ ba (GHN, cổng thanh toán, OAuth, SMTP) — `strapi-cms` không liên quan tới các luồng này.
 
 ---
@@ -47,6 +48,7 @@ Sơ đồ kiến trúc tổng thể
 - **Xác thực**: JWT (access token + refresh token riêng biệt), cookie `httpOnly`, `bcrypt` để hash mật khẩu.
 - **OAuth**: Google (`google-auth-library`, xác thực idToken) và Facebook (Graph API `debug_token`).
 - **Validation**: Zod cho toàn bộ input (body/query/param) thông qua middleware `validate`.
+- **Realtime**: `socket.io`, gắn chung vào đúng `http.Server` mà Express đang chạy (dùng chung 1 cổng) — phục vụ chat hỗ trợ khách hàng (xem 2.9).
 - **Khác**: `helmet` (bảo mật header), `cors`, `morgan` (logging), `multer` (upload ảnh), `@getbrevo/brevo` (gửi email OTP qua HTTPS API), `node-cron` (job nền).
 
 ### 2.2. Kiến trúc thư mục — modular theo feature
@@ -60,6 +62,8 @@ backend/src/
 ├── cronjob/                    # Job dọn đơn "pending" quá hạn thanh toán online + job retry tạo vận đơn GHN thất bại
 ├── external/ghn/               # Tích hợp Giao Hàng Nhanh (tỉnh/huyện/xã, phí ship, tạo đơn)
 ├── generated/prisma/           # Prisma Client được generate (không sửa tay)
+├── realtime/io-registry.ts     # Giữ instance Socket.IO `io` dùng chung + tên các room — tách riêng để feature service (REST) gọi được getIO() mà không tạo vòng lặp import
+├── socket.server.ts            # Khởi tạo Socket.IO, xác thực JWT lúc handshake, gắn chung http.Server với Express
 ├── shared/                     # Xử lý lỗi service dùng chung
 ├── utils/
 └── features/
@@ -75,9 +79,12 @@ backend/src/
     ├── payments/               # Trạng thái thanh toán + cổng thanh toán (gateways/)
     ├── reviews/                # Đánh giá sản phẩm
     ├── contacts/               # Form liên hệ
-    ├── notifications/          # Thông báo in-app (tự bắn khi đơn hàng/thanh toán đổi trạng thái, shop phản hồi review... + admin broadcast hàng loạt)
+    ├── conversations/          # Hội thoại chat hỗ trợ khách hàng (shared inbox cho staff, trạng thái open/resolved/closed) — realtime qua Socket.IO
+    ├── messages/               # Tin nhắn trong từng conversation — dùng chung logic gửi tin cho cả REST lẫn socket
+    ├── notifications/          # Thông báo in-app (tự bắn khi đơn hàng/thanh toán đổi trạng thái, shop phản hồi review... + admin broadcast hàng loạt) — hiện vẫn qua polling, chưa đẩy qua Socket.IO
     ├── dashboard/              # Thống kê tổng quan cho admin
-    └── uploads/                # Upload ảnh sản phẩm
+    ├── uploads/                # Upload ảnh sản phẩm
+    └── warranty/               # Bảo hành sản phẩm — CHƯA triển khai: model DB (`WarrantyPolicy`) đã có trong schema, nhưng route/controller/service vẫn là file rỗng
 ```
 
 Mỗi feature theo cùng một khuôn mẫu: `*.routes.ts` (định tuyến + khai báo quyền), `*.controller.ts`, `*.service.ts` (nghiệp vụ + Prisma), `*.validation.ts` (Zod schema), `*.utils.ts`, và `*.seed.ts` (dữ liệu mẫu khi khởi động).
@@ -102,29 +109,31 @@ Sơ đồ ERD Database
 
 - Đăng nhập trả về **access token** (ngắn hạn) + **refresh token** (cookie `httpOnly`), ký bằng 2 secret khác nhau.
 - Middleware `authenticateJWT` xác thực access token; `requirePermission("<resource>:<action>")` kiểm tra quyền theo mô hình `resource:action` (vd: `catalog:write`, `order:read`).
-- 3 role mặc định khi seed: **admin** (toàn quyền, tính động theo mọi permission hiện có), **manager** (vận hành: catalog, đơn hàng, kho, coupon, thanh toán, dashboard...), **customer** (giỏ hàng, đặt hàng, đánh giá, liên hệ).
+- 3 role mặc định khi seed: **admin** (toàn quyền, tính động theo mọi permission hiện có), **manager** (vận hành: catalog, đơn hàng, kho, coupon, thanh toán, dashboard, `conversation:manage` — shared inbox chat hỗ trợ...), **customer** (giỏ hàng, đặt hàng, đánh giá, liên hệ, `conversation:create` — chat hỗ trợ của chính mình).
 - RBAC có thể tùy biến qua API `/api/rbac` (tạo role/permission mới, gán/thu hồi quyền) — dữ liệu seed chỉ chạy khi bảng đang trống, không ghi đè phân quyền admin đã chỉnh tay.
 
 ### 2.5. Danh sách API chính (tiền tố `/api`)
 
-| Nhóm              | Route                                                                                                                                                                                                   | Ghi chú                                                                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth              | `/auth/register`, `/verify-otp`, `/resend-otp`, `/login`, `/google`, `/facebook`, `/refresh-token`, `/logout`, `/forgot-password`, `/reset-password`, `/me`                                             | Public, trừ `/me`                                                                                                                                           |
-| RBAC              | `/rbac/roles`, `/rbac/permissions`, `/rbac/roles/:id/permissions`                                                                                                                                       | Admin (`rbac:manage`)                                                                                                                                       |
-| Users             | `/users/me`, `/users/me/addresses`, `/users` (admin)                                                                                                                                                    | Self-service + Admin                                                                                                                                        |
-| Addresses (admin) | `/addresses`, `/addresses/user/:userId`                                                                                                                                                                 | Quản trị địa chỉ mọi user                                                                                                                                   |
-| Categories        | `/categories`, `/categories/featured`, `/categories/slug/:slug`, `/categories/id/:id` (admin)                                                                                                           | Public đọc, admin ghi                                                                                                                                       |
-| Products          | `/products`, `/products/featured`, `/products/slug/:slug`, `/products/admin`, `/products/id/:id/skus`, `.../images`                                                                                     | Public đọc, admin quản lý SKU/ảnh                                                                                                                           |
-| Cart              | `/cart`, `/cart/items`                                                                                                                                                                                  | Yêu cầu đăng nhập                                                                                                                                           |
-| Coupons           | `/coupons/request-welcome`, `/coupons/validate`, `/coupons` (admin CRUD)                                                                                                                                |                                                                                                                                                             |
-| Reviews           | `/reviews/product/:productId`, `/reviews/reviewable-items`, `/reviews/me`, `/reviews` (tạo/sửa/xóa của chính khách), `/reviews/admin`, `/reviews/admin/:id/hide`, `/unhide`, `/reviews/admin/:id/reply` | Đánh giá theo mô hình verified-purchase (xem 2.3)                                                                                                           |
-| Contacts          | `/contacts` (public gửi), `/contacts/me`, `/contacts` (admin)                                                                                                                                           |                                                                                                                                                             |
-| Notifications     | `/notifications` (self-service: xem/đánh dấu đã đọc/xóa), `/notifications/broadcast` (admin)                                                                                                            | Broadcast gửi TOÀN BỘ customer đang hoạt động                                                                                                               |
-| Orders            | `/orders` (checkout), `/orders/shipping-fee`, `/orders/buy-now`, `/orders/buy-now/shipping-fee`, `/orders/me`, `/orders/admin`, `/orders/webhooks/ghn`                                                  | "Mua ngay" đặt hàng thẳng 1 SKU, không qua giỏ hàng; webhook GHN không cần auth                                                                             |
-| Payments          | `/payments/me/:orderId`, `/payments/me/:orderId/method`, `/payments/me/:orderId/pay`, `/payments/vnpay/return`, `/payments/vnpay/ipn`, `/payments/zalopay/callback`, `/payments/admin`                  | Return/IPN không cần auth (gateway gọi trực tiếp); `PATCH .../method` đổi phương thức thanh toán (chỉ khi đơn còn "pending" và chưa thanh toán "completed") |
-| Dashboard         | `/dashboard/overview`, `/revenue`, `/top-products`, `/recent-orders`, `/low-stock`                                                                                                                      | Admin                                                                                                                                                       |
-| Uploads           | `/uploads/product-image`                                                                                                                                                                                | Admin, multipart/form-data                                                                                                                                  |
-| GHN               | `/external/ghn/provinces`, `/districts`, `/wards`                                                                                                                                                       | Proxy tra cứu địa chỉ hành chính cho GHN                                                                                                                    |
+| Nhóm              | Route                                                                                                                                                                                                                                                                     | Ghi chú                                                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth              | `/auth/register`, `/verify-otp`, `/resend-otp`, `/login`, `/google`, `/facebook`, `/refresh-token`, `/logout`, `/forgot-password`, `/reset-password`, `/me`                                                                                                               | Public, trừ `/me`                                                                                                                                           |
+| RBAC              | `/rbac/roles`, `/rbac/permissions`, `/rbac/roles/:id/permissions`                                                                                                                                                                                                         | Admin (`rbac:manage`)                                                                                                                                       |
+| Users             | `/users/me`, `/users/me/addresses`, `/users` (admin)                                                                                                                                                                                                                      | Self-service + Admin                                                                                                                                        |
+| Addresses (admin) | `/addresses`, `/addresses/user/:userId`                                                                                                                                                                                                                                   | Quản trị địa chỉ mọi user                                                                                                                                   |
+| Categories        | `/categories`, `/categories/featured`, `/categories/slug/:slug`, `/categories/id/:id` (admin)                                                                                                                                                                             | Public đọc, admin ghi                                                                                                                                       |
+| Products          | `/products`, `/products/featured`, `/products/slug/:slug`, `/products/admin`, `/products/id/:id/skus`, `.../images`                                                                                                                                                       | Public đọc, admin quản lý SKU/ảnh                                                                                                                           |
+| Cart              | `/cart`, `/cart/items`                                                                                                                                                                                                                                                    | Yêu cầu đăng nhập                                                                                                                                           |
+| Coupons           | `/coupons/request-welcome`, `/coupons/validate`, `/coupons` (admin CRUD)                                                                                                                                                                                                  |                                                                                                                                                             |
+| Reviews           | `/reviews/product/:productId`, `/reviews/reviewable-items`, `/reviews/me`, `/reviews` (tạo/sửa/xóa của chính khách), `/reviews/admin`, `/reviews/admin/:id/hide`, `/unhide`, `/reviews/admin/:id/reply`                                                                   | Đánh giá theo mô hình verified-purchase (xem 2.3)                                                                                                           |
+| Contacts          | `/contacts` (public gửi), `/contacts/me`, `/contacts` (admin)                                                                                                                                                                                                             |                                                                                                                                                             |
+| Notifications     | `/notifications` (self-service: xem/đánh dấu đã đọc/xóa), `/notifications/broadcast` (admin)                                                                                                                                                                              | Broadcast gửi TOÀN BỘ customer đang hoạt động                                                                                                               |
+| Conversations     | `/conversations/me` (tạo/lấy hội thoại của chính khách), `/conversations/me/:id`, `/conversations/me/:id/read`, `/conversations` (shared inbox, admin/manager), `/conversations/:id`, `/conversations/:id/assign`, `/conversations/:id/status`, `/conversations/:id/read` | Realtime qua Socket.IO (xem 2.9); staff xem MỌI hội thoại nhờ `conversation:manage`, không phụ thuộc `assignedStaffId`                                      |
+| Messages          | `/messages/:conversationId` (GET lịch sử phân trang theo cursor, POST gửi tin)                                                                                                                                                                                            | Dùng chung cho cả khách lẫn staff — phân quyền tự kiểm tra trong service (khách của đúng hội thoại HOẶC staff có `conversation:manage`)                     |
+| Orders            | `/orders` (checkout), `/orders/shipping-fee`, `/orders/buy-now`, `/orders/buy-now/shipping-fee`, `/orders/me`, `/orders/admin`, `/orders/webhooks/ghn`                                                                                                                    | "Mua ngay" đặt hàng thẳng 1 SKU, không qua giỏ hàng; webhook GHN không cần auth                                                                             |
+| Payments          | `/payments/me/:orderId`, `/payments/me/:orderId/method`, `/payments/me/:orderId/pay`, `/payments/vnpay/return`, `/payments/vnpay/ipn`, `/payments/zalopay/callback`, `/payments/admin`                                                                                    | Return/IPN không cần auth (gateway gọi trực tiếp); `PATCH .../method` đổi phương thức thanh toán (chỉ khi đơn còn "pending" và chưa thanh toán "completed") |
+| Dashboard         | `/dashboard/overview`, `/revenue`, `/top-products`, `/recent-orders`, `/low-stock`                                                                                                                                                                                        | Admin                                                                                                                                                       |
+| Uploads           | `/uploads/product-image`                                                                                                                                                                                                                                                  | Admin, multipart/form-data                                                                                                                                  |
+| GHN               | `/external/ghn/provinces`, `/districts`, `/wards`                                                                                                                                                                                                                         | Proxy tra cứu địa chỉ hành chính cho GHN                                                                                                                    |
 
 **"Mua ngay" (buy-now)**: bấm nút "Mua ngay" ở trang chi tiết sản phẩm sẽ đặt hàng thẳng đúng 1 SKU + số lượng đã chọn, **không đụng tới giỏ hàng** hiện có của khách (khác với checkout thường — luôn đọc/xoá từ giỏ hàng thật). Cả 2 luồng dùng chung 1 lõi xử lý trong `OrderService` (validate tồn kho trong transaction, áp coupon, trừ kho, tạo vận đơn GHN ngay nếu COD) để tránh lệch logic. Vì không có giỏ hàng để làm "gate" chống double-submit như checkout thường (xoá cart item bên trong transaction), luồng mua ngay dùng riêng bảng `checkout_idempotency_keys`: frontend tự sinh 1 UUID mỗi lần bấm "Đặt hàng", backend insert giá trị này làm dòng đầu tiên trong transaction — trùng khoá (double click, hoặc client tự động retry do mất mạng) sẽ bị chặn ngay lập tức, rollback toàn bộ.
 
@@ -157,6 +166,15 @@ npm run dev                        # tsx watch, tự seed roles/permissions/dữ
 
 Các script khác: `npm run build` (prisma generate + tsc), `npm start` (chạy bản build), `npm run db:studio` (Prisma Studio), `npm run db:reset`.
 
+### 2.9. Chat hỗ trợ khách hàng realtime (Socket.IO)
+
+- **Kết nối**: Socket.IO gắn chung vào đúng `http.Server` mà Express đang chạy (không mở cổng riêng). Xác thực JWT ngay lúc handshake bằng cách tự đọc cookie `accessToken` (không tái sử dụng được middleware Express vì handshake là 1 request HTTP riêng biệt, không đi qua chung pipeline `app.use`) — kết nối bị từ chối ngay nếu thiếu/token không hợp lệ.
+- **Mô hình dữ liệu**: `Conversation` (trạng thái `open → resolved/closed`, 1 khách chỉ có tối đa 1 hội thoại "open" tại một thời điểm, `assignedStaffId` chỉ để routing/hiển thị chứ không phải ACL) và `Message` (loại `text/image/system`, đánh dấu đã đọc riêng cho từng phía qua `customerLastReadMessageId`/`staffLastReadMessageId`).
+- **Shared inbox cho staff**: bất kỳ ai có quyền `conversation:manage` đều xem/trả lời được MỌI hội thoại. "Nhận xử lý" (`assign`) dùng `updateMany` với điều kiện `assignedStaffId: null` để atomic — 2 staff cùng bấm nhận 1 lúc chỉ 1 người thành công, không cần transaction/lock riêng.
+- **Đồng bộ REST ⇄ Socket**: logic gửi tin (`messageService.sendMessage`) và các action nghiệp vụ khác đều tự gọi `getIO()` để bắn realtime ngay sau khi ghi DB thành công — dùng chung được cho cả request REST (`POST /messages/:conversationId`) lẫn socket event (`send_message`), tránh viết lặp logic emit ở 2 nơi. `getIO()` trả về `null` nếu socket server chưa khởi tạo (vd chạy test) — REST vẫn hoạt động đúng dù không có realtime.
+- **Sự kiện chính**: `join_conversation`/`leave_conversation` (join phòng theo từng hội thoại, kèm presence — "ai đang xem cuộc hội thoại này"), `typing` (typing indicator, không lưu DB), `send_message`/`new_message`, và các sự kiện `conversation:new`/`conversation:updated`/`conversation:new_message` bắn riêng vào phòng chung `staff:support` để shared inbox cập nhật ngay không cần F5.
+- Notification in-app (2.3, mục 5) vẫn tách biệt hoàn toàn với hệ thống chat này và hiện vẫn chạy qua polling (xem 3.5), chưa được đẩy qua Socket.IO.
+
 ---
 
 ## 3. Frontend (`frontend/`)
@@ -167,7 +185,7 @@ Các script khác: `npm run build` (prisma generate + tsc), `npm start` (chạy 
 - **React Router v7** (data router, dùng `loader` để bảo vệ route theo trạng thái đăng nhập/permission).
 - **TanStack Query** cho data-fetching/caching, **Zustand** cho state client (giỏ hàng, auth).
 - **Bảng màu**: lấy cảm hứng từ template Etonal (Webflow) — nền kem ấm (`--color-cream: #faf6f0`), mực gần đen (`--color-ink`), điểm nhấn cam cháy (`--color-primary: #d9641f`).
-- Thư viện khác: `@react-oauth/google` (đăng nhập Google), `echarts` (biểu đồ dashboard admin), `react-toastify` (thông báo), `@strapi/blocks-react-renderer` (render rich text từ Strapi).
+- Thư viện khác: `@react-oauth/google` (đăng nhập Google), `echarts` (biểu đồ dashboard admin), `react-toastify` (thông báo), `@strapi/blocks-react-renderer` (render rich text từ Strapi), `socket.io-client` (chat hỗ trợ realtime — xem 2.9 và 3.5).
 
 ### 3.2. Kiến trúc thư mục — modular theo feature, tách rõ Admin / Client
 
@@ -184,13 +202,14 @@ frontend/src/
 │   ├── admin/             # Sidebar tối màu có thể thu gọn, header sticky, dropdown user
 │   └── auth/
 ├── middlewares/            # requirePermissionLoader (chặn route theo RBAC ở React Router)
+├── realtime/               # socket-client (Socket.IO client, singleton) + useSocketConnection (connect/disconnect theo trạng thái đăng nhập)
 ├── shared/                 # component & hằng số dùng chung
 ├── hooks/, utils/, types/
 └── features/
     ├── auth/               # Zustand store, useAuth hook, service gọi /api/auth, route loader
     ├── external/location/    # Gọi API GHN (tỉnh/huyện/xã) cho form địa chỉ
-    ├── client/              # home, shop, product, cart, order, payment, review, contact, notification, about, me (tài khoản)
-    └── admin/               # dashboard, product, category, coupon, order, review, payment, user, rbac, contact, notification, header, sidebar
+    ├── client/              # home, shop, product, cart, order, payment, review, contact, conversation (chat widget), notification, about, me (tài khoản), warranty (rỗng — chưa triển khai)
+    └── admin/               # dashboard, product, category, coupon, order, review, payment, user, rbac, contact, conversation (shared inbox), notification, header, sidebar
 ```
 
 Mỗi feature con thường có: `components/`, `hooks/`, `services/` (gọi API), `types/`, `utils/`, đúng khuôn mẫu với backend để hai bên "nói cùng ngôn ngữ".
@@ -208,6 +227,7 @@ Các trang: **Trang chủ, Cửa hàng (Shop), Chi tiết sản phẩm, Giỏ h�
 - Tab "Đơn hàng" trong trang tài khoản: xem chi tiết + theo dõi trạng thái từng đơn, hủy đơn khi còn "pending", thử thanh toán lại (đơn online đang "pending"/"failed") hoặc **đổi phương thức thanh toán** (COD ⇄ online, hoặc giữa các cổng online với nhau) ngay tại đây khi đơn còn "pending" và chưa thanh toán xong. Đơn đã hủy không cho thanh toán lại nữa — thay vào đó có nút **"Đặt lại"** tự thêm lại các sản phẩm còn khả dụng vào giỏ hàng rồi đưa khách sang trang giỏ hàng để đặt đơn mới.
 - Trang chi tiết sản phẩm có tab "Đánh giá" (điểm trung bình, phân bổ theo sao, lọc/sắp xếp, phản hồi của shop); tab "Đánh giá của tôi" trong trang tài khoản cho phép viết đánh giá cho sản phẩm đã mua (đơn đã giao, còn trong hạn 30 ngày) và sửa (tối đa 1 lần)/xóa đánh giá đã viết.
 - Nội dung tĩnh của Trang chủ / Giới thiệu / Liên hệ / banner Cửa hàng được lấy từ **Strapi CMS** (không hard-code trong code frontend), cho phép chỉnh nội dung marketing mà không cần deploy lại.
+- **Chat hỗ trợ (realtime)**: widget chat nổi ở góc màn hình (chỉ hiện khi đã đăng nhập), tự tạo/lấy lại hội thoại "open" hiện có của khách khi mở lên; nhận tin nhắn mới tức thời qua Socket.IO kèm badge báo tin chưa đọc khi đang thu gọn widget (xem 2.9 và 3.5).
 
 Trang chủ
 ![Ảnh giao diện trang chủ client](docs/images/client/home.png)
@@ -256,7 +276,7 @@ Trang quản lý liên hệ của tôi
 
 ### 3.4. Giao diện Admin
 
-Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Đánh giá sản phẩm** (kiểm duyệt ẩn/hiện kèm lý do, phản hồi chính thức), **Thanh toán**, **Liên hệ**, **Thông báo** (gửi hàng loạt).
+Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Đánh giá sản phẩm** (kiểm duyệt ẩn/hiện kèm lý do, phản hồi chính thức), **Thanh toán**, **Liên hệ**, **Chat hỗ trợ** (`/admin/conversation`, quyền `conversation:manage`) — shared inbox realtime: danh sách mọi hội thoại, lọc theo trạng thái/đã-nhận-xử-lý, nhận xử lý, đổi trạng thái, trả lời trực tiếp, **Thông báo** (gửi hàng loạt).
 
 Trang dashboard admin
 ![Ảnh giao diện Dashboard Admin](docs/images/admin/dashboard.png)
@@ -295,6 +315,9 @@ Trang quản lý đánh giá
 Trang quản lý liên hệ
 ![Ảnh giao diện quản lý liên hệ](docs/images/admin/contacts.png)
 
+Trang quản lý chat
+![Ảnh giao diện quản lý liên hệ](docs/images/admin/chat.png)
+
 ### 3.5. Hệ thống thông báo (Notification)
 
 **Domain Client** (`features/client/notification/`):
@@ -308,18 +331,33 @@ Trang quản lý liên hệ
 - Trang gửi thông báo hàng loạt (`/admin/notification`, quyền `notification:broadcast`): chọn loại (khuyến mãi/hệ thống), nhập tiêu đề + nội dung, gửi tới **toàn bộ customer đang hoạt động** (không hỗ trợ chọn tay từng người) — có bước xác nhận trước khi gửi vì không thể thu hồi.
 - Backend xử lý theo batch (500 user/lần, cursor pagination) thay vì 1 câu query duy nhất, tránh nghẽn server khi lượng khách hàng lớn.
 
-Kiến trúc kênh gửi ở backend theo Strategy Pattern (`features/notifications/channels/`) — hiện chỉ có kênh in-app/DB, thiết kế sẵn để mở rộng thêm email/push sau này mà không cần sửa lại phần điều phối (`notification.service.ts`).
+Kiến trúc kênh gửi ở backend theo Strategy Pattern (`features/notifications/channels/`) — hiện chỉ có kênh in-app/DB, thiết kế sẵn để mở rộng thêm email/push sau này mà không cần sửa lại phần điều phối (`notification.service.ts`). Đây là hệ thống **tách biệt hoàn toàn** với chat hỗ trợ ở mục 3.6 — notification vẫn chạy qua polling, còn chat đã có Socket.IO riêng.
 
-### 3.6. Xác thực phía frontend
+### 3.6. Chat hỗ trợ khách hàng (realtime)
+
+**Domain Client** (`features/client/conversation/`, component `ChatWidget` mount ở `layouts/client`):
+
+- Widget chat nổi ở góc màn hình, chỉ hiện khi đã đăng nhập. Mở lên sẽ tự lấy hội thoại "open" hiện có của khách (`GET /conversations/me`) hoặc tạo mới nếu chưa có/hội thoại trước đã kết thúc.
+- Kết nối Socket.IO dùng chung 1 instance singleton (`realtime/socket-client.ts`) cho toàn app, tự connect/disconnect theo trạng thái đăng nhập (`useSocketConnection`, gọi đúng 1 lần ở gốc app); tự phục hồi khi `accessToken` hết hạn giữa lúc giữ kết nối (gọi lại `/auth/me` để kích hoạt refresh token có sẵn trong `apiClient`, rồi mới connect lại).
+- Nhận tin nhắn mới tức thời qua sự kiện `new_message`; hiện badge chưa đọc trên nút mở widget khi đang thu gọn.
+
+**Domain Admin** (`features/admin/conversation/`, `pages/admin/conversation/`):
+
+- Trang shared inbox (`/admin/conversation`, quyền `conversation:manage`): danh sách toàn bộ hội thoại (lọc theo trạng thái/đã-nhận-xử-lý-hay-chưa), panel chat để trả lời trực tiếp, nút "Nhận xử lý" (atomic — 2 staff bấm cùng lúc chỉ 1 người thành công), đổi trạng thái hội thoại.
+- Tự cập nhật realtime khi có hội thoại mới/tin nhắn mới ở BẤT KỲ hội thoại nào (join sẵn phòng chung `staff:support` lúc kết nối) mà không cần đang mở đúng hội thoại đó.
+
+Kiến trúc chi tiết phía backend (xác thực Socket.IO, mô hình dữ liệu, các sự kiện) xem mục 2.9.
+
+### 3.7. Xác thực phía frontend
 
 - `apiClient` dùng cookie `httpOnly` (`withCredentials: true`), có interceptor: khi gặp `401` sẽ tự gọi `/auth/refresh-token`, gom các request đang chờ (tránh gọi refresh nhiều lần cùng lúc), và tự redirect về trang đăng nhập nếu refresh thất bại (trừ chính request `/auth/me` — vì `401` ở đó là trạng thái hợp lệ khi khách chưa đăng nhập ghé trang public).
 - `guestOnlyLoader` chặn user đã đăng nhập vào lại trang login/register; `requireAuthLoader` bắt đăng nhập; `requirePermissionLoader(permission)` bắt đúng quyền cho từng route admin.
 
-### 3.7. Biến môi trường
+### 3.8. Biến môi trường
 
-Xem `frontend/.env.example`: `VITE_API_BASE_URL` (backend), `VITE_STRAPI_BASE_URL` (CMS), `VITE_GOOGLE_CLIENT_ID`, cấu hình Facebook SDK (`VITE_FACEBOOK_APP_ID`, script id, script src, version).
+Xem `frontend/.env.example`: `VITE_API_BASE_URL` (backend), `VITE_SOCKET_URL` (origin Socket.IO — chỉ bắt buộc nếu `VITE_API_BASE_URL` là URL tương đối được proxy qua host khác, mặc định tự suy ra từ origin của `VITE_API_BASE_URL`), `VITE_STRAPI_BASE_URL` (CMS), `VITE_GOOGLE_CLIENT_ID`, cấu hình Facebook SDK (`VITE_FACEBOOK_APP_ID`, script id, script src, version).
 
-### 3.8. Chạy frontend
+### 3.9. Chạy frontend
 
 ```bash
 cd frontend
@@ -389,13 +427,13 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **Tách CMS khỏi hệ thống giao dịch**: nội dung marketing (Home/About/Contact/Shop banner) quản lý độc lập qua Strapi, không cần deploy lại frontend khi đổi nội dung.
 - **Hệ thống thông báo in-app**: tự động bắn khi đơn hàng/thanh toán đổi trạng thái, admin gửi hàng loạt tới toàn bộ khách hàng (xử lý theo batch), kiến trúc kênh gửi (Strategy Pattern) sẵn sàng mở rộng thêm email/push.
 - **Đánh giá sản phẩm theo mô hình verified-purchase**: chỉ đánh giá được sản phẩm đã mua và đơn đã giao, trong vòng 30 ngày kể từ ngày nhận hàng; sửa tối đa 1 lần; kiểm duyệt viên chỉ ẩn/hiện chứ không sửa nội dung gốc, mọi thao tác được ghi log để đối soát.
+- **Chat hỗ trợ khách hàng realtime**: widget chat phía khách + shared inbox phía admin/manager qua Socket.IO, xác thực JWT ngay lúc handshake, "nhận xử lý" hội thoại atomic (tránh 2 staff cùng nhận 1 lúc), REST và socket dùng chung 1 lõi xử lý nên hành vi bắn realtime luôn nhất quán dù gửi tin qua kênh nào.
 - Giao diện Client lấy cảm hứng từ **Etonal** (tông màu kem – cam cháy), giao diện Admin có dashboard trực quan bằng ECharts.
 
 ## 7. Định hướng phát triển tiếp theo
 
 - **Thanh toán**: Tích hợp thêm các cổng thanh toán online phổ biến khác như MoMo, PayPal, Stripe.
 - **Trải nghiệm người dùng**: Tiếp tục tinh chỉnh UI/UX cho cả giao diện Client và Admin.
-- **Thông báo real-time**: Hiện thông báo mới cập nhật qua polling (30s) — nâng cấp lên WebSocket để đẩy tức thời, và bổ sung thêm kênh gửi email/push (đã có sẵn interface `NotificationChannel`, chỉ cần thêm implementation mới).
-- **Chat trực tuyến**: Bổ sung tính năng hỗ trợ khách hàng realtime.
-- **Bảo hành sản phẩm**: Bổ sung tính năng quản lý bảo hành sản phẩm.
+- **Thông báo real-time**: Hiện thông báo mới cập nhật qua polling (30s) — nâng cấp lên WebSocket để đẩy tức thời (hạ tầng Socket.IO đã có sẵn nhờ tính năng chat, xem 2.9), và bổ sung thêm kênh gửi email/push (đã có sẵn interface `NotificationChannel`, chỉ cần thêm implementation mới).
+- **Bảo hành sản phẩm**: Bổ sung tính năng quản lý bảo hành sản phẩm — model DB (`WarrantyPolicy`) đã có sẵn trong schema, còn thiếu toàn bộ route/controller/service/UI.
 - **AI**: Nghiên cứu và tích hợp AI vào các luồng nghiệp vụ của dự án (gợi ý sản phẩm, chatbot hỗ trợ...).
