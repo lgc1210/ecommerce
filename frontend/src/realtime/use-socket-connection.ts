@@ -29,13 +29,23 @@ export const useSocketConnection = (): void => {
 
 		socket.connect();
 
-		const handleConnectError = () => {
+		let isRecovering = false; // chặn chồng nhiều lượt refetch+connect cùng lúc nếu connect_error bắn dồn dập
+
+		const handleConnectError = (error: Error) => {
+			// SỬA — CHỈ xử lý đúng "Unauthorized" (message BE trả về khi thiếu/hết hạn accessToken,
+			// xem backend socket.server.ts -> socketAuthMiddleware). Mọi lỗi connect_error KHÁC (CORS,
+			// transport, hạ tầng phía sau...) để mặc kệ Socket.IO tự retry bằng cơ chế backoff có sẵn
+			// của chính nó — KHÔNG tự gọi thêm connect() ở đây nữa, vì gọi thêm là nguyên nhân trực
+			// tiếp gây ra cơn bão request khi lỗi kéo dài liên tục (xem giải thích bug ở trên).
+			if (error.message !== "Unauthorized" || isRecovering) return;
+
+			isRecovering = true;
 			queryClient
 				.refetchQueries({ queryKey: AUTH_ME_QUERY_KEY })
 				.then(() => socket.connect())
-				.catch(() => {
-					// refetch /auth/me thất bại hẳn (refresh token cũng hết hạn) -> phiên đăng nhập
-					// thật sự đã hết, không cố connect lại nữa.
+				.catch(() => {})
+				.finally(() => {
+					isRecovering = false;
 				});
 		};
 
