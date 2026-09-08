@@ -33,7 +33,8 @@ export const getSocket = (): Socket => {
 		socket = io(resolveSocketUrl(), {
 			withCredentials: true,
 			autoConnect: false,
-			transports: ["websocket"],
+			// Let Socket.IO start with polling and upgrade when the Railway proxy supports it.
+			// Forcing websocket can create a reconnect loop when the proxy closes upgrades.
 		});
 	}
 	return socket;

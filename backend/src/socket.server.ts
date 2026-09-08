@@ -52,7 +52,6 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
 			origin: process.env.CLIENT_URL,
 			credentials: true,
 		},
-		transports: ["websocket"],
 	});
 	setIO(io);
 

@@ -76,18 +76,23 @@ export const useConversationRoom = (conversationId: number | null): void => {
 		if (conversationId === null) return;
 
 		const socket = getSocket();
-		socket.emit("join_conversation", conversationId);
 
 		const handleNewMessage = (message: Message) => {
 			if (message.conversationId !== conversationId) return;
 			appendMessageToCache(queryClient, conversationId, message);
 		};
+		const joinRoom = () => {
+			socket.emit("join_conversation", conversationId);
+		};
 
 		socket.on("new_message", handleNewMessage);
+		socket.on("connect", joinRoom);
+		joinRoom();
 
 		return () => {
 			socket.emit("leave_conversation", conversationId);
 			socket.off("new_message", handleNewMessage);
+			socket.off("connect", joinRoom);
 		};
 	}, [conversationId, queryClient]);
 };

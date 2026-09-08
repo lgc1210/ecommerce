@@ -27,8 +27,6 @@ export const useSocketConnection = (): void => {
 			return;
 		}
 
-		socket.connect();
-
 		let isRecovering = false; // chặn chồng nhiều lượt refetch+connect cùng lúc nếu connect_error bắn dồn dập
 
 		const handleConnectError = (error: Error) => {
@@ -50,9 +48,11 @@ export const useSocketConnection = (): void => {
 		};
 
 		socket.on("connect_error", handleConnectError);
+		socket.connect();
 
 		return () => {
 			socket.off("connect_error", handleConnectError);
+			socket.disconnect();
 		};
 	}, [isAuthenticated, queryClient]);
 };
