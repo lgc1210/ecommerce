@@ -1,7 +1,5 @@
 import { io, type Socket } from "socket.io-client";
 
-let socket: Socket | null = null;
-
 /**
  * Suy ra origin thật của backend (KHÔNG kèm "/api") từ VITE_API_BASE_URL để Socket.IO connect
  * đúng địa chỉ — Socket.IO luôn phục vụ ở đường dẫn gốc "/socket.io/", không nằm dưới "/api".
@@ -9,14 +7,10 @@ let socket: Socket | null = null;
  * cùng domain khi build production) thì trả về undefined — `io()` sẽ tự connect same-origin.
  */
 const resolveSocketUrl = (): string | undefined => {
-	const apiBase = import.meta.env.VITE_API_BASE_URL;
-	if (!apiBase) return undefined;
-	try {
-		return new URL(apiBase).origin;
-	} catch {
-		return undefined; // apiBase là path tương đối (vd "/api") -> same-origin, không parse được thành URL tuyệt đối
-	}
+	return import.meta.env.VITE_SOCKET_URL || undefined;
 };
+
+let socket: Socket | null = null;
 
 /**
  * Socket.IO client — 1 instance DUY NHẤT dùng chung toàn app (cả trang khách lẫn trang admin),
