@@ -1,141 +1,115 @@
-<svg viewBox="0 0 1040 844" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
-  <defs>
-    <marker id="arrowF" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#948a7c" />
-    </marker>
-  </defs>
-
-  <rect x="0" y="0" width="1040" height="844" fill="#faf6f0" />
-
-  <text x="520" y="42" text-anchor="middle" font-size="22" font-weight="700" fill="#1c1815">Sơ đồ thư mục frontend</text>
-  <text x="520" y="66" text-anchor="middle" font-size="13" fill="#948a7c">frontend/src — tách Client / Admin theo feature</text>
-
-  <!-- Root -->
-  <rect x="420" y="90" width="200" height="46" rx="10" fill="#1c1815" />
-  <text x="520" y="118" text-anchor="middle" font-size="14" font-weight="700" fill="#faf6f0">frontend/src/</text>
-
-  <!-- Branch lines -->
-  <line x1="520" y1="136" x2="270" y2="147" stroke="#948a7c" stroke-width="1.6" />
-  <line x1="520" y1="136" x2="760" y2="147" stroke="#948a7c" stroke-width="1.6" />
-
-  <!-- Left cluster label -->
-  <text x="230" y="164" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">Cấu hình &amp; hạ tầng dùng chung</text>
-
-  <!-- Left column boxes -->
-  <g font-size="11">
-    <rect x="40" y="176" width="180" height="44" rx="8" fill="#ffffff" stroke="#d9641f" stroke-width="1.5" />
-    <text x="130" y="193" text-anchor="middle" font-weight="700" fill="#1c1815">main.tsx / App.tsx</text>
-    <text x="130" y="209" text-anchor="middle" fill="#2c2620">Khởi tạo app, provider gốc</text>
-
-    <rect x="240" y="176" width="180" height="44" rx="8" fill="#ffffff" stroke="#d9641f" stroke-width="1.5" />
-    <text x="330" y="193" text-anchor="middle" font-weight="700" fill="#1c1815">configs/apis/</text>
-    <text x="330" y="209" text-anchor="middle" fill="#2c2620">apiClient (backend) + strapiClient</text>
-
-    <rect x="40" y="232" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="130" y="249" text-anchor="middle" font-weight="700" fill="#1c1815">configs/constants/</text>
-    <text x="130" y="264" text-anchor="middle" fill="#2c2620">paths, permissions</text>
-
-    <rect x="240" y="232" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="330" y="249" text-anchor="middle" font-weight="700" fill="#1c1815">configs/query-client/</text>
-    <text x="330" y="264" text-anchor="middle" fill="#2c2620">Cấu hình TanStack QueryClient</text>
-
-    <rect x="40" y="290" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="130" y="307" text-anchor="middle" font-weight="700" fill="#1c1815">configs/routes/</text>
-    <text x="130" y="322" text-anchor="middle" fill="#2c2620">Khai báo route + loader</text>
-
-    <rect x="240" y="290" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="330" y="307" text-anchor="middle" font-weight="700" fill="#1c1815">layouts/</text>
-    <text x="330" y="322" text-anchor="middle" fill="#2c2620">client/, admin/, auth/</text>
-
-    <rect x="40" y="348" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="130" y="365" text-anchor="middle" font-weight="700" fill="#1c1815">middlewares/</text>
-    <text x="130" y="380" text-anchor="middle" fill="#2c2620">requirePermissionLoader (RBAC)</text>
-
-    <rect x="240" y="348" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="330" y="365" text-anchor="middle" font-weight="700" fill="#1c1815">shared/</text>
-    <text x="330" y="380" text-anchor="middle" fill="#2c2620">Component &amp; hằng số dùng chung</text>
-
-    <rect x="40" y="406" width="380" height="42" rx="8" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" stroke-dasharray="4,3" />
-    <text x="230" y="423" text-anchor="middle" font-weight="700" fill="#1c1815">hooks/ · utils/ · types/</text>
-    <text x="230" y="438" text-anchor="middle" fill="#2c2620">Hook, tiện ích &amp; kiểu dữ liệu dùng chung</text>
-  </g>
-
-  <!-- Right cluster label -->
-  <text x="800" y="164" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">features/ — tách theo Client / Admin</text>
-
-  <!-- Right: auth + external/location -->
-  <g font-size="11">
-    <rect x="650" y="176" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="735" y="195" text-anchor="middle" font-weight="700" fill="#1c1815">auth/</text>
-    <text x="735" y="211" text-anchor="middle" fill="#2c2620">Zustand store, useAuth,</text>
-    <text x="735" y="224" text-anchor="middle" fill="#2c2620">route loader</text>
-
-    <rect x="840" y="176" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="925" y="195" text-anchor="middle" font-weight="700" fill="#1c1815">external/location/</text>
-    <text x="925" y="211" text-anchor="middle" fill="#2c2620">Gọi API GHN tỉnh/huyện/</text>
-    <text x="925" y="224" text-anchor="middle" fill="#2c2620">xã cho form địa chỉ</text>
-  </g>
-
-  <!-- client/ big box (đã thêm "notification" -> 9 nhóm -> 10 nhóm, box cao thêm 24px để chứa dòng mới) -->
-  <rect x="650" y="240" width="360" height="194" rx="10" fill="#fff7ee" stroke="#d9641f" stroke-width="1.8" />
-  <text x="830" y="262" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">client/</text>
-  <text x="830" y="278" text-anchor="middle" font-size="10.5" fill="#948a7c">10 nhóm trang khách hàng</text>
-
-  <g font-size="10.5" fill="#2c2620">
-    <text x="690" y="300">• home</text>
-    <text x="690" y="318">• shop</text>
-    <text x="690" y="336">• product</text>
-    <text x="690" y="354">• notification</text>
-    <text x="825" y="300">• cart</text>
-    <text x="825" y="318">• order</text>
-    <text x="825" y="336">• payment</text>
-    <text x="930" y="300">• contact</text>
-    <text x="930" y="318">• about</text>
-    <text x="930" y="336">• me (tài khoản)</text>
-  </g>
-  <text x="830" y="380" text-anchor="middle" font-size="10" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· utils/)</text>
-  <text x="830" y="400" text-anchor="middle" font-size="10" fill="#948a7c">footer/, header/ dùng chung cho layout Client</text>
-
-  <!-- admin/ big box (đã thêm "notification" -> 11 nhóm -> 12 nhóm, dịch xuống 24px để cách đều client/ mới) -->
-  <rect x="650" y="446" width="360" height="200" rx="10" fill="#ffffff" stroke="#1c1815" stroke-width="1.6" />
-  <text x="830" y="468" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">admin/</text>
-  <text x="830" y="484" text-anchor="middle" font-size="10.5" fill="#948a7c">12 nhóm trang quản trị</text>
-
-  <g font-size="10.5" fill="#2c2620">
-    <text x="680" y="506">• dashboard</text>
-    <text x="680" y="524">• product</text>
-    <text x="680" y="542">• category</text>
-    <text x="680" y="560">• coupon</text>
-    <text x="835" y="506">• order</text>
-    <text x="835" y="524">• payment</text>
-    <text x="835" y="542">• user</text>
-    <text x="835" y="560">• rbac</text>
-    <text x="920" y="506">• contact</text>
-    <text x="920" y="524">• header</text>
-    <text x="920" y="542">• sidebar</text>
-    <text x="920" y="560">• notification</text>
-  </g>
-  <text x="830" y="586" text-anchor="middle" font-size="10" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· utils/)</text>
-  <text x="830" y="606" text-anchor="middle" font-size="10" fill="#948a7c">rbac/ có thêm loader/ riêng (ma trận quyền)</text>
-  <text x="830" y="626" text-anchor="middle" font-size="10" fill="#948a7c">mọi route đều qua requirePermissionLoader</text>
-
-  <!-- Convention box -->
-  <rect x="40" y="470" width="580" height="60" rx="12" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.5" />
-  <text x="330" y="493" text-anchor="middle" font-size="12" font-weight="700" fill="#1c1815">pages/ — 1 file .tsx / route, import Component từ features/</text>
-  <text x="330" y="514" text-anchor="middle" font-size="11" fill="#2c2620">pages/client, pages/admin, pages/auth, pages/403, pages/404</text>
-
-  <!-- Convention note full width bottom (dịch xuống 24px theo admin/) -->
-  <rect x="40" y="670" width="970" height="110" rx="12" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" />
-  <text x="525" y="696" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">Khuôn mẫu chung của mỗi feature con</text>
-  <text x="525" y="722" text-anchor="middle" font-size="12" fill="#2c2620">components/ — UI riêng của feature &#160;·&#160; hooks/ — custom hook (thường bọc TanStack Query)</text>
-  <text x="525" y="744" text-anchor="middle" font-size="12" fill="#2c2620">services/ — hàm gọi apiClient/strapiClient &#160;·&#160; types/ — kiểu dữ liệu &#160;·&#160; utils/, constants/ (nếu có)</text>
-  <text x="525" y="766" text-anchor="middle" font-size="12" fill="#2c2620">Cùng khuôn mẫu với backend/features/&lt;tên&gt;/ để hai bên dễ tra cứu song song</text>
-
-  <!-- Legend (dịch xuống 24px) -->
-  <rect x="40" y="798" width="14" height="14" rx="3" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-  <text x="62" y="810" font-size="11" fill="#2c2620">Cấu hình / hạ tầng dùng chung</text>
-  <rect x="280" y="798" width="14" height="14" rx="3" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-  <text x="302" y="810" font-size="11" fill="#2c2620">Module nghiệp vụ (features/, admin/)</text>
-  <rect x="560" y="798" width="14" height="14" rx="3" fill="#fff7ee" stroke="#d9641f" stroke-width="1.6" />
-  <text x="582" y="810" font-size="11" fill="#2c2620">Nhóm chính / file quan trọng</text>
+<svg viewBox="0 0 1160 954" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTo3ODAwNzU1MC1hNjFkLTRkYjYtOTliMS0wYTg1YmU1OTk4Y2EAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaCGI8JnY/g3P97vctbDi/Y0AAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDozMmNhMmQyZC1iOTVhLTQ4ZDMtYjU0MC04ZTM3YjdhNjc4MDdscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNov1N111gVl7QqqImiPZRQYgAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggOkp0VX2zc+KIochTHHQ2M6vL6l5m3MDohDsIGfh4vkykZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaKHuGZsmzjtjU6Wyuv6wBEUAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCBQHSKxF8py+s8/1waDo+jfcZLrEBmlfenk7y2vEzJ6gWRuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBioZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjc4MDA3NTUwLWE2MWQtNGRiNi05OWIxLTBhODViZTU5OThjYS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmRlMTZjMDdlLTA2YmEtNDc3NS04ZTRmLTJlYzA2ZGYzZjRhMnJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCA6SnRVfbNz4oihyFMcdDYzq8vqXmbcwOiEOwgZ+Hi+TKJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggCDPMI5cYyZaB4QjFay11ULZYeweE9qvIHXUqfpPxipGiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgg565eYvEKawfP7X/6ekZ/OYJbMYQTovtzhcJ68rK0Q2l0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQGrQdS9FWhwgTRjb/Qs6IMlc3taOyw3c74kx3FM4BGkvq1G25T/yAdtO0eCAgFpMDTBdYAc91dJzWATS6/jo7d4=</c2pa:manifest></metadata>
+<rect x="0" y="0" width="1160" height="954" fill="#faf6f0" />
+<text x="580" y="42" text-anchor="middle" font-size="22" font-weight="700" fill="#1c1815">Sơ đồ thư mục frontend</text>
+<text x="580" y="66" text-anchor="middle" font-size="13" fill="#948a7c">frontend/src — tách Client / Admin theo feature (đã cập nhật theo source code hiện tại)</text>
+<rect x="480" y="88" width="200" height="46" rx="10" fill="#1c1815" />
+<text x="580" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#faf6f0">frontend/src/</text>
+<line x1="580" y1="134" x2="260" y2="150" stroke="#948a7c" stroke-width="1.6" />
+<line x1="580" y1="134" x2="860" y2="150" stroke="#948a7c" stroke-width="1.6" />
+<text x="240" y="166" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">Cấu hình &amp; hạ tầng dùng chung</text>
+<rect x="40" y="178" width="190" height="44" rx="8" fill="#ffffff" stroke="#d9641f" stroke-width="1.5" />
+<text x="135.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">main.tsx / App.tsx</text>
+<text x="135.0" y="210" text-anchor="middle" font-size="9.6" fill="#2c2620">Khởi tạo app, khai báo route</text>
+<rect x="250" y="178" width="190" height="44" rx="8" fill="#ffffff" stroke="#d9641f" stroke-width="1.5" />
+<text x="345.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">configs/apis/</text>
+<text x="345.0" y="210" text-anchor="middle" font-size="9.6" fill="#2c2620">apiClient (backend) + strapiClient</text>
+<rect x="40" y="234" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="251" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">configs/constants/</text>
+<text x="135.0" y="266" text-anchor="middle" font-size="9.6" fill="#2c2620">paths, permissions</text>
+<rect x="250" y="234" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="251" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">configs/query-client/</text>
+<text x="345.0" y="266" text-anchor="middle" font-size="9.6" fill="#2c2620">Cấu hình TanStack QueryClient</text>
+<rect x="40" y="292" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="309" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">configs/routes/</text>
+<text x="135.0" y="324" text-anchor="middle" font-size="9.6" fill="#2c2620">Khai báo route + loader (index.ts)</text>
+<rect x="250" y="292" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="309" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">layouts/</text>
+<text x="345.0" y="324" text-anchor="middle" font-size="9.6" fill="#2c2620">client/, admin/, auth/</text>
+<rect x="40" y="350" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="367" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">middlewares/</text>
+<text x="135.0" y="382" text-anchor="middle" font-size="9.2" fill="#2c2620">authenticate.ts (JWT)</text>
+<text x="135.0" y="395" text-anchor="middle" font-size="9.2" fill="#2c2620">rbac.ts (permission guard)</text>
+<rect x="250" y="350" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="367" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">components/</text>
+<text x="345.0" y="382" text-anchor="middle" font-size="9.2" fill="#2c2620">button, modal-shell, form-*,</text>
+<text x="345.0" y="395" text-anchor="middle" font-size="9.2" fill="#2c2620">pagination, tabs, can.tsx</text>
+<rect x="40" y="408" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="425" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">shared/</text>
+<text x="135.0" y="440" text-anchor="middle" font-size="9.2" fill="#2c2620">components/ (carousel, skeleton...)</text>
+<text x="135.0" y="453" text-anchor="middle" font-size="9.2" fill="#2c2620">constants/ (order, payment...)</text>
+<rect x="250" y="408" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="425" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">realtime/</text>
+<text x="345.0" y="440" text-anchor="middle" font-size="9.2" fill="#2c2620">socket-client.ts +</text>
+<text x="345.0" y="453" text-anchor="middle" font-size="9.2" fill="#2c2620">hook kết nối Socket.IO</text>
+<rect x="40" y="466" width="400" height="42" rx="8" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" stroke-dasharray="4,3" />
+<text x="240.0" y="483" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">hooks/ · utils/ · types/</text>
+<text x="240.0" y="498" text-anchor="middle" font-size="9.6" fill="#2c2620">Hook, tiện ích &amp; kiểu dữ liệu dùng chung</text>
+<text x="810" y="166" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">features/ — tách theo Client / Admin</text>
+<rect x="660" y="178" width="170" height="58" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="745.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">auth/</text>
+<text x="745.0" y="210" text-anchor="middle" font-size="9.3" fill="#2c2620">React Query (useAuth, AUTH_ME),</text>
+<text x="745.0" y="223" text-anchor="middle" font-size="9.3" fill="#2c2620">login Google/Facebook, OTP</text>
+<text x="745.0" y="236" text-anchor="middle" font-size="9.3" fill="#2c2620">loader/ (guestOnly, requireAuth)</text>
+<rect x="848" y="178" width="170" height="58" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="933.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">external/location/</text>
+<text x="933.0" y="210" text-anchor="middle" font-size="9.6" fill="#2c2620">Gọi API GHN tỉnh/huyện/</text>
+<text x="933.0" y="223" text-anchor="middle" font-size="9.6" fill="#2c2620">xã cho form địa chỉ</text>
+<rect x="660" y="252" width="358" height="246" rx="10" fill="#fff7ee" stroke="#d9641f" stroke-width="1.8" />
+<text x="839.0" y="274" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">client/</text>
+<text x="839.0" y="290" text-anchor="middle" font-size="10.5" fill="#948a7c">15 nhóm trang khách hàng</text>
+<text x="684.0" y="310" font-size="10.5" fill="#2c2620">• about</text>
+<text x="790.0" y="310" font-size="10.5" fill="#2c2620">• cart</text>
+<text x="896.0" y="310" font-size="10.5" fill="#2c2620">• category</text>
+<text x="684.0" y="328" font-size="10.5" fill="#2c2620">• contact</text>
+<text x="790.0" y="328" font-size="10.5" fill="#2c2620">• conversation</text>
+<text x="896.0" y="328" font-size="10.5" fill="#2c2620">• coupon</text>
+<text x="684.0" y="346" font-size="10.5" fill="#2c2620">• home</text>
+<text x="790.0" y="346" font-size="10.5" fill="#2c2620">• me</text>
+<text x="896.0" y="346" font-size="10.5" fill="#2c2620">• message</text>
+<text x="684.0" y="364" font-size="10.5" fill="#2c2620">• notification</text>
+<text x="790.0" y="364" font-size="10.5" fill="#2c2620">• order</text>
+<text x="896.0" y="364" font-size="10.5" fill="#2c2620">• payment</text>
+<text x="684.0" y="382" font-size="10.5" fill="#2c2620">• product</text>
+<text x="790.0" y="382" font-size="10.5" fill="#2c2620">• review</text>
+<text x="896.0" y="382" font-size="10.5" fill="#2c2620">• warranty</text>
+<text x="839.0" y="406" text-anchor="middle" font-size="9.6" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· constants/, utils/)</text>
+<text x="839.0" y="422" text-anchor="middle" font-size="9.6" fill="#948a7c">cart/ có stores/ riêng (Zustand + persist localStorage)</text>
+<text x="839.0" y="438" text-anchor="middle" font-size="9.6" fill="#948a7c">conversation/, message/ dùng realtime/ (Socket.IO) để chat trực tiếp</text>
+<text x="839.0" y="454" text-anchor="middle" font-size="9.6" fill="#948a7c">footer/, header/ dùng chung cho layout Client</text>
+<rect x="660" y="514" width="358" height="252" rx="10" fill="#ffffff" stroke="#1c1815" stroke-width="1.6" />
+<text x="839.0" y="536" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">admin/</text>
+<text x="839.0" y="552" text-anchor="middle" font-size="10.5" fill="#948a7c">14 nhóm trang quản trị</text>
+<text x="684.0" y="572" font-size="10.5" fill="#2c2620">• dashboard</text>
+<text x="790.0" y="572" font-size="10.5" fill="#2c2620">• product</text>
+<text x="896.0" y="572" font-size="10.5" fill="#2c2620">• category</text>
+<text x="684.0" y="590" font-size="10.5" fill="#2c2620">• coupon</text>
+<text x="790.0" y="590" font-size="10.5" fill="#2c2620">• order</text>
+<text x="896.0" y="590" font-size="10.5" fill="#2c2620">• payment</text>
+<text x="684.0" y="608" font-size="10.5" fill="#2c2620">• user</text>
+<text x="790.0" y="608" font-size="10.5" fill="#2c2620">• rbac</text>
+<text x="896.0" y="608" font-size="10.5" fill="#2c2620">• contact</text>
+<text x="684.0" y="626" font-size="10.5" fill="#2c2620">• header</text>
+<text x="790.0" y="626" font-size="10.5" fill="#2c2620">• sidebar</text>
+<text x="896.0" y="626" font-size="10.5" fill="#2c2620">• notification</text>
+<text x="684.0" y="644" font-size="10.5" fill="#2c2620">• conversation</text>
+<text x="790.0" y="644" font-size="10.5" fill="#2c2620">• review</text>
+<text x="839.0" y="668" text-anchor="middle" font-size="9.6" fill="#948a7c">mỗi nhóm: components/ · hooks/ · services/ · types/ (· constants/, utils/)</text>
+<text x="839.0" y="684" text-anchor="middle" font-size="9.6" fill="#948a7c">rbac/ có thêm loader/ riêng (ma trận quyền)</text>
+<text x="839.0" y="700" text-anchor="middle" font-size="9.6" fill="#948a7c">mọi route admin đều qua requirePermissionLoader</text>
+<text x="839.0" y="716" text-anchor="middle" font-size="9.6" fill="#948a7c">conversation/ (admin) dùng chung realtime/ để trả lời khách</text>
+<rect x="40" y="530" width="600" height="62" rx="8" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.5" />
+<text x="340.0" y="547" text-anchor="middle" font-size="12" font-weight="700" fill="#1c1815">pages/ — 1 file .tsx / route, import Component từ features/</text>
+<text x="340.0" y="562" text-anchor="middle" font-size="10" fill="#2c2620">pages/client (home, shop, cart, product-detail, buynow, payment,</text>
+<text x="340.0" y="575" text-anchor="middle" font-size="10" fill="#2c2620">payment-result, contact, about, account) · pages/admin · pages/auth · pages/403 · pages/404</text>
+<rect x="40" y="786" width="1080" height="118" rx="12" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" />
+<text x="580.0" y="812" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">Khuôn mẫu chung của mỗi feature con</text>
+<text x="580.0" y="838" text-anchor="middle" font-size="12" fill="#2c2620">components/ — UI riêng của feature &#160;·&#160; hooks/ — custom hook (thường bọc TanStack Query)</text>
+<text x="580.0" y="860" text-anchor="middle" font-size="12" fill="#2c2620">services/ — hàm gọi apiClient/strapiClient &#160;·&#160; types/ — kiểu dữ liệu &#160;·&#160; utils/, constants/, stores/ (nếu có)</text>
+<text x="580.0" y="882" text-anchor="middle" font-size="12" fill="#2c2620">Cùng khuôn mẫu với backend/features/&lt;tên&gt;/ để hai bên dễ tra cứu song song</text>
+<rect x="40" y="920" width="14" height="14" rx="3" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="62" y="932" font-size="11" fill="#2c2620">Cấu hình / hạ tầng dùng chung</text>
+<rect x="290" y="920" width="14" height="14" rx="3" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="312" y="932" font-size="11" fill="#2c2620">Module nghiệp vụ (features/, admin/)</text>
+<rect x="580" y="920" width="14" height="14" rx="3" fill="#fff7ee" stroke="#d9641f" stroke-width="1.6" />
+<text x="602" y="932" font-size="11" fill="#2c2620">Nhóm chính / file quan trọng</text>
 </svg>

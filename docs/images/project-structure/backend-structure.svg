@@ -1,169 +1,136 @@
-<svg viewBox="0 0 1040 900" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
-  <defs>
-    <marker id="arrowB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#948a7c" />
-    </marker>
-  </defs>
-
-  <rect x="0" y="0" width="1040" height="900" fill="#faf6f0" />
-
-  <text x="520" y="42" text-anchor="middle" font-size="22" font-weight="700" fill="#1c1815">Sơ đồ thư mục backend</text>
-  <text x="520" y="66" text-anchor="middle" font-size="13" fill="#948a7c">backend/src — modular theo feature</text>
-
-  <!-- Root -->
-  <rect x="420" y="90" width="200" height="46" rx="10" fill="#1c1815" />
-  <text x="520" y="118" text-anchor="middle" font-size="14" font-weight="700" fill="#faf6f0">backend/src/</text>
-
-  <!-- Branch lines -->
-  <line x1="520" y1="136" x2="270" y2="147" stroke="#948a7c" stroke-width="1.6" />
-  <line x1="520" y1="136" x2="760" y2="147" stroke="#948a7c" stroke-width="1.6" />
-
-  <!-- Left cluster label -->
-  <text x="230" y="164" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">Hạ tầng &amp; tiện ích dùng chung</text>
-
-  <!-- Left column boxes -->
-  <g font-size="11">
-    <rect x="40" y="176" width="180" height="42" rx="8" fill="#ffffff" stroke="#d9641f" stroke-width="1.5" />
-    <text x="130" y="193" text-anchor="middle" font-weight="700" fill="#1c1815">app.ts</text>
-    <text x="130" y="209" text-anchor="middle" fill="#2c2620">Khởi tạo Express, mount router</text>
-
-    <rect x="240" y="176" width="180" height="42" rx="8" fill="#ffffff" stroke="#d9641f" stroke-width="1.5" />
-    <text x="330" y="193" text-anchor="middle" font-weight="700" fill="#1c1815">server.ts</text>
-    <text x="330" y="209" text-anchor="middle" fill="#2c2620">Bootstrap, seed, start, shutdown</text>
-
-    <rect x="40" y="230" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="130" y="247" text-anchor="middle" font-weight="700" fill="#1c1815">config/</text>
-    <text x="130" y="262" text-anchor="middle" fill="#2c2620">env (zod), Prisma, axios, SMTP</text>
-
-    <rect x="240" y="230" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="330" y="245" text-anchor="middle" font-weight="700" fill="#1c1815">middlewares/</text>
-    <text x="330" y="259" text-anchor="middle" font-size="9.5" fill="#2c2620">authenticateJWT, requirePermission,</text>
-    <text x="330" y="270" text-anchor="middle" font-size="9.5" fill="#2c2620">validate (Zod)</text>
-
-    <rect x="40" y="286" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="130" y="303" text-anchor="middle" font-weight="700" fill="#1c1815">cronjob/</text>
-    <text x="130" y="318" text-anchor="middle" fill="#2c2620">Dọn đơn "pending" quá hạn</text>
-
-    <rect x="240" y="286" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="330" y="303" text-anchor="middle" font-weight="700" fill="#1c1815">external/ghn/</text>
-    <text x="330" y="318" text-anchor="middle" fill="#2c2620">Tích hợp Giao Hàng Nhanh</text>
-
-    <rect x="40" y="342" width="180" height="46" rx="8" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" stroke-dasharray="4,3" />
-    <text x="130" y="359" text-anchor="middle" font-weight="700" fill="#1c1815">generated/prisma/</text>
-    <text x="130" y="374" text-anchor="middle" fill="#2c2620">Prisma Client (tự sinh)</text>
-
-    <rect x="240" y="342" width="180" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="330" y="359" text-anchor="middle" font-weight="700" fill="#1c1815">shared/</text>
-    <text x="330" y="374" text-anchor="middle" fill="#2c2620">Xử lý lỗi service dùng chung</text>
-
-    <rect x="40" y="398" width="180" height="42" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-    <text x="130" y="415" text-anchor="middle" font-weight="700" fill="#1c1815">utils/</text>
-    <text x="130" y="430" text-anchor="middle" fill="#2c2620">Tiện ích dùng chung</text>
-
-    <rect x="240" y="398" width="180" height="42" rx="8" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.3" />
-    <text x="330" y="415" text-anchor="middle" font-weight="700" fill="#1c1815">prisma/schema.prisma</text>
-    <text x="330" y="430" text-anchor="middle" fill="#2c2620">Định nghĩa toàn bộ model DB</text>
-  </g>
-
-  <!-- Right cluster label -->
-  <text x="800" y="164" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">features/ — 1 module / nghiệp vụ</text>
-
-  <!-- features grid -->
-  <g font-size="11">
-    <!-- helper: 3 columns x 5 rows -->
-    <!-- row1 -->
-    <rect x="470" y="176" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="555" y="195" text-anchor="middle" font-weight="700" fill="#1c1815">auth/</text>
-    <text x="555" y="211" text-anchor="middle" fill="#2c2620">Đăng ký, OTP, login,</text>
-    <text x="555" y="224" text-anchor="middle" fill="#2c2620">refresh token</text>
-
-    <rect x="655" y="176" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="740" y="195" text-anchor="middle" font-weight="700" fill="#1c1815">users/</text>
-    <text x="740" y="211" text-anchor="middle" fill="#2c2620">Hồ sơ, địa chỉ</text>
-    <text x="740" y="224" text-anchor="middle" fill="#2c2620">của chính user</text>
-
-    <rect x="840" y="176" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="925" y="195" text-anchor="middle" font-weight="700" fill="#1c1815">user_addresses/</text>
-    <text x="925" y="211" text-anchor="middle" fill="#2c2620">Admin quản trị địa</text>
-    <text x="925" y="224" text-anchor="middle" fill="#2c2620">chỉ mọi người dùng</text>
-
-    <!-- row2 -->
-    <rect x="470" y="238" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="555" y="257" text-anchor="middle" font-weight="700" fill="#1c1815">rbac/</text>
-    <text x="555" y="273" text-anchor="middle" fill="#2c2620">Role &amp; Permission,</text>
-    <text x="555" y="286" text-anchor="middle" fill="#2c2620">gán/thu hồi quyền</text>
-
-    <rect x="655" y="238" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="740" y="257" text-anchor="middle" font-weight="700" fill="#1c1815">categories/</text>
-    <text x="740" y="273" text-anchor="middle" fill="#2c2620">Danh mục, cây</text>
-    <text x="740" y="286" text-anchor="middle" fill="#2c2620">phân cấp, slug VN</text>
-
-    <rect x="840" y="238" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="925" y="257" text-anchor="middle" font-weight="700" fill="#1c1815">products/</text>
-    <text x="925" y="273" text-anchor="middle" fill="#2c2620">Sản phẩm, SKU,</text>
-    <text x="925" y="286" text-anchor="middle" fill="#2c2620">ảnh theo biến thể</text>
-
-    <!-- row3 -->
-    <rect x="470" y="300" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="555" y="319" text-anchor="middle" font-weight="700" fill="#1c1815">carts/</text>
-    <text x="555" y="335" text-anchor="middle" fill="#2c2620">Giỏ hàng của</text>
-    <text x="555" y="348" text-anchor="middle" fill="#2c2620">user đăng nhập</text>
-
-    <rect x="655" y="300" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="740" y="319" text-anchor="middle" font-weight="700" fill="#1c1815">coupons/</text>
-    <text x="740" y="335" text-anchor="middle" fill="#2c2620">Mã giảm giá cố</text>
-    <text x="740" y="348" text-anchor="middle" fill="#2c2620">định / phần trăm</text>
-
-    <rect x="840" y="300" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="925" y="319" text-anchor="middle" font-weight="700" fill="#1c1815">orders/</text>
-    <text x="925" y="335" text-anchor="middle" fill="#2c2620">Checkout, phí ship</text>
-    <text x="925" y="348" text-anchor="middle" fill="#2c2620">GHN, webhook</text>
-
-    <!-- row4 -->
-    <rect x="470" y="362" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="555" y="381" text-anchor="middle" font-weight="700" fill="#1c1815">payments/</text>
-    <text x="555" y="397" text-anchor="middle" fill="#2c2620">Trạng thái + cổng</text>
-    <text x="555" y="410" text-anchor="middle" fill="#2c2620">thanh toán (gateways/)</text>
-
-    <rect x="655" y="362" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="740" y="381" text-anchor="middle" font-weight="700" fill="#1c1815">reviews/</text>
-    <text x="740" y="397" text-anchor="middle" fill="#2c2620">Đánh giá</text>
-    <text x="740" y="410" text-anchor="middle" fill="#2c2620">sản phẩm</text>
-
-    <rect x="840" y="362" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="925" y="381" text-anchor="middle" font-weight="700" fill="#1c1815">contacts/</text>
-    <text x="925" y="397" text-anchor="middle" fill="#2c2620">Form liên hệ</text>
-    <text x="925" y="410" text-anchor="middle" fill="#2c2620">khách hàng</text>
-
-    <!-- row5 -->
-    <rect x="470" y="424" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="555" y="443" text-anchor="middle" font-weight="700" fill="#1c1815">dashboard/</text>
-    <text x="555" y="459" text-anchor="middle" fill="#2c2620">Thống kê tổng</text>
-    <text x="555" y="472" text-anchor="middle" fill="#2c2620">quan cho admin</text>
-
-    <rect x="655" y="424" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="740" y="443" text-anchor="middle" font-weight="700" fill="#1c1815">uploads/</text>
-    <text x="740" y="459" text-anchor="middle" fill="#2c2620">Upload ảnh</text>
-    <text x="740" y="472" text-anchor="middle" fill="#2c2620">sản phẩm</text>
-
-    <rect x="840" y="424" width="170" height="52" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-    <text x="925" y="443" text-anchor="middle" font-weight="700" fill="#1c1815">notifications/</text>
-    <text x="925" y="459" text-anchor="middle" fill="#2c2620">Thông báo của user,</text>
-    <text x="925" y="472" text-anchor="middle" fill="#2c2620">admin phát thông báo</text>
-  </g>
-
-  <!-- Convention box -->
-  <rect x="60" y="496" width="850" height="120" rx="12" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.5" />
-  <text x="485" y="524" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">Khuôn mẫu chung của mỗi feature/&lt;tên&gt;/</text>
-  <text x="485" y="550" text-anchor="middle" font-size="12" fill="#2c2620">*.routes.ts — định tuyến + khai báo quyền &#160;·&#160; *.controller.ts — xử lý request/response</text>
-  <text x="485" y="572" text-anchor="middle" font-size="12" fill="#2c2620">*.service.ts — nghiệp vụ + Prisma &#160;·&#160; *.validation.ts — Zod schema &#160;·&#160; *.utils.ts</text>
-  <text x="485" y="594" text-anchor="middle" font-size="12" fill="#2c2620">*.seed.ts — dữ liệu mẫu khi khởi động &#160;(một số feature có thêm *.constant.ts / *.type.ts)</text>
-
-  <!-- legend -->
-  <rect x="60" y="636" width="14" height="14" rx="3" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
-  <text x="82" y="648" font-size="11" fill="#2c2620">Hạ tầng dùng chung</text>
-  <rect x="230" y="636" width="14" height="14" rx="3" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
-  <text x="252" y="648" font-size="11" fill="#2c2620">Module nghiệp vụ (features/)</text>
-  <rect x="430" y="636" width="14" height="14" rx="3" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.3" />
-  <text x="452" y="648" font-size="11" fill="#2c2620">File/cấu hình quan trọng</text>
+<svg viewBox="0 0 1200 814" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTpmYmUyY2U5OC02MjY0LTRjNjYtYjIwMi01YzFkNDRkOGJmOGYAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaI1FJFabDr2jdL95l7r2m3MAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDphZDY3ZTYyNi00MGUzLTQxYTMtOTMwOS1jODRlMWMxYjAyNjRscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNodxnbvEKVPf4GXhvWPu3neAAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggAShwz9mJm1dCrDfPubYuOA7sWujw5aNPfV/LEDIH6Q2kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaMgogL91+aUuoEh7NTAEG2MAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCDsPOl2PO2X+V3Ig2jWK4E0vcYgnwhAhrpGoSlJzJyLYGRuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBioZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmZiZTJjZTk4LTYyNjQtNGM2Ni1iMjAyLTVjMWQ0NGQ4YmY4Zi9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjkzYWU0YmJjLTY3ZWQtNGJkMC1hYjRhLTA3YjJhNTE1MjBhY3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCABKHDP2YmbV0KsN8+5ti44Duxa6PDlo099X8sQMgfpDaJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggj1pW3NNTlO6TnMgKrxzgPz1GPCcwAxjssAmNtH3Xr+2iY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggMiRjTXhT+qe6qM5BSxfXnk0lJr/SB46gvvTKaxUr9+Z0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQEiXJ+z4BpRQpyADnuxf0zy0N0ygD4NStUpCgw+vX7P7V9vX+8nPgu8RXsG4lWHALPBt29kumRE2xYeKK+xk/oc=</c2pa:manifest></metadata>
+<rect x="0" y="0" width="1200" height="814" fill="#faf6f0" />
+<text x="600" y="42" text-anchor="middle" font-size="22" font-weight="700" fill="#1c1815">Sơ đồ thư mục backend</text>
+<text x="600" y="66" text-anchor="middle" font-size="13" fill="#948a7c">backend/src — modular theo feature (đã cập nhật theo source code hiện tại)</text>
+<rect x="500" y="88" width="200" height="46" rx="10" fill="#1c1815" />
+<text x="600" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#faf6f0">backend/src/</text>
+<line x1="600" y1="134" x2="260" y2="150" stroke="#948a7c" stroke-width="1.6" />
+<line x1="600" y1="134" x2="900" y2="150" stroke="#948a7c" stroke-width="1.6" />
+<text x="240" y="166" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">Hạ tầng &amp; tiện ích dùng chung</text>
+<rect x="40" y="178" width="190" height="42" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">app.ts</text>
+<text x="135.0" y="210" text-anchor="middle" font-size="9.4" fill="#2c2620">Khởi tạo Express, mount router</text>
+<rect x="250" y="178" width="190" height="42" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">server.ts</text>
+<text x="345.0" y="210" text-anchor="middle" font-size="9.4" fill="#2c2620">Bootstrap, seed, start, shutdown</text>
+<rect x="40" y="230" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="247" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">config/</text>
+<text x="135.0" y="262" text-anchor="middle" font-size="9.2" fill="#2c2620">env (zod), Prisma, axios, SMTP,</text>
+<text x="135.0" y="275" text-anchor="middle" font-size="9.2" fill="#2c2620">openapi.ts (Swagger docs)</text>
+<rect x="250" y="230" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="247" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">middlewares/</text>
+<text x="345.0" y="262" text-anchor="middle" font-size="9.2" fill="#2c2620">authenticate.ts, rbac.ts, validate.ts</text>
+<text x="345.0" y="275" text-anchor="middle" font-size="9.2" fill="#2c2620">(requirePermissionLoader)</text>
+<rect x="40" y="286" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="303" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">cronjob/</text>
+<text x="135.0" y="318" text-anchor="middle" font-size="9.2" fill="#2c2620">order/ — dọn đơn pending quá hạn</text>
+<text x="135.0" y="331" text-anchor="middle" font-size="9.2" fill="#2c2620">payment/ — retry tạo vận đơn GHN</text>
+<rect x="250" y="286" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="303" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">external/ghn/</text>
+<text x="345.0" y="318" text-anchor="middle" font-size="9.4" fill="#2c2620">Tích hợp Giao Hàng Nhanh</text>
+<rect x="40" y="342" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="359" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">realtime/</text>
+<text x="135.0" y="374" text-anchor="middle" font-size="9.2" fill="#2c2620">io-registry.ts — instance io +</text>
+<text x="135.0" y="387" text-anchor="middle" font-size="9.2" fill="#2c2620">tên room (tách khỏi socket.server)</text>
+<rect x="250" y="342" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="359" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">socket.server.ts</text>
+<text x="345.0" y="374" text-anchor="middle" font-size="9.2" fill="#2c2620">Auth JWT lúc handshake,</text>
+<text x="345.0" y="387" text-anchor="middle" font-size="9.2" fill="#2c2620">đăng ký socket handler/feature</text>
+<rect x="40" y="398" width="190" height="46" rx="8" fill="#f3ede4" stroke="#948a7c" stroke-width="1.3" stroke-dasharray="4,3" />
+<text x="135.0" y="415" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">generated/prisma/</text>
+<text x="135.0" y="430" text-anchor="middle" font-size="9.4" fill="#2c2620">Prisma Client (tự sinh)</text>
+<rect x="250" y="398" width="190" height="46" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="345.0" y="415" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">shared/</text>
+<text x="345.0" y="430" text-anchor="middle" font-size="9.4" fill="#2c2620">service-error-handler.ts, validation.ts</text>
+<rect x="40" y="454" width="190" height="42" rx="8" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="135.0" y="471" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">utils/</text>
+<text x="135.0" y="486" text-anchor="middle" font-size="9.4" fill="#2c2620">Tiện ích dùng chung</text>
+<rect x="250" y="454" width="190" height="42" rx="8" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.3" />
+<text x="345.0" y="471" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">prisma/schema.prisma</text>
+<text x="345.0" y="486" text-anchor="middle" font-size="9.4" fill="#2c2620">Định nghĩa toàn bộ model DB</text>
+<text x="850" y="166" text-anchor="middle" font-size="13" font-weight="700" fill="#b84f14">features/ — 1 module / nghiệp vụ</text>
+<rect x="500" y="178" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="585.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">auth/</text>
+<text x="585.0" y="210" text-anchor="middle" font-size="9.3" fill="#2c2620">Đăng ký, OTP, login</text>
+<text x="585.0" y="223" text-anchor="middle" font-size="9.3" fill="#2c2620">(local + Google/Facebook),</text>
+<text x="585.0" y="236" text-anchor="middle" font-size="9.3" fill="#2c2620">refresh token</text>
+<rect x="685" y="178" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="770.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">users/</text>
+<text x="770.0" y="210" text-anchor="middle" font-size="9.3" fill="#2c2620">Hồ sơ, địa chỉ</text>
+<text x="770.0" y="223" text-anchor="middle" font-size="9.3" fill="#2c2620">của chính user</text>
+<rect x="870" y="178" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="955.0" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">user_addresses/</text>
+<text x="955.0" y="210" text-anchor="middle" font-size="9.3" fill="#2c2620">Admin quản trị địa</text>
+<text x="955.0" y="223" text-anchor="middle" font-size="9.3" fill="#2c2620">chỉ mọi người dùng</text>
+<rect x="500" y="254" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="585.0" y="271" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">rbac/</text>
+<text x="585.0" y="286" text-anchor="middle" font-size="9.3" fill="#2c2620">Role &amp; Permission,</text>
+<text x="585.0" y="299" text-anchor="middle" font-size="9.3" fill="#2c2620">gán/thu hồi quyền</text>
+<rect x="685" y="254" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="770.0" y="271" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">categories/</text>
+<text x="770.0" y="286" text-anchor="middle" font-size="9.3" fill="#2c2620">Danh mục, cây</text>
+<text x="770.0" y="299" text-anchor="middle" font-size="9.3" fill="#2c2620">phân cấp, slug VN</text>
+<rect x="870" y="254" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="955.0" y="271" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">products/</text>
+<text x="955.0" y="286" text-anchor="middle" font-size="9.3" fill="#2c2620">Sản phẩm, SKU,</text>
+<text x="955.0" y="299" text-anchor="middle" font-size="9.3" fill="#2c2620">ảnh theo biến thể</text>
+<rect x="500" y="330" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="585.0" y="347" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">carts/</text>
+<text x="585.0" y="362" text-anchor="middle" font-size="9.3" fill="#2c2620">Giỏ hàng của</text>
+<text x="585.0" y="375" text-anchor="middle" font-size="9.3" fill="#2c2620">user đăng nhập</text>
+<rect x="685" y="330" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="770.0" y="347" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">coupons/</text>
+<text x="770.0" y="362" text-anchor="middle" font-size="9.3" fill="#2c2620">Mã giảm giá cố</text>
+<text x="770.0" y="375" text-anchor="middle" font-size="9.3" fill="#2c2620">định / phần trăm</text>
+<rect x="870" y="330" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="955.0" y="347" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">orders/</text>
+<text x="955.0" y="362" text-anchor="middle" font-size="9.3" fill="#2c2620">Checkout, phí ship</text>
+<text x="955.0" y="375" text-anchor="middle" font-size="9.3" fill="#2c2620">GHN, webhook</text>
+<rect x="500" y="406" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="585.0" y="423" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">payments/</text>
+<text x="585.0" y="438" text-anchor="middle" font-size="9.3" fill="#2c2620">Trạng thái + cổng</text>
+<text x="585.0" y="451" text-anchor="middle" font-size="9.3" fill="#2c2620">thanh toán (gateways/)</text>
+<rect x="685" y="406" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="770.0" y="423" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">reviews/</text>
+<text x="770.0" y="438" text-anchor="middle" font-size="9.3" fill="#2c2620">Đánh giá</text>
+<text x="770.0" y="451" text-anchor="middle" font-size="9.3" fill="#2c2620">sản phẩm</text>
+<rect x="870" y="406" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="955.0" y="423" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">contacts/</text>
+<text x="955.0" y="438" text-anchor="middle" font-size="9.3" fill="#2c2620">Form liên hệ</text>
+<text x="955.0" y="451" text-anchor="middle" font-size="9.3" fill="#2c2620">khách hàng</text>
+<rect x="500" y="482" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="585.0" y="499" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">conversations/</text>
+<text x="585.0" y="514" text-anchor="middle" font-size="9.3" fill="#2c2620">Hội thoại chat</text>
+<text x="585.0" y="527" text-anchor="middle" font-size="9.3" fill="#2c2620">(+ .socket.ts)</text>
+<rect x="685" y="482" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="770.0" y="499" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">messages/</text>
+<text x="770.0" y="514" text-anchor="middle" font-size="9.3" fill="#2c2620">Tin nhắn trong</text>
+<text x="770.0" y="527" text-anchor="middle" font-size="9.3" fill="#2c2620">hội thoại (+ .socket.ts)</text>
+<rect x="870" y="482" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="955.0" y="499" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">warranty/</text>
+<text x="955.0" y="514" text-anchor="middle" font-size="9.3" fill="#2c2620">Bảo hành</text>
+<text x="955.0" y="527" text-anchor="middle" font-size="9.3" fill="#2c2620">sản phẩm đã mua</text>
+<rect x="500" y="558" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="585.0" y="575" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">dashboard/</text>
+<text x="585.0" y="590" text-anchor="middle" font-size="9.3" fill="#2c2620">Thống kê tổng</text>
+<text x="585.0" y="603" text-anchor="middle" font-size="9.3" fill="#2c2620">quan cho admin</text>
+<rect x="685" y="558" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="770.0" y="575" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">uploads/</text>
+<text x="770.0" y="590" text-anchor="middle" font-size="9.3" fill="#2c2620">Upload ảnh</text>
+<text x="770.0" y="603" text-anchor="middle" font-size="9.3" fill="#2c2620">sản phẩm</text>
+<rect x="870" y="558" width="170" height="66" rx="8" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="955.0" y="575" text-anchor="middle" font-size="11" font-weight="700" fill="#1c1815">notifications/</text>
+<text x="955.0" y="590" text-anchor="middle" font-size="9.3" fill="#2c2620">Thông báo của user,</text>
+<text x="955.0" y="603" text-anchor="middle" font-size="9.3" fill="#2c2620">admin phát thông báo</text>
+<rect x="60" y="644" width="1080" height="120" rx="12" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.5" />
+<text x="600.0" y="672" text-anchor="middle" font-size="13" font-weight="700" fill="#1c1815">Khuôn mẫu chung của mỗi feature/&lt;tên&gt;/</text>
+<text x="600.0" y="698" text-anchor="middle" font-size="12" fill="#2c2620">*.routes.ts — định tuyến + khai báo quyền &#160;·&#160; *.controller.ts — xử lý request/response</text>
+<text x="600.0" y="720" text-anchor="middle" font-size="12" fill="#2c2620">*.service.ts — nghiệp vụ + Prisma &#160;·&#160; *.validation.ts — Zod schema &#160;·&#160; *.utils.ts</text>
+<text x="600.0" y="742" text-anchor="middle" font-size="12" fill="#2c2620">*.seed.ts — dữ liệu mẫu &#160;·&#160; *.socket.ts — realtime handler (conversations/, messages/) &#160;·&#160; (một số có *.constant.ts / *.type.ts)</text>
+<rect x="60" y="780" width="14" height="14" rx="3" fill="#ffffff" stroke="#948a7c" stroke-width="1.3" />
+<text x="82" y="792" font-size="11" fill="#2c2620">Hạ tầng dùng chung</text>
+<rect x="260" y="780" width="14" height="14" rx="3" fill="#ffffff" stroke="#1c1815" stroke-width="1.3" />
+<text x="282" y="792" font-size="11" fill="#2c2620">Module nghiệp vụ (features/)</text>
+<rect x="500" y="780" width="14" height="14" rx="3" fill="#fbe6d3" stroke="#d9641f" stroke-width="1.3" />
+<text x="522" y="792" font-size="11" fill="#2c2620">File/cấu hình quan trọng</text>
 </svg>
