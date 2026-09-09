@@ -7,6 +7,11 @@ export interface Pagination {
 
 export interface RouteHandle {
 	title?: string;
+	description?: string;
+	seo?: {
+		description?: string;
+		noindex?: boolean;
+	};
 	crumb?: () => string;
 	crumbPath?: string;
 	preventScrollReset?: boolean;

@@ -19,6 +19,7 @@ import ProductDetailPageSkeleton from "./skeleton";
 import ProductReviewsTab from "../../../features/client/review/components/product-reviews-tab";
 import ProductDescriptionTab from "../../../features/client/product/components/product-description-tab";
 import ProductSpecsTab from "../../../features/client/product/components/product-specs-tab";
+import SeoHead from "../../../components/seo-head";
 
 const tabs = [
 	{ id: "description", label: "Mô tả" },
@@ -113,6 +114,8 @@ const ProductDetailPage = () => {
 	// nên đây là số lượng review đang hiển thị, không hẳn là tổng số review thực tế của sản phẩm.
 	const reviewCount = product.reviews.length;
 	const related = product.related;
+	const description = product.description?.replace(/\s+/g, " ").trim() || `Khám phá ${product.name} tại Ecommerce.`;
+	const productImage = gallery[0];
 
 	const handleSelect = (attribute: string, value: string) => {
 		setSelected((prev) => ({ ...prev, [attribute]: value }));
@@ -163,6 +166,34 @@ const ProductDetailPage = () => {
 
 	return (
 		<div>
+			<SeoHead
+				title={product.name}
+				description={description.slice(0, 160)}
+				canonicalPath={paths.client.productDetail(product.slug)}
+				image={productImage}
+				type='product'
+				jsonLd={{
+					"@context": "https://schema.org",
+					"@type": "Product",
+					name: product.name,
+					description,
+					url: `${window.location.origin}${paths.client.productDetail(product.slug)}`,
+					image: gallery,
+					brand: { "@type": "Brand", name: "Ecommerce" },
+					aggregateRating: product.averageRating && product.reviews.length > 0 ? {
+						"@type": "AggregateRating",
+						ratingValue: product.averageRating,
+						reviewCount: product.reviews.length,
+					} : undefined,
+					offers: {
+						"@type": "AggregateOffer",
+						lowPrice: priceRange.min,
+						highPrice: priceRange.max,
+						priceCurrency: "VND",
+						availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+					},
+				}}
+			/>
 			<BreadCrumb title={product.name} />
 
 			<div className='mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8'>

@@ -60,18 +60,19 @@ const router = createBrowserRouter([
 				Component: HomePage,
 				handle: {
 					title: "Trang chủ",
+					description: "Mua sắm sản phẩm chất lượng với trải nghiệm nhanh chóng và đáng tin cậy.",
 					crumb: () => "Trang chủ",
 				},
 			},
 			{
 				path: paths.client.about,
 				Component: AboutPage,
-				handle: { title: "Giới thiệu", crumb: () => "Giới thiệu" },
+				handle: { title: "Giới thiệu", description: "Tìm hiểu về Ecommerce và cam kết mang đến trải nghiệm mua sắm tốt hơn.", crumb: () => "Giới thiệu" },
 			},
 			{
 				path: paths.client.shop,
 				Component: ShopPage,
-				handle: { title: "Cửa hàng", crumb: () => "Cửa hàng", preventScrollReset: true },
+				handle: { title: "Cửa hàng", description: "Khám phá toàn bộ sản phẩm và tìm lựa chọn phù hợp với bạn.", crumb: () => "Cửa hàng", preventScrollReset: true },
 			},
 			{
 				// Route cha thuần logic (không path, không render gì thêm ngoài Outlet) — chỉ để
@@ -84,14 +85,14 @@ const router = createBrowserRouter([
 					{
 						path: "product/:slug",
 						Component: ProductDetailPage,
-						handle: { title: "Sản phẩm" },
+						handle: { title: "Sản phẩm", description: "Xem thông tin, lựa chọn biến thể và đặt mua sản phẩm.", },
 					},
 				],
 			},
 			{
 				path: paths.client.contact,
 				Component: ContactPage,
-				handle: { title: "Liên hệ", crumb: () => "Liên hệ" },
+				handle: { title: "Liên hệ", description: "Liên hệ với đội ngũ Ecommerce để được hỗ trợ.", crumb: () => "Liên hệ" },
 			},
 			{
 				// Giỏ hàng KHÔNG gắn requireAuthLoader: khách chưa đăng nhập vẫn phải
@@ -99,7 +100,7 @@ const router = createBrowserRouter([
 				// features/client/cart/store).
 				path: paths.client.cart,
 				Component: CartPage,
-				handle: { title: "Giỏ hàng", crumb: () => "Giỏ hàng" },
+				handle: { title: "Giỏ hàng", seo: { noindex: true }, crumb: () => "Giỏ hàng" },
 			},
 			{
 				// Thanh toán yêu cầu đăng nhập (cần xác định người đặt hàng): chọn địa chỉ, xem phí
@@ -108,7 +109,7 @@ const router = createBrowserRouter([
 				path: paths.client.payment,
 				loader: requireAuthLoader,
 				Component: PaymentPage,
-				handle: { title: "Thanh toán", crumb: () => "Thanh toán" },
+				handle: { title: "Thanh toán", seo: { noindex: true }, crumb: () => "Thanh toán" },
 			},
 			{
 				// Mua ngay (bấm ở trang chi tiết sản phẩm): đặt hàng thẳng đúng 1 SKU, không qua giỏ
@@ -119,49 +120,49 @@ const router = createBrowserRouter([
 				path: paths.client.buyNow,
 				loader: requireAuthLoader,
 				Component: BuyNowPage,
-				handle: { title: "Mua ngay", crumb: () => "Mua ngay" },
+				handle: { title: "Mua ngay", seo: { noindex: true }, crumb: () => "Mua ngay" },
 			},
 			{
 				path: paths.client.paymentResult,
 				loader: requireAuthLoader,
 				Component: PaymentResultPage,
-				handle: { title: "Kết quả thanh toán", crumb: () => "Kết quả thanh toán" },
+				handle: { title: "Kết quả thanh toán", seo: { noindex: true }, crumb: () => "Kết quả thanh toán" },
 			},
 			{
 				path: paths.client.account,
 				loader: requireAuthLoader,
 				Component: AccountPage,
-				handle: { title: "Tài khoản của tôi", crumb: () => "Tài khoản của tôi" },
+				handle: { title: "Tài khoản của tôi", seo: { noindex: true }, crumb: () => "Tài khoản của tôi" },
 			},
 			{
 				path: paths.auth.login,
 				loader: guestOnlyLoader,
 				Component: LoginPage,
-				handle: { title: "Đăng nhập", crumb: () => "Đăng nhập" },
+				handle: { title: "Đăng nhập", seo: { noindex: true }, crumb: () => "Đăng nhập" },
 			},
 			{
 				path: paths.auth.register,
 				loader: guestOnlyLoader,
 				Component: RegisterPage,
-				handle: { title: "Đăng ký", crumb: () => "Đăng ký" },
+				handle: { title: "Đăng ký", seo: { noindex: true }, crumb: () => "Đăng ký" },
 			},
 			{
 				path: paths.auth.forgotPassword,
 				loader: guestOnlyLoader,
 				Component: ForgotPasswordPage,
-				handle: { title: "Quên mật khẩu", crumb: () => "Quên mật khẩu" },
+				handle: { title: "Quên mật khẩu", seo: { noindex: true }, crumb: () => "Quên mật khẩu" },
 			},
 			{
 				path: "reset-password",
 				loader: guestOnlyLoader,
 				Component: ResetPasswordPage,
-				handle: { title: "Khôi phục mật khẩu", crumb: () => "Khôi phục mật khẩu" },
+				handle: { title: "Khôi phục mật khẩu", seo: { noindex: true }, crumb: () => "Khôi phục mật khẩu" },
 			},
 			{
 				path: "verify-otp",
 				loader: guestOnlyLoader,
 				Component: VerifyOtpPage,
-				handle: { title: "Xác thực OTP", crumb: () => "Xác thực OTP" },
+				handle: { title: "Xác thực OTP", seo: { noindex: true }, crumb: () => "Xác thực OTP" },
 			},
 		],
 	},
