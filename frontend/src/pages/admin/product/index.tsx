@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import Button from "../../../components/button";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
@@ -70,7 +71,10 @@ const AdminProductPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Sản phẩm' description='Quản lý sản phẩm, biến thể và tồn kho.' />
+				<div className='flex items-center gap-2'>
+					<ExportButton resource='products' params={{ search, categoryId: categoryId ?? undefined, isActive }} />
+					<AdminTitle title='Sản phẩm' description='Quản lý sản phẩm, biến thể và tồn kho.' />
+				</div>
 				<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setIsCreating(true)}>
 					Thêm sản phẩm
 				</Button>

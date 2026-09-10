@@ -4,6 +4,7 @@ import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Pagination from "../../../components/pagination";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
 import Button from "../../../components/button";
 import useListQueryParams from "../../../hooks/useListQueryParams";
@@ -90,7 +91,10 @@ const AdminOrderPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<AdminTitle title='Đơn hàng' description='Xem và xử lý các đơn hàng khách đã đặt.' />
+			<div className='flex items-center gap-2'>
+				<ExportButton resource='orders' params={{ search, status, dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined, dateTo: dateTo ? new Date(dateTo).toISOString() : undefined }} />
+				<AdminTitle title='Đơn hàng' description='Xem và xử lý các đơn hàng khách đã đặt.' />
+			</div>
 
 			{/* Filters */}
 			<div className='flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-surface p-4'>

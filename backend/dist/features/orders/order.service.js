@@ -1,0 +1,707 @@
+import prisma from "../../config/prisma.js";
+import { parsePagination } from "../../utils/index.js";
+import { normalizeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "../coupons/coupon.utils.js";
+import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
+import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus } from "./order.utils.js";
+import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "../../generated/prisma/index.js";
+import notificationService from "../notifications/notification.service.js";
+import { env } from "../../config/dotenv.js";
+const orderItemInclude = {
+    items: {
+        include: {
+            productSku: {
+                include: {
+                    product: { select: { id: true, name: true, slug: true } },
+                    images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }] },
+                },
+            },
+        },
+    },
+};
+const orderDetailInclude = {
+    ...orderItemInclude,
+    user: { select: { id: true, name: true, email: true, phone: true } },
+    shippingAddress: true,
+    coupon: { select: { id: true, code: true, discountType: true, discountValue: true } },
+    payment: true,
+};
+const orderListInclude = {
+    user: { select: { id: true, name: true, email: true } },
+    payment: { select: { paymentMethod: true, paymentStatus: true } },
+    _count: { select: { items: true } },
+};
+class OrderService {
+    // ==========================================
+    // Self-service: checkout
+    // ==========================================
+    /**
+     * Tạo đơn hàng từ giỏ hàng hiện tại của user, trừ tồn kho, áp coupon (nếu có). Toàn bộ trong 1
+     * transaction. LƯU Ý: KHÔNG xóa giỏ hàng sau khi đặt — khách có thể đặt lại/mua thêm từ đúng
+     * giỏ hàng cũ, việc xóa/giữ giỏ hàng là do khách tự quyết định (qua API xóa giỏ hàng riêng).
+     */
+    async checkout(userId, data, userEmail) {
+        const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, data.shippingAddressId);
+        return this.processCheckout({
+            userId,
+            userEmail,
+            address,
+            items: cart.items,
+            subtotalAmount,
+            couponCode: data.couponCode,
+            shippingAddressId: data.shippingAddressId,
+            paymentMethod: data.paymentMethod,
+            // Xoá đúng các cart item đã đọc ở trên trong lúc tạo đơn (xem giải thích chi tiết trong
+            // processCheckout) — đây LÀ giỏ hàng thật của khách nên phải dọn sau khi đặt hàng.
+            cartCleanup: { cartId: cart.id, cartItemIds: cart.items.map((item) => item.id) },
+        });
+    }
+    /**
+     * Mua ngay: khách bấm "Mua ngay" ở trang chi tiết sản phẩm -> tạo đơn thẳng với ĐÚNG 1 SKU +
+     * số lượng được chọn, KHÔNG đụng tới giỏ hàng hiện có của khách (không đọc, không xoá, không
+     * thêm gì vào giỏ). Toàn bộ phần còn lại (validate tồn kho, áp coupon, trừ kho, tạo vận đơn
+     * COD, thông báo...) dùng chung processCheckout() với checkout() từ giỏ hàng.
+     */
+    async buyNow(userId, data, userEmail) {
+        const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(userId, data.shippingAddressId, data.productSkuId, data.quantity);
+        return this.processCheckout({
+            userId,
+            userEmail,
+            address,
+            items,
+            subtotalAmount,
+            couponCode: data.couponCode,
+            shippingAddressId: data.shippingAddressId,
+            paymentMethod: data.paymentMethod,
+            // Không có giỏ hàng nào liên quan -> không cần bước dọn giỏ hàng trong transaction. Đổi
+            // lại, PHẢI có idempotencyKey để tự làm gate chống double-submit (xem processCheckout()).
+            cartCleanup: null,
+            idempotencyKey: data.idempotencyKey,
+        });
+    }
+    /**
+     * Lõi dùng chung cho checkout() (từ giỏ hàng) và buyNow() (mua thẳng 1 SKU): validate lại tồn
+     * kho trong transaction, áp coupon, trừ kho, tạo đơn + payment, tạo vận đơn GHN ngay nếu COD.
+     * Chống double-submit bằng 1 trong 2 cơ chế tuỳ nguồn gốc đơn: `cartCleanup` (xoá cart item —
+     * dùng cho checkout() từ giỏ hàng) hoặc `idempotencyKey` (insert vào bảng gate riêng — dùng cho
+     * buyNow(), không có giỏ hàng để làm gate). Xem comment chi tiết ngay đầu transaction bên dưới.
+     */
+    async processCheckout(params) {
+        const { userId, userEmail, address, items, subtotalAmount, couponCode, shippingAddressId, paymentMethod, cartCleanup, idempotencyKey } = params;
+        let couponId = null;
+        let couponUsageLimit = null;
+        let discountAmount = 0;
+        if (couponCode) {
+            const coupon = await prisma.coupon.findUnique({ where: { code: normalizeCouponCode(couponCode) } });
+            if (!coupon) {
+                throw new Error("NotFound: Mã giảm giá không tồn tại.");
+            }
+            // Coupon chào mừng đơn hàng đầu tiên (hoặc bất kỳ coupon nào bị gắn riêng cho 1 email) chỉ
+            // dùng được khi tài khoản đặt hàng có email trùng khớp.
+            if (!checkCouponEmailOwnership(coupon.email, userEmail)) {
+                throw new Error("Forbidden: Mã giảm giá này chỉ dành riêng cho một tài khoản khác.");
+            }
+            const usability = checkCouponUsability(coupon);
+            if (!usability.valid) {
+                throw new Error(`BadRequest: ${usability.reason}`);
+            }
+            if (subtotalAmount < Number(coupon.minOrderValue)) {
+                throw new Error(`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`);
+            }
+            couponId = coupon.id;
+            couponUsageLimit = coupon.usageLimit;
+            discountAmount = computeDiscountAmount(coupon, subtotalAmount);
+        }
+        const shippingFee = await this.computeShippingFeeForCart(address, items, subtotalAmount);
+        const totalAmount = Math.max(0, subtotalAmount - discountAmount + shippingFee);
+        // Gom các SKU rơi xuống bằng/dưới LOW_STOCK_THRESHOLD sau khi trừ kho trong transaction bên
+        // dưới — thông báo admin thực sự được bắn SAU KHI transaction commit (xem cuối hàm).
+        const lowStockSkus = [];
+        const order = await prisma.$transaction(async (tx) => {
+            // Chặn double-submit cho buyNow NGAY ĐẦU transaction (trước mọi thao tác khác, kể cả
+            // cartCleanup) — insert (userId, key) vào bảng gate riêng; unique constraint (userId,
+            // key) sẽ tự chặn nếu request thứ 2 cùng key lọt vào transaction (double click nhanh
+            // trước khi FE kịp disable nút, hoặc client tự động retry do mất mạng). Ném lỗi ở đây
+            // rollback toàn bộ transaction ngay lập tức, KHÔNG kịp đụng tới tồn kho/coupon —
+            // tương tự tinh thần cartCleanup bên dưới nhưng dùng insert thay vì delete làm gate vì
+            // buyNow không có tài nguyên "giỏ hàng" sẵn có để xoá.
+            if (idempotencyKey) {
+                try {
+                    await tx.checkoutIdempotencyKey.create({ data: { userId, key: idempotencyKey } });
+                }
+                catch (error) {
+                    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+                        throw new Error("BadRequest: Yêu cầu đặt hàng này đã được xử lý (hoặc đang được xử lý), vui lòng kiểm tra lại đơn hàng của bạn.");
+                    }
+                    throw error;
+                }
+            }
+            // Xoá các cart item đã đọc ở loadValidatedCartForCheckout NGAY ĐẦU transaction (trước
+            // cả bước trừ kho) để: (1) giỏ hàng trống sau khi đặt hàng thành công — tránh việc
+            // khách bấm "Đặt hàng" thêm lần nữa (do mạng chậm, chưa thấy phản hồi) tạo ra 1 đơn
+            // hàng trùng cho cùng giỏ hàng đó; (2) tự chống race condition thật sự khi 2 request
+            // checkout chạy gần như đồng thời: request nào vào transaction trước sẽ xoá đủ số cart
+            // item mong đợi; request còn lại xoá được ÍT HƠN (vì đã bị xoá trước đó) -> phát hiện
+            // ngay và rollback toàn bộ, không đụng tới tồn kho/coupon, tránh tạo 2 đơn trùng nhau.
+            //
+            // "Mua ngay" (buyNow) KHÔNG đụng tới giỏ hàng nên cartCleanup = null, bỏ qua bước này
+            // hoàn toàn — cơ chế chống double-submit tương đương cho buyNow là bước insert
+            // idempotencyKey ở TRÊN (chạy trước cả bước này).
+            if (cartCleanup) {
+                const deletedCartItems = await tx.cartItem.deleteMany({ where: { id: { in: cartCleanup.cartItemIds }, cartId: cartCleanup.cartId } });
+                if (deletedCartItems.count !== cartCleanup.cartItemIds.length) {
+                    throw new Error("BadRequest: Giỏ hàng này vừa được đặt hàng ở 1 yêu cầu khác, vui lòng kiểm tra lại đơn hàng của bạn.");
+                }
+            }
+            // Trừ tồn kho từng SKU, kiểm tra lại 1 lần nữa trong transaction để tránh race condition (2 request đặt hàng cùng lúc)
+            for (const item of items) {
+                const updated = await tx.productSku.updateMany({
+                    where: { id: item.productSkuId, stockQuantity: { gte: item.quantity } },
+                    data: { stockQuantity: { decrement: item.quantity } },
+                });
+                if (updated.count === 0) {
+                    throw new Error(`BadRequest: Sản phẩm "${item.productSku.sku}" vừa hết hàng, vui lòng thử lại.`);
+                }
+                // Đọc lại tồn kho SAU khi trừ để phát hiện "tồn kho thấp" — chỉ gom lại ở đây, việc
+                // bắn thông báo thật sự diễn ra SAU KHI transaction commit thành công (xem dưới
+                // notifyAdminLowStock), tránh giữ transaction lâu hơn cần thiết vì việc phụ này.
+                const skuAfterDecrement = await tx.productSku.findUnique({
+                    where: { id: item.productSkuId },
+                    select: { stockQuantity: true },
+                });
+                // productId nullable trên schema (SKU mồ côi, không còn gắn với product nào) — bỏ qua
+                // thông báo "tồn kho thấp" cho trường hợp hiếm này vì không có trang admin nào để dẫn tới.
+                if (skuAfterDecrement && skuAfterDecrement.stockQuantity <= env.LOW_STOCK_THRESHOLD && item.productSku.productId) {
+                    lowStockSkus.push({
+                        skuId: item.productSkuId,
+                        skuLabel: item.productSku.sku,
+                        productId: item.productSku.productId,
+                        productName: item.productSku.product?.name ?? "Sản phẩm",
+                        stockQuantity: skuAfterDecrement.stockQuantity,
+                    });
+                }
+            }
+            if (couponId !== null) {
+                // BUG FIX: update có điều kiện thay vì increment vô điều kiện, để tránh race
+                // condition khi nhiều request checkout cùng dùng 1 coupon sắp hết lượt chạy
+                // song song - trước đó usedCount có thể vượt quá usageLimit vì usability đã
+                // được kiểm tra trước transaction (không atomic).
+                // Coupon không giới hạn lượt dùng (usageLimit = null) thì không cần điều kiện
+                // usedCount < limit — Prisma báo lỗi nếu truyền lt: null.
+                const couponUpdate = await tx.coupon.updateMany({
+                    where: {
+                        id: couponId,
+                        ...(couponUsageLimit !== null ? { usedCount: { lt: couponUsageLimit } } : {}),
+                    },
+                    data: { usedCount: { increment: 1 } },
+                });
+                if (couponUpdate.count === 0) {
+                    throw new Error("BadRequest: Mã giảm giá vừa hết lượt sử dụng, vui lòng thử lại.");
+                }
+            }
+            const createdOrder = await tx.order.create({
+                data: {
+                    userId,
+                    shippingAddressId,
+                    couponId,
+                    orderNumber: generateOrderNumber(),
+                    subtotalAmount,
+                    discountAmount,
+                    shippingFee,
+                    totalAmount,
+                    orderStatus: OrderStatus.pending,
+                    items: {
+                        create: items.map((item) => ({
+                            productSkuId: item.productSkuId,
+                            quantity: item.quantity,
+                            priceAtPurchase: item.productSku.price,
+                            variationSnapshot: item.productSku.variationDetails,
+                        })),
+                    },
+                    payment: {
+                        create: {
+                            paymentMethod,
+                            paymentStatus: PaymentStatus.pending,
+                            amount: totalAmount,
+                        },
+                    },
+                },
+                include: orderDetailInclude,
+            });
+            // COD: tiền được thu trực tiếp khi giao hàng nên "đặt hàng thành công" = tạo vận đơn
+            // GHN ngay. Nếu GHN tạo đơn thất bại, ném lỗi ở đây sẽ rollback toàn bộ (trừ kho,
+            // dùng coupon, tạo đơn) — khách sẽ thấy checkout thất bại thay vì có 1 đơn "mồ côi".
+            //
+            // Thanh toán online (vnpay/zalopay/momo/...): KHÔNG được tạo vận đơn ở đây — khách
+            // mới chỉ tạo đơn, CHƯA thanh toán (bước /pay và IPN xảy ra sau, ở request khác).
+            // Tạo vận đơn ngay lúc này nghĩa là hàng đã "sẵn sàng giao" dù khách có thể không bao
+            // giờ thanh toán hoặc thanh toán thất bại. Với các đơn này, order được tạo với
+            // ghnOrderCode = null; vận đơn thật sự chỉ được tạo sau khi IPN xác nhận thanh toán
+            // "completed" (xem payment.service.ts -> createShipmentAfterPayment bên dưới). Nếu
+            // thanh toán thất bại, đơn vẫn ở "pending" (không có vận đơn "ảo" nào cả) để khách có
+            // thể thử thanh toán lại (payment.utils.ts cho phép failed -> pending).
+            if (paymentMethod === PaymentMethod.cod) {
+                const cartPackage = computeCartPackage(items);
+                const shipment = await createShippingOrder({
+                    clientOrderCode: createdOrder.orderNumber,
+                    toName: address.recipientName,
+                    toPhone: address.phoneNumber,
+                    toAddress: address.addressLine,
+                    toWardCode: address.wardCode,
+                    toDistrictId: address.districtId,
+                    codAmount: totalAmount,
+                    insuranceValue: subtotalAmount,
+                    items: items.map((item) => ({
+                        name: item.productSku.product?.name ?? item.productSku.sku,
+                        quantity: item.quantity,
+                    })),
+                    ...cartPackage,
+                });
+                return tx.order.update({
+                    where: { id: createdOrder.id },
+                    data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
+                    include: orderDetailInclude,
+                });
+            }
+            return createdOrder;
+        }, { timeout: 15_000 });
+        if (order.userId) {
+            await notificationService.notifyOrderPlaced(order.userId, order.id, order.orderNumber);
+        }
+        // Thông báo nội bộ cho admin/manager — best-effort, KHÔNG được phép làm fail checkout đã
+        // thành công (tương tự tinh thần try/catch riêng của từng channel ở notification.service.ts).
+        await notificationService.notifyAdminNewOrder(order.id, order.orderNumber, totalAmount);
+        for (const sku of lowStockSkus) {
+            await notificationService.notifyAdminLowStock(sku.skuId, sku.skuLabel, sku.productId, sku.productName, sku.stockQuantity);
+        }
+        return order;
+    }
+    /**
+     * Tính trước phí vận chuyển GHN theo giỏ hàng hiện tại + địa chỉ giao hàng, dùng cho trang
+     * checkout hiển thị phí ship cho khách TRƯỚC khi họ bấm đặt hàng (không tạo đơn, không trừ tồn kho).
+     */
+    async previewShippingFee(userId, shippingAddressId) {
+        const { address, cart, subtotalAmount } = await this.loadValidatedCartForCheckout(userId, shippingAddressId);
+        const shippingFee = await this.computeShippingFeeForCart(address, cart.items, subtotalAmount);
+        return { subtotalAmount, shippingFee };
+    }
+    /**
+     * Tương tự previewShippingFee() nhưng cho trang "Mua ngay" — tính trước phí ship + tạm tính cho
+     * đúng 1 SKU (không phải cả giỏ hàng), để trang thanh toán "mua ngay" hiển thị số tiền cho khách
+     * TRƯỚC khi họ bấm đặt hàng (không tạo đơn, không trừ tồn kho).
+     */
+    async previewBuyNowShippingFee(userId, shippingAddressId, productSkuId, quantity) {
+        const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(userId, shippingAddressId, productSkuId, quantity);
+        const shippingFee = await this.computeShippingFeeForCart(address, items, subtotalAmount);
+        return { subtotalAmount, shippingFee };
+    }
+    // ==========================================
+    // Self-service: xem & hủy đơn của chính mình
+    // ==========================================
+    async listOwnOrders(userId, params) {
+        const where = { userId };
+        if (params.status)
+            where.orderStatus = params.status;
+        const { page, limit, skip } = parsePagination(params);
+        const [orders, total] = await Promise.all([prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }), prisma.order.count({ where })]);
+        return {
+            data: orders,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        };
+    }
+    async getOwnOrderById(userId, orderId) {
+        const order = await this.getOrderOrThrow(orderId, orderDetailInclude);
+        if (order.userId !== userId) {
+            throw new Error("NotFound: Đơn hàng không tồn tại.");
+        }
+        return order;
+    }
+    /** Khách chỉ được tự hủy đơn khi đơn còn ở trạng thái "pending" (chưa được xử lý) */
+    async cancelOwnOrder(userId, orderId) {
+        const order = await this.getOrderOrThrow(orderId);
+        if (order.userId !== userId) {
+            throw new Error("NotFound: Đơn hàng không tồn tại.");
+        }
+        if (order.orderStatus !== OrderStatus.pending) {
+            throw new Error('BadRequest: Chỉ có thể hủy đơn hàng khi đơn đang ở trạng thái "pending".');
+        }
+        return this.transitionOrderStatus(order, OrderStatus.cancelled);
+    }
+    /**
+     * Tạo vận đơn GHN thật SAU KHI thanh toán online đã "completed" (gọi từ payment.service.ts, hoặc
+     * từ retryPendingGhnShipments() bên dưới nếu lần gọi lúc IPN trước đó thất bại). Không thu COD vì
+     * tiền đã thu qua cổng thanh toán.
+     */
+    async createShipmentAfterPayment(orderId) {
+        await this.createGhnShipmentForOrder(orderId, false);
+    }
+    /**
+     * MỚI — Tạo vận đơn GHN thu hộ COD cho 1 đơn đang "pending" — dùng khi khách đổi phương thức
+     * thanh toán từ online sang COD (xem payment.service.ts -> changeOwnPaymentMethod()). Đơn online
+     * chưa thanh toán thì CHƯA từng có vận đơn nào (chỉ tạo sau khi "completed", xem
+     * createShipmentAfterPayment) nên gọi thẳng hàm này là an toàn, không đụng vận đơn cũ nào.
+     */
+    async createCodShipmentForOrder(orderId) {
+        await this.createGhnShipmentForOrder(orderId, true);
+    }
+    /**
+     * MỚI — Hủy vận đơn GHN thu hộ COD đã tạo sẵn lúc checkout() + xoá ghnOrderCode/ghnStatus khỏi
+     * đơn — dùng khi khách đổi phương thức thanh toán từ COD sang thanh toán online (xem
+     * payment.service.ts -> changeOwnPaymentMethod()). PHẢI hủy vận đơn COD cũ trước khi cho đổi, nếu
+     * không GHN vẫn thu hộ tiền mặt lúc giao dù khách đã trả tiền qua cổng online. Nếu GHN từ chối hủy
+     * (đã lấy hàng/đang giao) thì ném lỗi lên cho caller, KHÔNG cho đổi phương thức thanh toán nữa —
+     * giữ đồng bộ với vận đơn thật đang chạy bên GHN (cùng tinh thần với transitionOrderStatus() -> hủy đơn).
+     */
+    async cancelCodShipmentForPaymentMethodChange(orderId, ghnOrderCode) {
+        await cancelShippingOrder(ghnOrderCode);
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { ghnOrderCode: null, ghnStatus: null },
+        });
+    }
+    /**
+     * MỚI — Job định kỳ (xem cronjob/index.ts): quét các đơn đã thanh toán online "completed" nhưng
+     * vẫn chưa có vận đơn GHN — tức lần tạo vận đơn lúc IPN xử lý thành công trước đó đã thất bại (vd
+     * lỗi tạm thời phía GHN như timeout nội bộ "context deadline exceeded", xem payment.service.ts ->
+     * transitionStatus). Bổ sung cho lớp retry-tức-thời đã có sẵn trong ghn.service.ts (chỉ cứu được
+     * lỗi thoáng qua trong vài giây); job này xử lý các lỗi kéo dài hơn (GHN gián đoạn nhiều phút/giờ)
+     * mà retry tức thời không cứu được, tránh phải chờ admin can thiệp thủ công cho MỌI trường hợp.
+     * Không nhắm tới đơn "cancelled" (đã hoàn tiền/hủy thì không cần vận đơn nữa).
+     */
+    async retryPendingGhnShipments() {
+        const staleOrders = await prisma.order.findMany({
+            where: {
+                ghnOrderCode: null,
+                orderStatus: { not: OrderStatus.cancelled },
+                payment: { paymentStatus: PaymentStatus.completed },
+            },
+            select: { id: true, orderNumber: true },
+        });
+        let succeeded = 0;
+        for (const order of staleOrders) {
+            try {
+                await this.createShipmentAfterPayment(order.id);
+                succeeded++;
+                console.log(`[ghn-retry] Đã tạo lại vận đơn GHN thành công cho đơn ${order.orderNumber}.`);
+            }
+            catch (error) {
+                console.error(`[ghn-retry] Vẫn chưa tạo được vận đơn GHN cho đơn ${order.orderNumber}:`, error?.message ?? error);
+            }
+        }
+        return { scanned: staleOrders.length, succeeded };
+    }
+    // ==========================================
+    // Admin
+    // ==========================================
+    async listOrdersAdmin(params) {
+        const where = {};
+        if (params.status)
+            where.orderStatus = params.status;
+        if (params.userId)
+            where.userId = Number(params.userId);
+        if (params.search) {
+            where.OR = [{ orderNumber: { contains: params.search } }, { user: { email: { contains: params.search } } }, { user: { name: { contains: params.search } } }];
+        }
+        if (params.dateFrom || params.dateTo) {
+            where.createdAt = {
+                ...(params.dateFrom ? { gte: new Date(params.dateFrom) } : {}),
+                ...(params.dateTo ? { lte: new Date(params.dateTo) } : {}),
+            };
+        }
+        const { page, limit, skip } = parsePagination(params);
+        const [orders, total] = await Promise.all([prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }), prisma.order.count({ where })]);
+        return {
+            data: orders,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        };
+    }
+    async getOrderById(orderId) {
+        return this.getOrderOrThrow(orderId, orderDetailInclude);
+    }
+    /** Staff cập nhật trạng thái xử lý đơn hàng. Khi chuyển sang "cancelled", tự động hoàn tồn kho + hoàn lượt dùng coupon. */
+    async updateOrderStatus(orderId, status) {
+        const order = await this.getOrderOrThrow(orderId);
+        return this.transitionOrderStatus(order, status);
+    }
+    /**
+     * Nhận cập nhật trạng thái vận chuyển từ GHN qua webhook (server-to-server, GHN gọi trực tiếp,
+     * không qua người dùng). Luôn lưu lại `ghnStatus` thô; chỉ tự chuyển `orderStatus` nội bộ khi
+     * trạng thái GHN đủ rõ ràng để map (xem mapGhnStatusToOrderStatus) và đơn CHƯA ở trạng thái
+     * cuối (delivered/cancelled) — một khi đã ở trạng thái cuối thì không cho GHN đổi ngược lại nữa
+     * (vd. GHN báo "return" sau khi đơn đã được đánh dấu "delivered" thủ công).
+     */
+    async syncFromGhnWebhook(ghnOrderCode, ghnStatus) {
+        const order = await prisma.order.findUnique({ where: { ghnOrderCode }, include: { payment: true } });
+        if (!order)
+            return; // Không thuộc hệ thống này (hoặc sai mã) — bỏ qua, vẫn trả 200 để GHN không retry vô ích
+        const currentStatus = order.orderStatus;
+        const isTerminal = currentStatus === OrderStatus.delivered || currentStatus === OrderStatus.cancelled;
+        const mappedStatus = mapGhnStatusToOrderStatus(ghnStatus);
+        if (!isTerminal && mappedStatus && mappedStatus !== currentStatus) {
+            await this.transitionOrderStatus(order, mappedStatus, { source: "ghn-webhook", ghnStatus });
+            // COD: khách trả tiền mặt trực tiếp cho shipper ngay lúc nhận hàng, nên "giao thành
+            // công" ĐỒNG NGHĨA với "đã thu tiền" -> tự động hoàn tất luôn payment ở đây. Việc GHN
+            // có đối soát/chuyển khoản tiền COD đó về cho shop hay chưa là công nợ nội bộ giữa
+            // Shop <-> GHN (theo chu kỳ đối soát riêng), KHÔNG liên quan tới trạng thái thanh toán
+            // hiển thị cho khách trên đơn này.
+            if (mappedStatus === OrderStatus.delivered && order.payment?.paymentMethod === PaymentMethod.cod && order.payment.paymentStatus !== PaymentStatus.completed) {
+                await prisma.payment.update({
+                    where: { orderId: order.id },
+                    data: { paymentStatus: PaymentStatus.completed, paidAt: new Date() },
+                });
+            }
+        }
+        else {
+            await prisma.order.update({ where: { id: order.id }, data: { ghnStatus } });
+        }
+    }
+    /**
+     * Dọn đơn "pending" thanh toán online quá hạn (job định kỳ gọi, xem order.cleanup.job.ts) —
+     * khách đặt hàng nhưng bỏ ngang, không bao giờ thanh toán hoặc thanh toán fail rồi không thử
+     * lại (payment.utils.ts cho phép failed -> pending nên vẫn phải chờ hết hạn mới hủy, không hủy
+     * ngay khi fail). Chỉ nhắm đến đơn thanh toán ONLINE (COD không có khái niệm hết hạn thanh toán
+     * — COD đã có vận đơn GHN thật ngay lúc đặt, vòng đời do GHN dẫn dắt). Hủy từng đơn qua
+     * transitionOrderStatus để tái dùng đúng logic hoàn tồn kho + lượt dùng coupon; đơn online quá
+     * hạn chưa từng có ghnOrderCode (xem checkout()) nên không cần gọi cancelShippingOrder.
+     */
+    async cancelExpiredPendingOrders(ttlHours) {
+        const cutoff = new Date(Date.now() - ttlHours * 60 * 60 * 1000);
+        const staleOrders = await prisma.order.findMany({
+            where: {
+                orderStatus: OrderStatus.pending,
+                createdAt: { lt: cutoff },
+                payment: { paymentMethod: { not: PaymentMethod.cod } },
+            },
+            select: { id: true, orderStatus: true, couponId: true, ghnOrderCode: true },
+        });
+        let cancelledCount = 0;
+        for (const order of staleOrders) {
+            try {
+                await this.transitionOrderStatus(order, OrderStatus.cancelled);
+                cancelledCount++;
+            }
+            catch (error) {
+                // Lỗi ở 1 đơn (vd transition không hợp lệ do vừa được xử lý ở request khác ngay
+                // trước đó) không được chặn các đơn còn lại trong lượt dọn dẹp này.
+                console.error(`[order-cleanup] Hủy đơn quá hạn thất bại cho orderId=${order.id}:`, error?.message ?? error);
+            }
+        }
+        return { scanned: staleOrders.length, cancelled: cancelledCount };
+    }
+    /**
+     * Dọn các idempotency key của buyNow đã cũ (job định kỳ gọi, dùng chung lịch chạy với
+     * cancelExpiredPendingOrders ở cronjob/index.ts). Key chỉ cần sống đủ lâu để chặn double-submit
+     * XẢY RA GẦN NHAU (double click, client tự động retry do mất mạng) — không cần giữ vĩnh viễn,
+     * nên xoá định kỳ tránh phình bảng vô hạn theo thời gian.
+     */
+    async cleanupExpiredIdempotencyKeys(ttlHours) {
+        const cutoff = new Date(Date.now() - ttlHours * 60 * 60 * 1000);
+        const result = await prisma.checkoutIdempotencyKey.deleteMany({ where: { createdAt: { lt: cutoff } } });
+        return { deleted: result.count };
+    }
+    // ==========================================
+    // Helpers
+    // ==========================================
+    /**
+     * Kiểm tra địa chỉ giao hàng thuộc về đúng user, load giỏ hàng hiện tại và validate từng dòng
+     * (còn kinh doanh, đủ tồn kho). Dùng chung cho cả checkout() lẫn previewShippingFee() để tránh
+     * lặp lại logic và đảm bảo phí ship xem trước luôn khớp với phí ship lúc đặt hàng thật.
+     */
+    async loadValidatedCartForCheckout(userId, shippingAddressId) {
+        const address = await this.loadOwnedShippingAddress(userId, shippingAddressId);
+        const cart = await prisma.cart.findUnique({
+            where: { userId },
+            include: {
+                items: {
+                    include: {
+                        productSku: {
+                            include: {
+                                product: {
+                                    select: {
+                                        isActive: true,
+                                        name: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!cart || cart.items.length === 0) {
+            throw new Error("BadRequest: Giỏ hàng đang trống, không thể đặt hàng.");
+        }
+        for (const item of cart.items) {
+            if (!item.productSku || (item.productSku.product && !item.productSku.product.isActive)) {
+                throw new Error("BadRequest: Một số sản phẩm trong giỏ hàng đã ngừng kinh doanh, vui lòng cập nhật giỏ hàng.");
+            }
+            if (item.quantity > item.productSku.stockQuantity) {
+                throw new Error(`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`);
+            }
+        }
+        const subtotalAmount = cart.items.reduce((sum, item) => sum + Number(item.productSku.price) * item.quantity, 0);
+        return { address, cart, subtotalAmount };
+    }
+    /**
+     * "Mua ngay": kiểm tra địa chỉ giao hàng + validate ĐÚNG 1 SKU (còn kinh doanh, đủ tồn kho) —
+     * hoàn toàn KHÔNG đọc/đụng tới giỏ hàng của user, khác với loadValidatedCartForCheckout() ở
+     * trên. Trả về `items` có hình dạng giống hệt cart.items (thiếu field `id` của cart item vì
+     * không thuộc giỏ hàng nào) để processCheckout() dùng chung logic với checkout() từ giỏ hàng.
+     */
+    async loadValidatedBuyNowItem(userId, shippingAddressId, productSkuId, quantity) {
+        const address = await this.loadOwnedShippingAddress(userId, shippingAddressId);
+        const productSku = await prisma.productSku.findUnique({
+            where: { id: productSkuId },
+            include: {
+                product: { select: { isActive: true, name: true } },
+            },
+        });
+        if (!productSku || (productSku.product && !productSku.product.isActive)) {
+            throw new Error("NotFound: Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.");
+        }
+        if (quantity > productSku.stockQuantity) {
+            throw new Error(`BadRequest: Sản phẩm "${productSku.sku}" chỉ còn ${productSku.stockQuantity} trong kho.`);
+        }
+        const items = [{ productSkuId: productSku.id, quantity, productSku }];
+        const subtotalAmount = Number(productSku.price) * quantity;
+        return { address, items, subtotalAmount };
+    }
+    /** Kiểm tra địa chỉ giao hàng tồn tại và thuộc đúng user đang đặt hàng. Dùng chung cho cả checkout từ giỏ hàng lẫn mua ngay. */
+    async loadOwnedShippingAddress(userId, shippingAddressId) {
+        const address = await prisma.userAddress.findUnique({ where: { id: shippingAddressId } });
+        if (!address || address.userId !== userId) {
+            throw new Error("NotFound: Địa chỉ giao hàng không tồn tại hoặc không thuộc về bạn.");
+        }
+        return address;
+    }
+    /** Gọi GHN để tính phí vận chuyển thực tế theo địa chỉ đích + khối lượng/kích thước thật của giỏ hàng. */
+    async computeShippingFeeForCart(address, cartItems, subtotalAmount) {
+        const cartPackage = computeCartPackage(cartItems);
+        return calculateShippingFee({
+            toDistrictId: address.districtId,
+            toWardCode: address.wardCode,
+            ...cartPackage,
+            insuranceValue: subtotalAmount,
+        });
+    }
+    /**
+     * @param options.source "internal" (mặc định, do admin/khách chủ động đổi) bắt buộc theo đúng
+     * ALLOWED_TRANSITIONS và tự đồng bộ hủy đơn sang GHN nếu đơn đã có vận đơn. "ghn-webhook" (do
+     * syncFromGhnWebhook gọi) bỏ qua kiểm tra graph — GHN là nguồn sự thật bên vận chuyển — và
+     * KHÔNG gọi lại cancelShippingOrder (tránh gọi ngược lại chính nơi vừa báo cho mình).
+     */
+    async transitionOrderStatus(order, nextStatus, options = {}) {
+        const currentStatus = order.orderStatus;
+        const source = options.source ?? "internal";
+        if (source === "internal" && !isValidOrderStatusTransition(currentStatus, nextStatus)) {
+            throw new Error(`BadRequest: Không thể chuyển trạng thái đơn hàng từ "${currentStatus}" sang "${nextStatus}".`);
+        }
+        // Hủy đơn do NGƯỜI DÙNG/ADMIN chủ động (không phải do webhook GHN báo về): phải hủy được
+        // bên GHN trước. Nếu đơn chưa có vận đơn (ghnOrderCode null, hiếm khi xảy ra vì checkout()
+        // luôn tạo cùng lúc) thì bỏ qua bước này. Nếu GHN từ chối hủy (đã lấy hàng/đang giao) thì
+        // ném lỗi ngay, KHÔNG cho hủy ở hệ thống mình nữa — giữ đồng bộ giữa 2 bên.
+        if (source === "internal" && isCancellation(currentStatus, nextStatus) && order.ghnOrderCode) {
+            await cancelShippingOrder(order.ghnOrderCode);
+        }
+        const updatedOrder = await prisma.$transaction(async (tx) => {
+            if (isCancellation(currentStatus, nextStatus)) {
+                const items = await tx.orderItem.findMany({ where: { orderId: order.id } });
+                for (const item of items) {
+                    if (item.productSkuId) {
+                        await tx.productSku.update({
+                            where: { id: item.productSkuId },
+                            data: { stockQuantity: { increment: item.quantity } },
+                        });
+                    }
+                }
+                if (order.couponId) {
+                    await tx.coupon.update({
+                        where: { id: order.couponId },
+                        data: { usedCount: { decrement: 1 } },
+                    });
+                }
+                // Đơn bị hủy mà payment vẫn "pending" -> chuyển luôn payment sang "failed", tránh để
+                // lại 1 payment "pending" mồ côi (đơn đã hủy nhưng payment vẫn treo lơ lửng như chưa
+                // có chuyện gì xảy ra). Dùng updateMany điều kiện paymentStatus = pending thay vì
+                // update vô điều kiện: nếu payment đã "completed" (vd COD giao thành công) thì đây
+                // PHẢI là 1 case hoàn tiền (đi qua payment.service.ts -> refunded), không phải hủy
+                // thường — không được tự ý ghi đè "completed"/"refunded" ở đây.
+                await tx.payment.updateMany({
+                    where: { orderId: order.id, paymentStatus: PaymentStatus.pending },
+                    data: { paymentStatus: PaymentStatus.failed },
+                });
+            }
+            return tx.order.update({
+                where: { id: order.id },
+                data: {
+                    orderStatus: nextStatus,
+                    ...(options.ghnStatus ? { ghnStatus: options.ghnStatus } : {}),
+                    // Chỉ set 1 LẦN DUY NHẤT khi thực sự chuyển sang "delivered" — currentStatus đã được
+                    // đảm bảo khác "delivered" ở đây nhờ isValidOrderStatusTransition/isTerminal chặn
+                    // chuyển đi từ trạng thái terminal, nên không lo bị ghi đè lại mốc thời gian cũ.
+                    ...(nextStatus === OrderStatus.delivered ? { deliveredAt: new Date() } : {}),
+                },
+                include: orderDetailInclude,
+            });
+        });
+        if (updatedOrder.userId) {
+            await notificationService.notifyOrderStatusChanged(updatedOrder.userId, updatedOrder.id, updatedOrder.orderNumber, nextStatus);
+        }
+        return updatedOrder;
+    }
+    async getOrderOrThrow(orderId, include) {
+        const order = await prisma.order.findUnique({ where: { id: orderId }, ...(include ? { include } : {}) });
+        if (!order) {
+            throw new Error("NotFound: Đơn hàng không tồn tại.");
+        }
+        return order;
+    }
+    // ==========================================
+    // Được gọi từ payment.service.ts sau khi có kết quả thanh toán online (IPN), hoặc khi khách đổi
+    // phương thức thanh toán (xem thêm createCodShipmentForOrder/cancelCodShipmentForPaymentMethodChange)
+    // ==========================================
+    /**
+     * Lõi dùng chung để tạo vận đơn GHN thật cho 1 đơn đã tồn tại (KHÔNG phải lúc checkout — lúc đó
+     * dùng nhánh riêng trong processCheckout() vì cần chạy chung transaction với trừ kho). Idempotent:
+     * bỏ qua nếu đơn đã có ghnOrderCode (IPN/retry job có thể gọi lại nhiều lần). `collectCod` quyết
+     * định GHN có thu hộ tiền mặt lúc giao hay không — false cho đơn đã thanh toán online, true cho
+     * đơn COD (tiền chưa thu, GHN thu hộ khi giao). Lỗi ở đây KHÔNG có transaction bao ngoài — caller
+     * tự quyết định xử lý lỗi thế nào (xem createShipmentAfterPayment/createCodShipmentForOrder).
+     */
+    async createGhnShipmentForOrder(orderId, collectCod) {
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: { ...orderItemInclude, shippingAddress: true },
+        });
+        if (!order || order.ghnOrderCode)
+            return; // idempotent
+        if (!order.shippingAddress) {
+            throw new Error(`Config: Đơn hàng #${order.orderNumber} không còn địa chỉ giao hàng hợp lệ, không thể tạo vận đơn.`);
+        }
+        const items = order.items.filter((item) => item.productSku !== null);
+        if (items.length !== order.items.length) {
+            throw new Error(`Config: Đơn hàng #${order.orderNumber} có sản phẩm đã bị xóa khỏi hệ thống, không thể tự tạo vận đơn.`);
+        }
+        const cartPackage = computeCartPackage(items);
+        const shipment = await createShippingOrder({
+            clientOrderCode: order.orderNumber,
+            toName: order.shippingAddress.recipientName,
+            toPhone: order.shippingAddress.phoneNumber,
+            toAddress: order.shippingAddress.addressLine,
+            toWardCode: order.shippingAddress.wardCode,
+            toDistrictId: order.shippingAddress.districtId,
+            codAmount: collectCod ? Number(order.totalAmount) : 0,
+            insuranceValue: Number(order.subtotalAmount),
+            items: items.map((item) => ({
+                name: item.productSku.product?.name ?? item.productSku.sku,
+                quantity: item.quantity,
+            })),
+            ...cartPackage,
+        });
+        await prisma.order.update({
+            where: { id: order.id },
+            data: { ghnOrderCode: shipment.orderCode, ghnStatus: "ready_to_pick" },
+        });
+    }
+}
+export default new OrderService();
+//# sourceMappingURL=order.service.js.map

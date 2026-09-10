@@ -1,0 +1,36 @@
+export declare const env: {
+    ADMIN_PASSWORD: string;
+    CLIENT_URL: string;
+    DATABASE_URL: string;
+    DATABASE_SSL: boolean;
+    GOOGLE_CLIENT_ID: string;
+    FACEBOOK_APP_ID: string;
+    FACEBOOK_APP_SECRET: string;
+    JWT_SECRET: string;
+    JWT_REFRESH_SECRET: string;
+    VNP_TMNCODE: string;
+    VNP_HASHSECRET: string;
+    VNP_URL: string;
+    VNP_RETURNURL: string;
+    ZALOPAY_APP_ID: string;
+    ZALOPAY_KEY1: string;
+    ZALOPAY_KEY2: string;
+    ZALOPAY_ENDPOINT: string;
+    ZALOPAY_REDIRECT_URL: string;
+    ZALOPAY_CALLBACK_URL: string;
+    GHN_API_TOKEN: string;
+    GHN_API_URL: string;
+    GHN_SHOP_ID: string;
+    GHN_SERVICE_TYPE_ID: string;
+    GHN_FROM_DISTRICT_ID: string;
+    GHN_FROM_WARD_CODE: string;
+    BREVO_API_KEY: string;
+    BREVO_SENDER_EMAIL: string;
+    BREVO_SENDER_NAME: string;
+    PENDING_ORDER_TTL_HOURS: number;
+    PENDING_ORDER_CLEANUP_CRON: string;
+    LOW_STOCK_THRESHOLD: number;
+    GHN_SHIPMENT_RETRY_CRON: string;
+    COOKIE_DOMAIN?: string | undefined;
+};
+//# sourceMappingURL=dotenv.d.ts.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"notification.constant.js","sourceRoot":"","sources":["../../../src/features/notifications/notification.constant.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,iBAAiB,GAAgC,MAAM,CAAC,MAAM,CAAC;IAC3E,OAAO,EAAE,gBAAgB;IACzB,UAAU,EAAE,oBAAoB;IAChC,OAAO,EAAE,gBAAgB;IACzB,SAAS,EAAE,oBAAoB;IAC/B,SAAS,EAAE,WAAW;CACb,CAAC,CAAC"}

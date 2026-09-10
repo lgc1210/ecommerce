@@ -5,6 +5,7 @@ import FormSelect from "../../../components/form-select";
 import Popup from "../../../components/popup";
 import Pagination from "../../../components/pagination";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseEnumParam } from "../../../utils/searchParams";
@@ -97,7 +98,10 @@ const AdminContactPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<AdminTitle title='Liên hệ' description='Xem và xử lý các liên hệ khách hàng gửi từ trang web.' />
+			<div className='flex items-center gap-2'>
+				<ExportButton resource='contacts' params={{ search, status }} />
+				<AdminTitle title='Liên hệ' description='Xem và xử lý các liên hệ khách hàng gửi từ trang web.' />
+			</div>
 
 			{/* Filters */}
 			<div className='flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-surface p-4'>

@@ -14,6 +14,7 @@ import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseBooleanParam, parseNumberParam } from "../../../utils/searchParams";
 import { useRolesQuery } from "../../../features/admin/rbac/hooks/useRbac";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import StatusBadge from "../../../features/admin/user/components/status-badge";
 import CreateUserModal from "../../../features/admin/user/components/create-user-modal";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
@@ -65,7 +66,10 @@ const AdminUserPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Người dùng' description='Quản lý tài khoản, gán role và bật/tắt trạng thái hoạt động.' />
+				<div className='flex items-center gap-2'>
+					<ExportButton resource='users' params={{ search, roleId: roleId ?? undefined, isActive }} />
+					<AdminTitle title='Người dùng' description='Quản lý tài khoản, gán role và bật/tắt trạng thái hoạt động.' />
+				</div>
 
 				<Can permission={permissions.user.write}>
 					<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setCreateUserOpen(true)}>

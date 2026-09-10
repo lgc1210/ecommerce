@@ -23,6 +23,7 @@ import notificationRouter from "./features/notifications/notification.routes.js"
 import conversationRouter from "./features/conversations/conversation.routes.js";
 import messageRouter from "./features/messages/message.routes.js";
 import uploadRouter from "./features/uploads/upload.routes.js";
+import exportRouter from "./features/exports/export.routes.js";
 
 import ghnRouter from "./external/ghn/ghn.routes.js";
 
@@ -79,6 +80,7 @@ app.use("/api/notifications", notificationRouter);
 app.use("/api/conversations", conversationRouter);
 app.use("/api/messages", messageRouter);
 app.use("/api/uploads", uploadRouter);
+app.use("/api/exports", exportRouter);
 
 app.use("/api/external/ghn", ghnRouter);
 

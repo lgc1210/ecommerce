@@ -1,0 +1,42 @@
+import bcrypt from "bcrypt";
+import prisma from "../../config/prisma.js";
+import pkg from "../../generated/prisma/index.js";
+import { BCRYPT_SALT_ROUNDS } from "../auth/auth.constant.js";
+import { env } from "../../config/dotenv.js";
+const { Provider } = pkg;
+const seedUsers = [{ name: "Quản Trị Viên", email: "admin@example.com", phone: "0900000001", roleName: "admin" }];
+/**
+ * Seed tài khoản mẫu cho môi trường phát triển/demo.
+ * Yêu cầu chạy SAU roleSeed() (features/rbac/rbac.seed.ts) vì cần roleId đã tồn tại sẵn.
+ * Chỉ chạy khi bảng users hoàn toàn trống, để không ghi đè dữ liệu thật khi deploy lên môi trường có sẵn user.
+ */
+export const userSeed = async () => {
+    const existingUsers = await prisma.user.count();
+    if (existingUsers > 0)
+        return;
+    const roles = await prisma.role.findMany({ where: { name: { in: seedUsers.map((u) => u.roleName) } } });
+    const roleIdByName = new Map(roles.map((role) => [role.name, role.id]));
+    const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, BCRYPT_SALT_ROUNDS);
+    for (const seedUser of seedUsers) {
+        const roleId = roleIdByName.get(seedUser.roleName);
+        if (!roleId) {
+            // Role tương ứng chưa tồn tại (roleSeed chưa chạy hoặc bị thay đổi tên) -> bỏ qua user này, không chặn cả seed.
+            console.warn(`Seeding: Bỏ qua user '${seedUser.email}' vì role '${seedUser.roleName}' không tồn tại.`);
+            continue;
+        }
+        await prisma.user.create({
+            data: {
+                name: seedUser.name,
+                email: seedUser.email,
+                phone: seedUser.phone,
+                passwordHash,
+                roleId,
+                provider: Provider.local,
+                isActive: true,
+                isVerified: true,
+            },
+        });
+    }
+    console.log(`Seeding: Users created successfully (mật khẩu mặc định: "${env.ADMIN_PASSWORD}")`);
+};
+//# sourceMappingURL=user.seed.js.map

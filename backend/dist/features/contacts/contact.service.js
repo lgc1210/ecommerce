@@ -1,0 +1,112 @@
+import prisma from "../../config/prisma.js";
+import { parsePagination } from "../../utils/index.js";
+import { isValidContactStatusTransition } from "./contact.utils.js";
+import notificationService from "../notifications/notification.service.js";
+const contactWithUserInclude = {
+    user: {
+        select: {
+            id: true,
+            name: true,
+            email: true,
+        },
+    },
+};
+class ContactService {
+    // ==========================================
+    // Public
+    // ==========================================
+    /** userId = null nếu khách gửi liên hệ mà chưa đăng nhập (guest submission) */
+    async createContact(userId, data) {
+        const contact = await prisma.contact.create({
+            data: {
+                userId: userId ?? null,
+                name: data.name,
+                email: data.email,
+                subject: data.subject ?? null,
+                message: data.message,
+            },
+        });
+        // "Liên hệ mới" — bắn cho admin/manager ngay sau khi lưu liên hệ thành công. Best-effort:
+        // không được phép làm hỏng luồng gửi liên hệ của khách (kể cả khách chưa đăng nhập) nếu
+        // bắn thông báo lỗi.
+        await notificationService.notifyAdminNewContact(contact.id, contact.name, contact.subject);
+        return contact;
+    }
+    // ==========================================
+    // Self-service
+    // ==========================================
+    async listOwnContacts(userId, params) {
+        const { page, limit, skip } = parsePagination(params);
+        const [contacts, total] = await Promise.all([
+            prisma.contact.findMany({
+                where: { userId },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.contact.count({ where: { userId } }),
+        ]);
+        return {
+            data: contacts,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        };
+    }
+    // ==========================================
+    // Admin
+    // ==========================================
+    async listContacts(params) {
+        const where = {};
+        if (params.status)
+            where.status = params.status;
+        if (params.userId)
+            where.userId = Number(params.userId);
+        if (params.search) {
+            where.OR = [{ name: { contains: params.search } }, { email: { contains: params.search } }, { subject: { contains: params.search } }];
+        }
+        const { page, limit, skip } = parsePagination(params);
+        const [contacts, total] = await Promise.all([
+            prisma.contact.findMany({
+                where,
+                include: contactWithUserInclude,
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.contact.count({ where }),
+        ]);
+        return {
+            data: contacts,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        };
+    }
+    async getContactById(contactId) {
+        const contact = await prisma.contact.findUnique({ where: { id: contactId }, include: contactWithUserInclude });
+        if (!contact) {
+            throw new Error("NotFound: Liên hệ không tồn tại.");
+        }
+        return contact;
+    }
+    async updateContactStatus(contactId, status) {
+        const contact = await this.getContactOrThrow(contactId);
+        if (!isValidContactStatusTransition(contact.status, status)) {
+            throw new Error(`BadRequest: Không thể chuyển trạng thái từ "${contact.status}" sang "${status}".`);
+        }
+        return prisma.contact.update({ where: { id: contactId }, data: { status }, include: contactWithUserInclude });
+    }
+    async deleteContact(contactId) {
+        await this.getContactOrThrow(contactId);
+        await prisma.contact.delete({ where: { id: contactId } });
+    }
+    // ==========================================
+    // Helpers
+    // ==========================================
+    async getContactOrThrow(contactId) {
+        const contact = await prisma.contact.findUnique({ where: { id: contactId } });
+        if (!contact) {
+            throw new Error("NotFound: Liên hệ không tồn tại.");
+        }
+        return contact;
+    }
+}
+export default new ContactService();
+//# sourceMappingURL=contact.service.js.map

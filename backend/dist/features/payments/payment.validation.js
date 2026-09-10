@@ -1,0 +1,63 @@
+import { z } from "zod";
+import { PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
+import { numericIdString } from "../../shared/validation.js";
+const paymentStatusEnum = z.enum([PaymentStatus.pending, PaymentStatus.completed, PaymentStatus.failed, PaymentStatus.refunded]);
+const paymentMethodEnum = z.enum([PaymentMethod.cod, PaymentMethod.vnpay, PaymentMethod.zalopay, PaymentMethod.momo, PaymentMethod.stripe, PaymentMethod.paypal]);
+// ==========================================
+// Self-service: xem & xác nhận thanh toán đơn của chính mình
+// ==========================================
+export const OwnPaymentParamSchema = z.object({
+    params: z.object({ orderId: numericIdString }),
+});
+export const ConfirmOwnPaymentSchema = z.object({
+    params: z.object({ orderId: numericIdString }),
+    body: z.object({
+        transactionId: z.string().min(1).max(255).optional(),
+    }),
+});
+/**
+ * Đổi phương thức thanh toán cho đơn của chính khách — dùng ĐẦY ĐỦ danh sách PaymentMethod (kể cả
+ * zalopay, khác với `paymentMethodEnum` phía trên đang thiếu zalopay) để khớp với danh sách khách
+ * chọn lúc checkout (xem order.validation.ts). service tự kiểm tra điều kiện được phép đổi hay không.
+ */
+export const ChangeOwnPaymentMethodSchema = z.object({
+    params: z.object({ orderId: numericIdString }),
+    body: z.object({
+        paymentMethod: paymentMethodEnum,
+    }),
+});
+// ==========================================
+// Admin
+// ==========================================
+export const ListPaymentsAdminQuerySchema = z.object({
+    query: z.object({
+        page: z.string().regex(/^\d+$/).optional(),
+        limit: z.string().regex(/^\d+$/).optional(),
+        status: paymentStatusEnum.optional(),
+        method: paymentMethodEnum.optional(),
+        search: z.string().max(100).optional(),
+        dateFrom: z
+            .string()
+            .refine((value) => !Number.isNaN(Date.parse(value)), {
+            message: "Định dạng ngày không hợp lệ (cần dạng ISO 8601).",
+        })
+            .optional(),
+        dateTo: z
+            .string()
+            .refine((value) => !Number.isNaN(Date.parse(value)), {
+            message: "Định dạng ngày không hợp lệ (cần dạng ISO 8601).",
+        })
+            .optional(),
+    }),
+});
+export const PaymentIdParamSchema = z.object({
+    params: z.object({ id: numericIdString }),
+});
+export const UpdatePaymentStatusSchema = z.object({
+    params: z.object({ id: numericIdString }),
+    body: z.object({
+        status: paymentStatusEnum,
+        transactionId: z.string().min(1).max(255).optional(),
+    }),
+});
+//# sourceMappingURL=payment.validation.js.map

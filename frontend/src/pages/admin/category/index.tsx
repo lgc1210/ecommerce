@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import Button from "../../../components/button";
 import Can from "../../../components/can";
 import FormControl from "../../../components/form-control";
@@ -68,7 +69,10 @@ const AdminCategoryPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Danh mục' description='Quản lý hệ thống danh mục sản phẩm phân cấp cha - con.' />
+				<div className='flex items-center gap-2'>
+					<ExportButton resource='categories' params={{ search }} />
+					<AdminTitle title='Danh mục' description='Quản lý hệ thống danh mục sản phẩm phân cấp cha - con.' />
+				</div>
 				<Can permission={permissions.catalog.write}>
 					<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setFormState({ mode: "create", parentId: null })}>
 						Thêm danh mục

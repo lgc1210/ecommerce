@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import Button from "../../../components/button";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
@@ -66,7 +67,10 @@ const AdminCouponPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Mã giảm giá' description='Quản lý mã giảm giá áp dụng cho đơn hàng.' />
+				<div className='flex items-center gap-2'>
+					<ExportButton resource='coupons' params={{ search, isActive, discountType }} />
+					<AdminTitle title='Mã giảm giá' description='Quản lý mã giảm giá áp dụng cho đơn hàng.' />
+				</div>
 				<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setFormState({})}>
 					Thêm mã giảm giá
 				</Button>

@@ -1,0 +1,64 @@
+import app from "./app.js";
+import prisma from "./config/prisma.js";
+import { permissionSeed, rolePermissionSeed, roleSeed } from "./features/rbac/rbac.seed.js";
+import { userSeed } from "./features/users/user.seed.js";
+import { productSeed } from "./features/products/product.seed.js";
+import { couponSeed } from "./features/coupons/coupon.seed.js";
+import { categorySeed } from "./features/categories/category.seed.js";
+import { startOrderCleanupJob } from "./cronjob/order/index.js";
+import { startGhnShipmentRetryJob } from "./cronjob/payment/index.js";
+import { initSocketServer } from "./socket.server.js";
+async function bootstrap() {
+    try {
+        // 1. Assert database connection integrity before opening network channels
+        await prisma.$connect();
+        console.log("Database Connection: Successfully instantiated connection pool link with MySQL via Prisma Client.");
+        // 2. Seed the database with system roles and permissions
+        await roleSeed();
+        await permissionSeed();
+        await rolePermissionSeed();
+        await userSeed();
+        // await userAddressSeed();
+        await categorySeed();
+        await productSeed();
+        // await orderSeed();
+        await couponSeed();
+        // await reviewSeed();
+        // await contactSeed();
+        // 2. Instantiate and mount active HTTP port listeners
+        const server = app.listen(process.env.PORT, () => {
+            console.log(`=======================================================`);
+            console.log(`Server execution loop initialized successfully.`);
+            process.env.NODE_ENV === "development" &&
+                console.log(`Network Listening Port: http://localhost:${process.env.PORT}`);
+            console.log(`Active App Operating Mode: [${process.env.NODE_ENV}]`);
+            console.log(`=======================================================`);
+        });
+        // 2.1. Bắt đầu job nền dọn đơn "pending" thanh toán online quá hạn (xem order.cleanup.job.ts)
+        startOrderCleanupJob();
+        // 2.2. MỚI — Bắt đầu job nền retry tạo vận đơn GHN cho đơn thiếu vận đơn (xem cronjob/index.ts)
+        startGhnShipmentRetryJob();
+        // 2.3. Gắn Socket.IO vào ĐÚNG http.Server này (dùng chung 1 cổng, không mở cổng mới)
+        initSocketServer(server);
+        // 3. Graceful Shutdown handlers (Ensures database connections close cleanly if server stops)
+        const handleSignal = async (signal) => {
+            console.log(`\nReceived ${signal} signal. Initializing graceful termination steps...`);
+            server.close(async () => {
+                console.log("Express HTTP server channel disconnected.");
+                await prisma.$disconnect();
+                console.log("Prisma database connection pool drained safely.");
+                process.exit(0);
+            });
+        };
+        process.on("SIGTERM", () => handleSignal("SIGTERM"));
+        process.on("SIGINT", () => handleSignal("SIGINT"));
+    }
+    catch (error) {
+        console.error("CRITICAL ENGINE BOOT ERROR: Unable to successfully mount infrastructure components:");
+        console.error(error);
+        process.exit(1);
+    }
+}
+// Fire up the execution ignition sequence
+bootstrap();
+//# sourceMappingURL=server.js.map

@@ -4,6 +4,7 @@ import FormSelect from "../../../components/form-select";
 import Popup from "../../../components/popup";
 import Pagination from "../../../components/pagination";
 import AdminTitle from "../../../components/admin-title";
+import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { formatDate } from "../../../utils";
@@ -70,7 +71,10 @@ const AdminReviewPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<AdminTitle title='Đánh giá sản phẩm' description='Xem, kiểm duyệt (ẩn/hiện) và phản hồi các đánh giá của khách hàng.' />
+			<div className='flex items-center gap-2'>
+				<ExportButton resource='reviews' params={{ search, isVisible: isVisibleParam === null ? undefined : isVisibleParam === "true", rating: ratingParam ? Number(ratingParam) : undefined }} />
+				<AdminTitle title='Đánh giá sản phẩm' description='Xem, kiểm duyệt (ẩn/hiện) và phản hồi các đánh giá của khách hàng.' />
+			</div>
 
 			{/* Filters */}
 			<div className='flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-surface p-4'>
