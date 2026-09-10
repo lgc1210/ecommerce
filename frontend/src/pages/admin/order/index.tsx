@@ -38,9 +38,10 @@ const PAGE_SIZE = 10;
  * link chia sẻ được.
  */
 const AdminOrderPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
-		defaultLimit: PAGE_SIZE,
-	});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const status = parseEnumParam<OrderStatus>(searchParams, "status");
 	// dateFrom/dateTo giữ nguyên dạng chuỗi thô (không cần parser riêng) — chỉ convert sang ISO
@@ -91,9 +92,17 @@ const AdminOrderPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<div className='flex items-center gap-2'>
-				<ExportButton resource='orders' params={{ search, status, dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined, dateTo: dateTo ? new Date(dateTo).toISOString() : undefined }} />
+			<div className='flex items-center justify-between gap-2'>
 				<AdminTitle title='Đơn hàng' description='Xem và xử lý các đơn hàng khách đã đặt.' />
+				<ExportButton
+					resource='orders'
+					params={{
+						search,
+						status,
+						dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
+						dateTo: dateTo ? new Date(dateTo).toISOString() : undefined,
+					}}
+				/>
 			</div>
 
 			{/* Filters */}
@@ -111,8 +120,18 @@ const AdminOrderPage = () => {
 					placeholder='Tất cả trạng thái'
 					options={Object.entries(ORDER_STATUS_LABEL).map(([value, label]) => ({ value, label }))}
 				/>
-				<FormControl type='date' value={dateFrom} onChange={(e) => setFilter("dateFrom", e.target.value || undefined)} wrapperClassName='w-40' />
-				<FormControl type='date' value={dateTo} onChange={(e) => setFilter("dateTo", e.target.value || undefined)} wrapperClassName='w-40' />
+				<FormControl
+					type='date'
+					value={dateFrom}
+					onChange={(e) => setFilter("dateFrom", e.target.value || undefined)}
+					wrapperClassName='w-40'
+				/>
+				<FormControl
+					type='date'
+					value={dateTo}
+					onChange={(e) => setFilter("dateTo", e.target.value || undefined)}
+					wrapperClassName='w-40'
+				/>
 				{hasActiveFilters(["status", "dateFrom", "dateTo"]) && (
 					<Button
 						type='button'
@@ -151,7 +170,10 @@ const AdminOrderPage = () => {
 							</tr>
 						) : (
 							orders.map((order) => (
-								<tr key={order.id} onClick={() => setSelectedOrderId(order.id)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={order.id}
+									onClick={() => setSelectedOrderId(order.id)}
+									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{order.orderNumber}</p>
 										<p className='text-xs text-muted'>{order._count.items} sản phẩm</p>

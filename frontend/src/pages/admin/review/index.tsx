@@ -32,9 +32,10 @@ const RATING_OPTIONS = [5, 4, 3, 2, 1].map((star) => ({ value: String(star), lab
  * backend: mọi endpoint GET/PATCH/DELETE /reviews/admin/* đều yêu cầu "review:update".
  */
 const AdminReviewPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
-		defaultLimit: PAGE_SIZE,
-	});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const isVisibleParam = searchParams.get("isVisible");
 	const ratingParam = searchParams.get("rating");
@@ -71,9 +72,19 @@ const AdminReviewPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<div className='flex items-center gap-2'>
-				<ExportButton resource='reviews' params={{ search, isVisible: isVisibleParam === null ? undefined : isVisibleParam === "true", rating: ratingParam ? Number(ratingParam) : undefined }} />
-				<AdminTitle title='Đánh giá sản phẩm' description='Xem, kiểm duyệt (ẩn/hiện) và phản hồi các đánh giá của khách hàng.' />
+			<div className='flex items-center justify-between gap-2'>
+				<AdminTitle
+					title='Đánh giá sản phẩm'
+					description='Xem, kiểm duyệt (ẩn/hiện) và phản hồi các đánh giá của khách hàng.'
+				/>
+				<ExportButton
+					resource='reviews'
+					params={{
+						search,
+						isVisible: isVisibleParam === null ? undefined : isVisibleParam === "true",
+						rating: ratingParam ? Number(ratingParam) : undefined,
+					}}
+				/>
 			</div>
 
 			{/* Filters */}
@@ -85,8 +96,18 @@ const AdminReviewPage = () => {
 					onChange={(e) => setSearchInput(e.target.value)}
 					rightElement={<SearchIcon className='h-4 w-4 text-muted' />}
 				/>
-				<FormSelect value={ratingParam ?? ""} onChange={(e) => setFilter("rating", e.target.value || undefined)} placeholder='Tất cả số sao' options={RATING_OPTIONS} />
-				<FormSelect value={isVisibleParam ?? ""} onChange={(e) => setFilter("isVisible", e.target.value || undefined)} placeholder='Tất cả trạng thái' options={VISIBILITY_OPTIONS} />
+				<FormSelect
+					value={ratingParam ?? ""}
+					onChange={(e) => setFilter("rating", e.target.value || undefined)}
+					placeholder='Tất cả số sao'
+					options={RATING_OPTIONS}
+				/>
+				<FormSelect
+					value={isVisibleParam ?? ""}
+					onChange={(e) => setFilter("isVisible", e.target.value || undefined)}
+					placeholder='Tất cả trạng thái'
+					options={VISIBILITY_OPTIONS}
+				/>
 				{hasActiveFilters(["rating", "isVisible"]) && (
 					<Button
 						type='button'
@@ -124,7 +145,10 @@ const AdminReviewPage = () => {
 							</tr>
 						) : (
 							reviews.map((review) => (
-								<tr key={review.id} onClick={() => setSelectedReviewId(review.id)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={review.id}
+									onClick={() => setSelectedReviewId(review.id)}
+									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='max-w-70 truncate px-5 py-3.5 font-medium text-ink'>{review.product.name}</td>
 									<td className='px-5 py-3.5 text-ink/80'>{review.user?.name ?? "Người dùng đã xóa"}</td>
 									<td className='px-5 py-3.5'>
@@ -145,7 +169,13 @@ const AdminReviewPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{selectedReview && <ReviewDetailModal review={selectedReview} onClose={() => setSelectedReviewId(null)} onRequestDelete={() => setDeletingReview(selectedReview)} />}
+			{selectedReview && (
+				<ReviewDetailModal
+					review={selectedReview}
+					onClose={() => setSelectedReviewId(null)}
+					onRequestDelete={() => setDeletingReview(selectedReview)}
+				/>
+			)}
 			{deletingReview && (
 				<Popup
 					title='Xóa đánh giá'

@@ -9,14 +9,26 @@ import { CloseIcon, PlusIcon, SearchIcon } from "../../../components/icons";
 import permissions from "../../../configs/constants/permissions";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { useAuth } from "../../../features/auth/hooks/useAuth";
-import { useCategoryTreeQuery, useCreateCategory, useDeleteCategory, useUpdateCategory } from "../../../features/admin/category/hooks";
-import type { Category, CategoryTreeNode, CreateCategoryPayload, UpdateCategoryPayload } from "../../../features/admin/category/types";
+import {
+	useCategoryTreeQuery,
+	useCreateCategory,
+	useDeleteCategory,
+	useUpdateCategory,
+} from "../../../features/admin/category/hooks";
+import type {
+	Category,
+	CategoryTreeNode,
+	CreateCategoryPayload,
+	UpdateCategoryPayload,
+} from "../../../features/admin/category/types";
 import { collectSubtreeIds, flattenCategoryTree } from "../../../features/admin/category/utils";
 import CategoryTreeRow from "../../../features/admin/category/components/category-tree-row";
 import CategoryFormModal from "../../../features/admin/category/components/category-form-modal";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
-type FormState = { mode: "create"; parentId: number | null } | { mode: "edit"; category: Category; ownSubtreeIds: Set<number> };
+type FormState =
+	| { mode: "create"; parentId: number | null }
+	| { mode: "edit"; category: Category; ownSubtreeIds: Set<number> };
 
 /**
  * Trang quản trị Category. Route "/admin/category" đã được bảo vệ bởi
@@ -46,7 +58,10 @@ const AdminCategoryPage = () => {
 	// Danh sách phẳng đầy đủ, dùng cho dropdown "Danh mục cha". Khi đang sửa, loại bỏ
 	// chính node đó + toàn bộ hậu duệ của nó để không thể tự chọn con của mình làm cha
 	// (backend cũng chặn trường hợp này, đây chỉ là UX ẩn bớt lựa chọn vô nghĩa).
-	const parentOptions = formState?.mode === "edit" ? flattenCategoryTree(tree).filter((option) => !formState.ownSubtreeIds.has(option.id)) : flattenCategoryTree(tree);
+	const parentOptions =
+		formState?.mode === "edit"
+			? flattenCategoryTree(tree).filter((option) => !formState.ownSubtreeIds.has(option.id))
+			: flattenCategoryTree(tree);
 
 	const handleSubmitForm = (payload: CreateCategoryPayload | UpdateCategoryPayload) => {
 		if (formState?.mode === "edit") {
@@ -69,15 +84,18 @@ const AdminCategoryPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<div className='flex items-center gap-2'>
+				<AdminTitle title='Danh mục' description='Quản lý hệ thống danh mục sản phẩm phân cấp cha - con.' />
+				<div className='flex flex-col gap-2'>
+					<Can permission={permissions.catalog.write}>
+						<Button
+							size='sm'
+							icon={<PlusIcon className='h-4 w-4' />}
+							onClick={() => setFormState({ mode: "create", parentId: null })}>
+							Thêm danh mục
+						</Button>
+					</Can>
 					<ExportButton resource='categories' params={{ search }} />
-					<AdminTitle title='Danh mục' description='Quản lý hệ thống danh mục sản phẩm phân cấp cha - con.' />
 				</div>
-				<Can permission={permissions.catalog.write}>
-					<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setFormState({ mode: "create", parentId: null })}>
-						Thêm danh mục
-					</Button>
-				</Can>
 			</div>
 
 			{/* Filter */}
@@ -131,7 +149,9 @@ const AdminCategoryPage = () => {
 									depth={0}
 									canWrite={canWrite}
 									onAddChild={(parentId) => setFormState({ mode: "create", parentId })}
-									onEdit={(category) => setFormState({ mode: "edit", category, ownSubtreeIds: collectSubtreeIds(category) })}
+									onEdit={(category) =>
+										setFormState({ mode: "edit", category, ownSubtreeIds: collectSubtreeIds(category) })
+									}
 									onDelete={setDeletingCategory}
 									onToggleFeatured={handleToggleFeatured}
 								/>

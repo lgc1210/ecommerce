@@ -34,9 +34,10 @@ const PAGE_SIZE = 10;
  * chia sẻ được.
  */
 const AdminContactPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
-		defaultLimit: PAGE_SIZE,
-	});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const status = parseEnumParam<ContactStatus>(searchParams, "status");
 
@@ -98,9 +99,9 @@ const AdminContactPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<div className='flex items-center gap-2'>
-				<ExportButton resource='contacts' params={{ search, status }} />
+			<div className='flex items-center justify-between gap-2'>
 				<AdminTitle title='Liên hệ' description='Xem và xử lý các liên hệ khách hàng gửi từ trang web.' />
+				<ExportButton resource='contacts' params={{ search, status }} />
 			</div>
 
 			{/* Filters */}
@@ -158,7 +159,10 @@ const AdminContactPage = () => {
 							</tr>
 						) : (
 							contacts.map((contact) => (
-								<tr key={contact.id} onClick={() => setSelectedContact(contact)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={contact.id}
+									onClick={() => setSelectedContact(contact)}
+									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{contact.name}</p>
 										<p className='truncate text-xs text-muted'>{contact.email}</p>
@@ -166,9 +170,13 @@ const AdminContactPage = () => {
 
 									<td className='px-5 py-3.5'>
 										{contact.user ? (
-											<span className='inline-flex items-center rounded-full bg-primary-light px-2.5 py-1 text-xs truncate font-semibold text-primary-dark'>Tài khoản #{contact.user.id}</span>
+											<span className='inline-flex items-center rounded-full bg-primary-light px-2.5 py-1 text-xs truncate font-semibold text-primary-dark'>
+												Tài khoản #{contact.user.id}
+											</span>
 										) : (
-											<span className='inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-xs truncate text-ink/60'>Khách vãng lai</span>
+											<span className='inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-xs truncate text-ink/60'>
+												Khách vãng lai
+											</span>
 										)}
 									</td>
 

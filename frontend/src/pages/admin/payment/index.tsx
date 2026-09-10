@@ -35,9 +35,10 @@ const PAGE_SIZE = 10;
  * pattern với trang Order/Contact: reload/back-forward vẫn giữ đúng view, copy link chia sẻ được.
  */
 const AdminPaymentPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({
-		defaultLimit: PAGE_SIZE,
-	});
+	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
+		useListQueryParams({
+			defaultLimit: PAGE_SIZE,
+		});
 
 	const status = parseEnumParam<PaymentStatus>(searchParams, "status");
 	const method = parseEnumParam<PaymentMethod>(searchParams, "method");
@@ -89,9 +90,18 @@ const AdminPaymentPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<div className='flex items-center gap-2'>
-				<ExportButton resource='payments' params={{ search, status, method, dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined, dateTo: dateTo ? new Date(dateTo).toISOString() : undefined }} />
+			<div className='flex items-center justify-between gap-2'>
 				<AdminTitle title='Thanh toán' description='Theo dõi và xử lý các giao dịch thanh toán của đơn hàng.' />
+				<ExportButton
+					resource='payments'
+					params={{
+						search,
+						status,
+						method,
+						dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
+						dateTo: dateTo ? new Date(dateTo).toISOString() : undefined,
+					}}
+				/>
 			</div>
 
 			{/* Filters */}
@@ -115,8 +125,18 @@ const AdminPaymentPage = () => {
 					placeholder='Tất cả phương thức'
 					options={PAYMENT_METHOD_FILTER_OPTIONS.map((value) => ({ value, label: PAYMENT_METHOD_LABEL[value] }))}
 				/>
-				<FormControl type='date' value={dateFrom} onChange={(e) => setFilter("dateFrom", e.target.value || undefined)} wrapperClassName='w-40' />
-				<FormControl type='date' value={dateTo} onChange={(e) => setFilter("dateTo", e.target.value || undefined)} wrapperClassName='w-40' />
+				<FormControl
+					type='date'
+					value={dateFrom}
+					onChange={(e) => setFilter("dateFrom", e.target.value || undefined)}
+					wrapperClassName='w-40'
+				/>
+				<FormControl
+					type='date'
+					value={dateTo}
+					onChange={(e) => setFilter("dateTo", e.target.value || undefined)}
+					wrapperClassName='w-40'
+				/>
 				{hasActiveFilters(["status", "method", "dateFrom", "dateTo"]) && (
 					<Button
 						type='button'
@@ -155,7 +175,10 @@ const AdminPaymentPage = () => {
 							</tr>
 						) : (
 							payments.map((payment) => (
-								<tr key={payment.id} onClick={() => setSelectedPayment(payment)} className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={payment.id}
+									onClick={() => setSelectedPayment(payment)}
+									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5 font-semibold text-ink'>{payment.order.orderNumber}</td>
 									<td className='px-5 py-3.5'>
 										<p className='font-medium text-ink'>{payment.order.user?.name ?? "Khách vãng lai"}</p>
