@@ -1,6 +1,9 @@
 import apiClient from "../configs/apis";
 
-export const downloadExport = async (resource: string, params: Record<string, string | number | boolean | undefined>) => {
+export const downloadExport = async (
+	resource: string,
+	params: Record<string, string | number | boolean | undefined>,
+) => {
 	const response = await apiClient.get(`/exports/${resource}`, {
 		params,
 		responseType: "blob",

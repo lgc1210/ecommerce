@@ -25,7 +25,13 @@ const ExportButton = ({ resource, params }: ExportButtonProps) => {
 	};
 
 	return (
-		<Button type='button' size='sm' variant='outline' icon={<DownloadIcon className='h-4 w-4' />} onClick={handleExport} disabled={isExporting}>
+		<Button
+			type='button'
+			size='sm'
+			variant='outline'
+			icon={<DownloadIcon className='h-4 w-4' />}
+			onClick={handleExport}
+			disabled={isExporting}>
 			{isExporting ? "Đang xuất..." : "Xuất CSV"}
 		</Button>
 	);

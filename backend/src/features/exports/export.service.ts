@@ -11,7 +11,8 @@ type BatchReader = (cursor?: number) => Promise<Row[]>;
 
 const csvValue = (value: unknown): string => {
 	if (value === null || value === undefined) return "";
-	const text = value instanceof Date ? value.toISOString() : typeof value === "object" ? JSON.stringify(value) : String(value);
+	const text =
+		value instanceof Date ? value.toISOString() : typeof value === "object" ? JSON.stringify(value) : String(value);
 	// Prevent formula injection when an export is opened in Excel/Sheets.
 	const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
 	return /[",\r\n]/.test(safeText) ? `"${safeText.replaceAll('"', '""')}"` : safeText;
@@ -43,11 +44,22 @@ const dateRange = (query: ExportQuery) => {
 	};
 };
 
-const buildReader = (resource: ExportResource, query: ExportQuery): { filename: string; headers: string[]; readBatch: BatchReader } => {
+const buildReader = (
+	resource: ExportResource,
+	query: ExportQuery,
+): { filename: string; headers: string[]; readBatch: BatchReader } => {
 	switch (resource) {
 		case "users": {
 			const where = {
-				...(query.search ? { OR: [{ name: { contains: query.search } }, { email: { contains: query.search } }, { phone: { contains: query.search } }] } : {}),
+				...(query.search
+					? {
+							OR: [
+								{ name: { contains: query.search } },
+								{ email: { contains: query.search } },
+								{ phone: { contains: query.search } },
+							],
+						}
+					: {}),
 				...(query.roleId ? { roleId: Number(query.roleId) } : {}),
 				...(query.isActive ? { isActive: query.isActive === "true" } : {}),
 			};
@@ -61,7 +73,17 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 						take: BATCH_SIZE,
 						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
 						orderBy: { id: "asc" },
-						select: { id: true, name: true, email: true, phone: true, provider: true, isActive: true, isVerified: true, createdAt: true, role: { select: { name: true } } },
+						select: {
+							id: true,
+							name: true,
+							email: true,
+							phone: true,
+							provider: true,
+							isActive: true,
+							isVerified: true,
+							createdAt: true,
+							role: { select: { name: true } },
+						},
 					});
 					return users.map(({ role, ...user }) => ({ ...user, role: role.name }));
 				},
@@ -73,7 +95,22 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 			return {
 				filename: "categories.csv",
 				headers,
-				readBatch: async (cursor) => prisma.category.findMany({ where, take: BATCH_SIZE, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { id: "asc" }, select: { id: true, parentId: true, name: true, slug: true, description: true, isFeatured: true, createdAt: true } }),
+				readBatch: async (cursor) =>
+					prisma.category.findMany({
+						where,
+						take: BATCH_SIZE,
+						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+						orderBy: { id: "asc" },
+						select: {
+							id: true,
+							parentId: true,
+							name: true,
+							slug: true,
+							description: true,
+							isFeatured: true,
+							createdAt: true,
+						},
+					}),
 			};
 		}
 		case "products": {
@@ -82,7 +119,21 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 				...(query.categoryId ? { categoryId: Number(query.categoryId) } : {}),
 				...(query.isActive ? { isActive: query.isActive === "true" } : {}),
 			};
-			const headers = ["id", "name", "slug", "category", "sku", "price", "oldPrice", "stockQuantity", "variationDetails", "isActive", "isFeatured", "thumbnailUrl", "createdAt"];
+			const headers = [
+				"id",
+				"name",
+				"slug",
+				"category",
+				"sku",
+				"price",
+				"oldPrice",
+				"stockQuantity",
+				"variationDetails",
+				"isActive",
+				"isFeatured",
+				"thumbnailUrl",
+				"createdAt",
+			];
 			return {
 				filename: "products.csv",
 				headers,
@@ -92,7 +143,17 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 						take: BATCH_SIZE,
 						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
 						orderBy: { id: "asc" },
-						select: { id: true, name: true, slug: true, isActive: true, isFeatured: true, thumbnailUrl: true, createdAt: true, category: { select: { name: true } }, skus: { select: { sku: true, price: true, oldPrice: true, stockQuantity: true, variationDetails: true } } },
+						select: {
+							id: true,
+							name: true,
+							slug: true,
+							isActive: true,
+							isFeatured: true,
+							thumbnailUrl: true,
+							createdAt: true,
+							category: { select: { name: true } },
+							skus: { select: { sku: true, price: true, oldPrice: true, stockQuantity: true, variationDetails: true } },
+						},
 					});
 					return products.flatMap((product) =>
 						(product.skus.length ? product.skus : [null]).map((sku) => ({
@@ -120,8 +181,45 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 				...(query.isActive ? { isActive: query.isActive === "true" } : {}),
 				...(query.discountType ? { discountType: query.discountType as never } : {}),
 			};
-			const headers = ["id", "code", "email", "discountType", "discountValue", "minOrderValue", "maxDiscountValue", "startsAt", "expiresAt", "usageLimit", "usedCount", "isActive"];
-			return { filename: "coupons.csv", headers, readBatch: async (cursor) => prisma.coupon.findMany({ where, take: BATCH_SIZE, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { id: "asc" }, select: { id: true, code: true, email: true, discountType: true, discountValue: true, minOrderValue: true, maxDiscountValue: true, startsAt: true, expiresAt: true, usageLimit: true, usedCount: true, isActive: true } }) };
+			const headers = [
+				"id",
+				"code",
+				"email",
+				"discountType",
+				"discountValue",
+				"minOrderValue",
+				"maxDiscountValue",
+				"startsAt",
+				"expiresAt",
+				"usageLimit",
+				"usedCount",
+				"isActive",
+			];
+			return {
+				filename: "coupons.csv",
+				headers,
+				readBatch: async (cursor) =>
+					prisma.coupon.findMany({
+						where,
+						take: BATCH_SIZE,
+						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+						orderBy: { id: "asc" },
+						select: {
+							id: true,
+							code: true,
+							email: true,
+							discountType: true,
+							discountValue: true,
+							minOrderValue: true,
+							maxDiscountValue: true,
+							startsAt: true,
+							expiresAt: true,
+							usageLimit: true,
+							usedCount: true,
+							isActive: true,
+						},
+					}),
+			};
 		}
 		case "reviews": {
 			const where = {
@@ -132,32 +230,124 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 				...(query.search ? { comment: { contains: query.search } } : {}),
 			};
 			const headers = ["id", "product", "user", "rating", "comment", "isVisible", "isRefundedTag", "createdAt"];
-			return { filename: "reviews.csv", headers, readBatch: async (cursor) => (await prisma.review.findMany({ where, take: BATCH_SIZE, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { id: "asc" }, select: { id: true, rating: true, comment: true, isVisible: true, isRefundedTag: true, createdAt: true, product: { select: { name: true } }, user: { select: { email: true } } } })).map(({ product, user, ...review }) => ({ ...review, product: product.name, user: user?.email })) };
+			return {
+				filename: "reviews.csv",
+				headers,
+				readBatch: async (cursor) =>
+					(
+						await prisma.review.findMany({
+							where,
+							take: BATCH_SIZE,
+							...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+							orderBy: { id: "asc" },
+							select: {
+								id: true,
+								rating: true,
+								comment: true,
+								isVisible: true,
+								isRefundedTag: true,
+								createdAt: true,
+								product: { select: { name: true } },
+								user: { select: { email: true } },
+							},
+						})
+					).map(({ product, user, ...review }) => ({ ...review, product: product.name, user: user?.email })),
+			};
 		}
 		case "contacts": {
 			const where = {
 				...(query.status ? { status: query.status as never } : {}),
 				...(query.userId ? { userId: Number(query.userId) } : {}),
-				...(query.search ? { OR: [{ name: { contains: query.search } }, { email: { contains: query.search } }, { subject: { contains: query.search } }] } : {}),
+				...(query.search
+					? {
+							OR: [
+								{ name: { contains: query.search } },
+								{ email: { contains: query.search } },
+								{ subject: { contains: query.search } },
+							],
+						}
+					: {}),
 			};
 			const headers = ["id", "userId", "name", "email", "subject", "message", "status", "createdAt", "updatedAt"];
-			return { filename: "contacts.csv", headers, readBatch: async (cursor) => prisma.contact.findMany({ where, take: BATCH_SIZE, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { id: "asc" }, select: { id: true, userId: true, name: true, email: true, subject: true, message: true, status: true, createdAt: true, updatedAt: true } }) };
+			return {
+				filename: "contacts.csv",
+				headers,
+				readBatch: async (cursor) =>
+					prisma.contact.findMany({
+						where,
+						take: BATCH_SIZE,
+						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+						orderBy: { id: "asc" },
+						select: {
+							id: true,
+							userId: true,
+							name: true,
+							email: true,
+							subject: true,
+							message: true,
+							status: true,
+							createdAt: true,
+							updatedAt: true,
+						},
+					}),
+			};
 		}
 		case "orders": {
 			const where = {
 				...(query.status ? { orderStatus: query.status as never } : {}),
 				...(query.userId ? { userId: Number(query.userId) } : {}),
-				...(query.search ? { OR: [{ orderNumber: { contains: query.search } }, { user: { email: { contains: query.search } } }, { user: { name: { contains: query.search } } }] } : {}),
+				...(query.search
+					? {
+							OR: [
+								{ orderNumber: { contains: query.search } },
+								{ user: { email: { contains: query.search } } },
+								{ user: { name: { contains: query.search } } },
+							],
+						}
+					: {}),
 				...(dateRange(query) ? { createdAt: dateRange(query) } : {}),
 			};
-			const headers = ["id", "orderNumber", "customer", "email", "subtotalAmount", "discountAmount", "shippingFee", "totalAmount", "orderStatus", "paymentStatus", "paymentMethod", "createdAt", "deliveredAt"];
+			const headers = [
+				"id",
+				"orderNumber",
+				"customer",
+				"email",
+				"subtotalAmount",
+				"discountAmount",
+				"shippingFee",
+				"totalAmount",
+				"orderStatus",
+				"paymentStatus",
+				"paymentMethod",
+				"createdAt",
+				"deliveredAt",
+			];
 			return {
 				filename: "orders.csv",
 				headers,
 				readBatch: async (cursor) => {
-					const orders: Prisma.OrderGetPayload<{ include: { user: { select: { name: true; email: true } }; payment: { select: { paymentStatus: true; paymentMethod: true } } } }>[] =
-						await prisma.order.findMany({ where: where as Prisma.OrderWhereInput, take: BATCH_SIZE, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { id: "asc" }, include: { user: { select: { name: true, email: true } }, payment: { select: { paymentStatus: true, paymentMethod: true } } } });
-					return orders.map(({ user, payment, ...order }) => ({ ...order, customer: user?.name, email: user?.email, paymentStatus: payment?.paymentStatus, paymentMethod: payment?.paymentMethod }));
+					const orders: Prisma.OrderGetPayload<{
+						include: {
+							user: { select: { name: true; email: true } };
+							payment: { select: { paymentStatus: true; paymentMethod: true } };
+						};
+					}>[] = await prisma.order.findMany({
+						where: where as Prisma.OrderWhereInput,
+						take: BATCH_SIZE,
+						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+						orderBy: { id: "asc" },
+						include: {
+							user: { select: { name: true, email: true } },
+							payment: { select: { paymentStatus: true, paymentMethod: true } },
+						},
+					});
+					return orders.map(({ user, payment, ...order }) => ({
+						...order,
+						customer: user?.name,
+						email: user?.email,
+						paymentStatus: payment?.paymentStatus,
+						paymentMethod: payment?.paymentMethod,
+					}));
 				},
 			};
 		}
@@ -165,17 +355,50 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 			const where = {
 				...(query.status ? { paymentStatus: query.status as never } : {}),
 				...(query.method ? { paymentMethod: query.method as never } : {}),
-				...(query.search ? { order: { OR: [{ orderNumber: { contains: query.search } }, { user: { email: { contains: query.search } } }, { user: { name: { contains: query.search } } }] } } : {}),
+				...(query.search
+					? {
+							order: {
+								OR: [
+									{ orderNumber: { contains: query.search } },
+									{ user: { email: { contains: query.search } } },
+									{ user: { name: { contains: query.search } } },
+								],
+							},
+						}
+					: {}),
 				...(dateRange(query) ? { createdAt: dateRange(query) } : {}),
 			};
-			const headers = ["id", "orderNumber", "customer", "email", "paymentMethod", "paymentStatus", "amount", "transactionId", "paidAt", "createdAt"];
+			const headers = [
+				"id",
+				"orderNumber",
+				"customer",
+				"email",
+				"paymentMethod",
+				"paymentStatus",
+				"amount",
+				"transactionId",
+				"paidAt",
+				"createdAt",
+			];
 			return {
 				filename: "payments.csv",
 				headers,
 				readBatch: async (cursor) => {
-					const payments: Prisma.PaymentGetPayload<{ include: { order: { select: { orderNumber: true; user: { select: { name: true; email: true } } } } } }>[] =
-						await prisma.payment.findMany({ where: where as Prisma.PaymentWhereInput, take: BATCH_SIZE, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { id: "asc" }, include: { order: { select: { orderNumber: true, user: { select: { name: true, email: true } } } } } });
-					return payments.map(({ order, ...payment }) => ({ ...payment, orderNumber: order.orderNumber, customer: order.user?.name, email: order.user?.email }));
+					const payments: Prisma.PaymentGetPayload<{
+						include: { order: { select: { orderNumber: true; user: { select: { name: true; email: true } } } } };
+					}>[] = await prisma.payment.findMany({
+						where: where as Prisma.PaymentWhereInput,
+						take: BATCH_SIZE,
+						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+						orderBy: { id: "asc" },
+						include: { order: { select: { orderNumber: true, user: { select: { name: true, email: true } } } } },
+					});
+					return payments.map(({ order, ...payment }) => ({
+						...payment,
+						orderNumber: order.orderNumber,
+						customer: order.user?.name,
+						email: order.user?.email,
+					}));
 				},
 			};
 		}
@@ -185,6 +408,7 @@ const buildReader = (resource: ExportResource, query: ExportQuery): { filename: 
 export const exportResource = async (resource: ExportResource, query: ExportQuery, res: Response): Promise<void> => {
 	const { filename, headers, readBatch } = buildReader(resource, query);
 	res.setHeader("Content-Type", "text/csv; charset=utf-8");
+	res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
 	res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 	await writeRows(res, headers, readBatch);
 };
