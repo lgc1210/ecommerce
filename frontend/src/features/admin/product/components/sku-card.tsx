@@ -7,6 +7,7 @@ import { useUpdateSkuStock } from "../hooks";
 import { formatVariationDetails } from "../utils";
 import type { ProductSku } from "../types";
 import SkuImageManager from "./sku-image-manager";
+import ReceiveStockModal from "./recieve-stock-modal";
 
 interface SkuCardProps {
 	productId: number;
@@ -19,9 +20,11 @@ interface SkuCardProps {
 
 const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, onDelete }: SkuCardProps) => {
 	const [stockInput, setStockInput] = useState(String(sku.stockQuantity));
+	const [isReceivingStock, setIsReceivingStock] = useState(false);
 	const updateStock = useUpdateSkuStock();
 
-	const hasStockChanged = Number(stockInput) !== sku.stockQuantity && stockInput.trim() !== "" && Number(stockInput) >= 0;
+	const hasStockChanged =
+		Number(stockInput) !== sku.stockQuantity && stockInput.trim() !== "" && Number(stockInput) >= 0;
 
 	const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = Number(e.target.value);
@@ -29,69 +32,107 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 	};
 
 	return (
-		<div className='rounded-2xl border border-border bg-surface p-5'>
-			<div className='flex flex-wrap items-start justify-between gap-3'>
-				<div>
-					<p className='font-semibold text-ink'>{formatVariationDetails(sku.variationDetails)}</p>
-					<p className='mt-0.5 font-mono text-xs text-muted'>{sku.sku}</p>
-					<p className='mt-1 flex items-center gap-2 text-sm text-ink/80'>
-						<span>{formatCurrency(Number(sku.price))}</span>
-						{sku.oldPrice && <span className='text-xs text-muted line-through'>{formatCurrency(Number(sku.oldPrice))}</span>}
-					</p>
-					<p className='mt-1 text-xs text-muted'>
-						{sku.weightGram}g · {sku.lengthCm}×{sku.widthCm}×{sku.heightCm}cm
-					</p>
+		<>
+			<div className='rounded-2xl border border-border bg-surface p-5'>
+				<div className='flex flex-wrap items-start justify-between gap-3'>
+					<div>
+						<p className='font-semibold text-ink'>{formatVariationDetails(sku.variationDetails)}</p>
+						<p className='mt-0.5 font-mono text-xs text-muted'>{sku.sku}</p>
+						<p className='mt-1 flex items-center gap-2 text-sm text-ink/80'>
+							<span>{formatCurrency(Number(sku.price))}</span>
+							{sku.oldPrice && (
+								<span className='text-xs text-muted line-through'>{formatCurrency(Number(sku.oldPrice))}</span>
+							)}
+						</p>
+						<p className='mt-1 text-xs text-muted'>
+							{sku.weightGram}g · {sku.lengthCm}×{sku.widthCm}×{sku.heightCm}cm
+						</p>
+						{sku.trackSerial && (
+							<span className='mt-1.5 inline-flex items-center rounded-full bg-primary-light px-2.5 py-0.5 text-[11px] font-semibold text-primary-dark'>
+								Quản lý theo serial
+							</span>
+						)}
+					</div>
+
+					{canWriteCatalog && (
+						<div className='flex items-center gap-1.5'>
+							<button
+								type='button'
+								onClick={onEdit}
+								className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-cream-soft hover:text-ink'
+								title='Sửa'>
+								<PencilIcon className='h-4 w-4' />
+							</button>
+							<button
+								type='button'
+								onClick={onDelete}
+								className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-600'
+								title='Xóa'>
+								<TrashIcon className='h-4 w-4' />
+							</button>
+						</div>
+					)}
 				</div>
 
-				{canWriteCatalog && (
-					<div className='flex items-center gap-1.5'>
-						<button
-							type='button'
-							onClick={onEdit}
-							className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-cream-soft hover:text-ink'
-							title='Sửa'>
-							<PencilIcon className='h-4 w-4' />
-						</button>
-						<button
-							type='button'
-							onClick={onDelete}
-							className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-600'
-							title='Xóa'>
-							<TrashIcon className='h-4 w-4' />
-						</button>
+				{canUpdateInventory && (
+					<div className='mt-3'>
+						{sku.trackSerial ? (
+							<div className='flex items-center justify-between gap-2 rounded-xl bg-cream-soft px-3 py-2.5'>
+								<p className='text-sm text-ink/80'>
+									Tồn kho: <span className='font-semibold text-ink'>{sku.stockQuantity}</span> (quản lý theo serial)
+								</p>
+								<Button size='sm' variant='outline' type='button' onClick={() => setIsReceivingStock(true)}>
+									Nhập kho theo serial
+								</Button>
+							</div>
+						) : (
+							<div className='flex items-end gap-2'>
+								<FormControl
+									label='Tồn kho'
+									type='number'
+									step='any'
+									wrapperClassName='w-32'
+									value={stockInput}
+									onChange={handleStockChange}
+								/>
+								<Button
+									size='sm'
+									variant='outline'
+									type='button'
+									disabled={!hasStockChanged || updateStock.isPending}
+									onClick={() => updateStock.mutate({ productId, skuId: sku.id, stockQuantity: Number(stockInput) })}>
+									{updateStock.isPending ? "Đang lưu..." : "Cập nhật tồn kho"}
+								</Button>
+							</div>
+						)}
 					</div>
 				)}
+
+				<div className='mt-4 border-t border-border pt-4'>
+					<p className='mb-2 text-sm font-medium text-ink'>Hình ảnh</p>
+					{canWriteCatalog ? (
+						<SkuImageManager productId={productId} skuId={sku.id} images={sku.images} />
+					) : sku.images.length === 0 ? (
+						<p className='text-sm text-muted'>Chưa có ảnh.</p>
+					) : (
+						<div className='flex flex-wrap gap-3'>
+							{sku.images.map((image) => (
+								<img
+									key={image.id}
+									src={image.imageUrl}
+									alt={image.altText ?? ""}
+									className='h-20 w-20 rounded-xl border border-border object-cover'
+								/>
+							))}
+						</div>
+					)}
+				</div>
 			</div>
 
-			{canUpdateInventory && (
-				<div className='mt-3 flex items-end gap-2'>
-					<FormControl label='Tồn kho' type='number' step='any' wrapperClassName='w-32' value={stockInput} onChange={handleStockChange} />
-					<Button
-						size='sm'
-						variant='outline'
-						type='button'
-						disabled={!hasStockChanged || updateStock.isPending}
-						onClick={() => updateStock.mutate({ productId, skuId: sku.id, stockQuantity: Number(stockInput) })}>
-						{updateStock.isPending ? "Đang lưu..." : "Cập nhật tồn kho"}
-					</Button>
-				</div>
+			{isReceivingStock && (
+				<ReceiveStockModal productId={productId} sku={sku} onClose={() => setIsReceivingStock(false)} />
 			)}
-
-			<div className='mt-4 border-t border-border pt-4'>
-				<p className='mb-2 text-sm font-medium text-ink'>Hình ảnh</p>
-				{canWriteCatalog ? (
-					<SkuImageManager productId={productId} skuId={sku.id} images={sku.images} />
-				) : sku.images.length === 0 ? (
-					<p className='text-sm text-muted'>Chưa có ảnh.</p>
-				) : (
-					<div className='flex flex-wrap gap-3'>
-						{sku.images.map((image) => (
-							<img key={image.id} src={image.imageUrl} alt={image.altText ?? ""} className='h-20 w-20 rounded-xl border border-border object-cover' />
-						))}
-					</div>
-				)}
-			</div>
-		</div>
+		</>
 	);
 };
 

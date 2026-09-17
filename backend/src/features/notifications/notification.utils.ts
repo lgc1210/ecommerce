@@ -21,7 +21,11 @@ const ORDER_STATUS_TEXT: Record<OrderStatus, string> = Object.freeze({
 	cancelled: "đã bị hủy",
 } as const);
 
-export function buildOrderPlacedNotification(userId: number, orderId: number, orderNumber: string): NotificationPayload {
+export function buildOrderPlacedNotification(
+	userId: number,
+	orderId: number,
+	orderNumber: string,
+): NotificationPayload {
 	return {
 		userId,
 		type: "order",
@@ -32,7 +36,12 @@ export function buildOrderPlacedNotification(userId: number, orderId: number, or
 	};
 }
 
-export function buildOrderStatusChangedNotification(userId: number, orderId: number, orderNumber: string, status: OrderStatus): NotificationPayload {
+export function buildOrderStatusChangedNotification(
+	userId: number,
+	orderId: number,
+	orderNumber: string,
+	status: OrderStatus,
+): NotificationPayload {
 	return {
 		userId,
 		type: "order",
@@ -43,7 +52,11 @@ export function buildOrderStatusChangedNotification(userId: number, orderId: num
 	};
 }
 
-export function buildPaymentCompletedNotification(userId: number, orderId: number, orderNumber: string): NotificationPayload {
+export function buildPaymentCompletedNotification(
+	userId: number,
+	orderId: number,
+	orderNumber: string,
+): NotificationPayload {
 	return {
 		userId,
 		type: "payment",
@@ -54,7 +67,11 @@ export function buildPaymentCompletedNotification(userId: number, orderId: numbe
 	};
 }
 
-export function buildPaymentFailedNotification(userId: number, orderId: number, orderNumber: string): NotificationPayload {
+export function buildPaymentFailedNotification(
+	userId: number,
+	orderId: number,
+	orderNumber: string,
+): NotificationPayload {
 	return {
 		userId,
 		type: "payment",
@@ -65,7 +82,11 @@ export function buildPaymentFailedNotification(userId: number, orderId: number, 
 	};
 }
 
-export function buildPaymentRefundedNotification(userId: number, orderId: number, orderNumber: string): NotificationPayload {
+export function buildPaymentRefundedNotification(
+	userId: number,
+	orderId: number,
+	orderNumber: string,
+): NotificationPayload {
 	return {
 		userId,
 		type: "payment",
@@ -77,7 +98,11 @@ export function buildPaymentRefundedNotification(userId: number, orderId: number
 }
 
 /** actionUrl phải khớp route thật của FE là "/product/:slug" (số ít, dùng slug) — xem paths.client.productDetail. */
-export function buildReviewRepliedNotification(userId: number, productSlug: string, reviewId: number): NotificationPayload {
+export function buildReviewRepliedNotification(
+	userId: number,
+	productSlug: string,
+	reviewId: number,
+): NotificationPayload {
 	return {
 		userId,
 		type: "review",
@@ -107,7 +132,11 @@ type AdminNotificationContent = Omit<NotificationPayload, "userId">;
  * frontend không có route chi tiết riêng cho order — chi tiết mở qua modal + state cục bộ ngay
  * trong trang list (xem order-detail-modal.tsx).
  */
-export function buildAdminNewOrderContent(orderId: number, orderNumber: string, totalAmount: number): AdminNotificationContent {
+export function buildAdminNewOrderContent(
+	orderId: number,
+	orderNumber: string,
+	totalAmount: number,
+): AdminNotificationContent {
 	return {
 		type: "order",
 		title: "Đơn hàng mới",
@@ -123,7 +152,13 @@ export function buildAdminNewOrderContent(orderId: number, orderNumber: string, 
  * nơi duy nhất quản lý tồn kho từng SKU — xem pages/admin/product/detail.tsx), dùng productId chứ
  * KHÔNG phải skuId vì route chỉ có param cấp sản phẩm.
  */
-export function buildAdminLowStockContent(skuId: number, skuLabel: string, productId: number, productName: string, stockQuantity: number): AdminNotificationContent {
+export function buildAdminLowStockContent(
+	skuId: number,
+	skuLabel: string,
+	productId: number,
+	productName: string,
+	stockQuantity: number,
+): AdminNotificationContent {
 	return {
 		type: "stock",
 		title: "Tồn kho thấp",
@@ -151,7 +186,11 @@ export function buildAdminPaymentFailedContent(orderId: number, orderNumber: str
  * "/admin/review" (không filter) là đủ, vì danh sách mặc định sort theo createdAt desc, review
  * vừa tạo luôn nằm ở đầu trang 1.
  */
-export function buildAdminNewReviewContent(reviewId: number, productName: string, rating: number): AdminNotificationContent {
+export function buildAdminNewReviewContent(
+	reviewId: number,
+	productName: string,
+	rating: number,
+): AdminNotificationContent {
 	return {
 		type: "review",
 		title: "Khách hàng đánh giá",
@@ -173,12 +212,48 @@ export function buildAdminSystemAlertContent(title: string, message: string): Ad
 }
 
 /** "Liên hệ mới" — bắn khi có người gửi form liên hệ (kể cả khách chưa đăng nhập). Trang Contact search theo tên/email/chủ đề (xem contact.service.ts), nên search theo `name` là đủ để lọc ra liên hệ vừa gửi. */
-export function buildAdminNewContactContent(contactId: number, name: string, subject?: string | null): AdminNotificationContent {
+export function buildAdminNewContactContent(
+	contactId: number,
+	name: string,
+	subject?: string | null,
+): AdminNotificationContent {
 	return {
 		type: "contact",
 		title: "Liên hệ mới",
 		message: subject ? `${name} vừa gửi liên hệ: "${subject}".` : `${name} vừa gửi 1 liên hệ mới.`,
 		actionUrl: `/admin/contact?search=${encodeURIComponent(name)}`,
 		referenceId: String(contactId),
+	};
+}
+
+/** "Yêu cầu bảo hành mới" — gọi ngay sau khi khách gửi claim thành công. */
+export function buildAdminNewWarrantyClaimContent(
+	claimId: number,
+	claimNumber: string,
+	productName: string,
+): AdminNotificationContent {
+	return {
+		type: "warranty",
+		title: "Yêu cầu bảo hành mới",
+		message: `Khách hàng vừa gửi yêu cầu bảo hành ${claimNumber} cho sản phẩm "${productName}".`,
+		actionUrl: `/admin/warranty-claims/${claimId}`,
+		referenceId: String(claimId),
+	};
+}
+
+/** "Cập nhật trạng thái bảo hành" — gửi cho khách khi staff đổi trạng thái claim (Phase 3). */
+export function buildWarrantyClaimStatusChangedNotification(
+	userId: number,
+	claimId: number,
+	claimNumber: string,
+	statusText: string,
+): NotificationPayload {
+	return {
+		userId,
+		type: "warranty",
+		title: "Cập nhật yêu cầu bảo hành",
+		message: `Yêu cầu bảo hành ${claimNumber} của bạn ${statusText}.`,
+		actionUrl: `/account/warranty-claims/${claimId}`,
+		referenceId: String(claimId),
 	};
 }

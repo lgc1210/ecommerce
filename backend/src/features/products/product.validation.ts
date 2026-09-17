@@ -10,6 +10,9 @@ const SkuInputSchema = z.object({
 	price: z.number().positive({ message: "Giá phải lớn hơn 0." }),
 	oldPrice: z.number().positive({ message: "Giá khóa phải lớn hơn 0." }).nullable().optional(),
 	stockQuantity: z.number().int().min(0, { message: "Tồn kho không được âm." }).optional(),
+	// true = quản lý tồn kho theo serial (ProductUnit) — nếu bật, stockQuantity gửi kèm sẽ bị bỏ
+	// qua lúc tạo SKU (luôn khởi tạo 0), phải nhập kho qua endpoint receive-stock riêng.
+	trackSerial: z.boolean().optional(),
 	variationDetails: z.record(z.string(), z.any()).refine((obj) => Object.keys(obj).length > 0, {
 		message: "Cần ít nhất 1 thuộc tính biến thể (vd: color, size).",
 	}),
@@ -66,7 +69,12 @@ export const FeaturedProductsQuerySchema = z.object({
 export const CreateProductSchema = z.object({
 	body: z.object({
 		name: z.string().min(2, { message: "Tên sản phẩm phải có ít nhất 2 ký tự." }).max(100),
-		slug: z.string().min(2).max(100).regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }).optional(),
+		slug: z
+			.string()
+			.min(2)
+			.max(100)
+			.regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." })
+			.optional(),
 		description: z.string().max(5000).optional(),
 		categoryId: z.number().int().positive().nullable().optional(),
 		isActive: z.boolean().optional(),
@@ -74,6 +82,7 @@ export const CreateProductSchema = z.object({
 		isFeatured: z.boolean().optional(),
 		// URL trả về từ POST /uploads/product-image sau khi admin chọn ảnh thumbnail từ máy
 		thumbnailUrl: z.string().max(500).url({ message: "thumbnailUrl phải là một URL hợp lệ." }).optional(),
+		warrantyPolicyId: z.number().int().positive().nullable().optional(),
 		skus: z.array(SkuInputSchema).optional(),
 	}),
 });
@@ -83,12 +92,18 @@ export const UpdateProductSchema = z.object({
 	body: z
 		.object({
 			name: z.string().min(2, { message: "Tên sản phẩm phải có ít nhất 2 ký tự." }).max(100).optional(),
-			slug: z.string().min(2).max(100).regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }).optional(),
+			slug: z
+				.string()
+				.min(2)
+				.max(100)
+				.regex(slugRegex, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." })
+				.optional(),
 			description: z.string().max(5000).optional(),
 			categoryId: z.number().int().positive().nullable().optional(),
 			isActive: z.boolean().optional(),
 			isFeatured: z.boolean().optional(),
 			thumbnailUrl: z.url({ message: "thumbnailUrl phải là một URL hợp lệ." }).nullable().optional(),
+			warrantyPolicyId: z.number().int().positive().nullable().optional(),
 		})
 		.refine((data) => Object.keys(data).length > 0, { message: "Cần ít nhất 1 trường để cập nhật." }),
 });
@@ -113,6 +128,7 @@ export const UpdateSkuSchema = z.object({
 			price: SkuInputSchema.shape.price.optional(),
 			oldPrice: SkuInputSchema.shape.oldPrice.optional(),
 			stockQuantity: SkuInputSchema.shape.stockQuantity,
+			trackSerial: SkuInputSchema.shape.trackSerial,
 			variationDetails: SkuInputSchema.shape.variationDetails.optional(),
 			weightGram: SkuInputSchema.shape.weightGram,
 			lengthCm: SkuInputSchema.shape.lengthCm,
@@ -133,13 +149,28 @@ export const UpdateStockSchema = z.object({
 	}),
 });
 
+// Nhập kho theo serial — CHỈ dùng cho SKU có trackSerial = true (xem product-inventory.service.ts)
+export const ReceiveStockSchema = z.object({
+	params: z.object({ id: numericIdString, skuId: numericIdString }),
+	body: z.object({
+		serialNumbers: z
+			.array(z.string().min(1).max(100))
+			.min(1, { message: "Cần ít nhất 1 số serial." })
+			.max(500, { message: "Mỗi lần nhập kho tối đa 500 serial, vui lòng chia nhỏ." }),
+	}),
+});
+
 // ==========================================
 // Admin - Product SKU Images (ảnh theo từng biến thể)
 // ==========================================
 export const CreateSkuImageSchema = z.object({
 	params: z.object({ id: numericIdString, skuId: numericIdString }),
 	body: z.object({
-		imageUrl: z.string().min(1, { message: "imageUrl không được để trống." }).max(500).url({ message: "imageUrl phải là một URL hợp lệ." }),
+		imageUrl: z
+			.string()
+			.min(1, { message: "imageUrl không được để trống." })
+			.max(500)
+			.url({ message: "imageUrl phải là một URL hợp lệ." }),
 		altText: z.string().max(255).optional(),
 		isPrimary: z.boolean().optional(),
 		sortOrder: z.number().int().min(0).optional(),
@@ -161,3 +192,9 @@ export const UpdateSkuImageSchema = z.object({
 export const SkuImageParamSchema = z.object({
 	params: z.object({ id: numericIdString, skuId: numericIdString, imageId: numericIdString }),
 });
+
+export type SkuInput = z.TypeOf<typeof SkuInputSchema>;
+export type UpdateSkuInput = z.TypeOf<typeof UpdateSkuSchema>["body"];
+export type CreateProductInput = z.TypeOf<typeof CreateProductSchema>["body"];
+export type UpdateProductInput = z.TypeOf<typeof UpdateProductSchema>["body"];
+export type ListProductsParams = z.TypeOf<typeof ListProductsQuerySchema>["query"];

@@ -9,7 +9,16 @@ import { NotificationType } from "../../generated/prisma/index.js";
 // ==========================================
 export const NotificationPayloadSchema = z.object({
 	userId: z.number().int().positive(),
-	type: z.enum([NotificationType.order, NotificationType.payment, NotificationType.promotion, NotificationType.stock, NotificationType.system, NotificationType.review, NotificationType.contact]),
+	type: z.enum([
+		NotificationType.order,
+		NotificationType.payment,
+		NotificationType.promotion,
+		NotificationType.stock,
+		NotificationType.system,
+		NotificationType.review,
+		NotificationType.contact,
+		NotificationType.warranty,
+	]),
 	title: z.string().min(1).max(255),
 	message: z.string().min(1),
 	actionUrl: z.string().max(255).optional(),
@@ -26,7 +35,15 @@ export const ListOwnNotificationsQuerySchema = z.object({
 		limit: z.string().regex(/^\d+$/).optional(),
 		isRead: z.enum(["true", "false"]).optional(),
 		type: z
-			.enum([NotificationType.order, NotificationType.payment, NotificationType.promotion, NotificationType.stock, NotificationType.system, NotificationType.review, NotificationType.contact])
+			.enum([
+				NotificationType.order,
+				NotificationType.payment,
+				NotificationType.promotion,
+				NotificationType.stock,
+				NotificationType.system,
+				NotificationType.review,
+				NotificationType.contact,
+			])
 			.optional(),
 	}),
 });
@@ -41,7 +58,9 @@ export const NotificationIdParamSchema = z.object({
 // ==========================================
 export const BroadcastNotificationSchema = z.object({
 	body: z.object({
-		type: z.enum([NotificationType.promotion, NotificationType.system], { message: "Chỉ hỗ trợ broadcast loại 'promotion' hoặc 'system'." }),
+		type: z.enum([NotificationType.promotion, NotificationType.system], {
+			message: "Chỉ hỗ trợ broadcast loại 'promotion' hoặc 'system'.",
+		}),
 		title: z.string().min(1).max(255),
 		message: z.string().min(1),
 		actionUrl: z.string().max(255).optional(),

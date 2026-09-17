@@ -97,6 +97,7 @@ export interface PublicProductDetail {
 	category: PublicCategoryRef | null;
 	skus: PublicProductSku[];
 	reviews: PublicProductReview[];
+	warrantyPolicy: { id: number; name: string } | null;
 	averageRating: number | null;
 	/** Sản phẩm liên quan (ưu tiên cùng danh mục, fallback mới nhất) — đã được backend tính sẵn. */
 	related: PublicProductListItem[];

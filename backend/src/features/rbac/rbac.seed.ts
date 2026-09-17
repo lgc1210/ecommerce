@@ -46,21 +46,9 @@ export const permissionSeed = async () => {
 		"update",
 		"Update warehouse stock counts manually without changing pricing details.",
 	);
-	await rbacService.createPermission(
-		"cart",
-		"manage",
-		"Read and write actions on own cart items (Owned data check).",
-	);
-	await rbacService.createPermission(
-		"order",
-		"create",
-		"Place a new order and execute checkout (Customer action).",
-	);
-	await rbacService.createPermission(
-		"order",
-		"read",
-		"View personal order logs. Staff can view all customer orders.",
-	);
+	await rbacService.createPermission("cart", "manage", "Read and write actions on own cart items (Owned data check).");
+	await rbacService.createPermission("order", "create", "Place a new order and execute checkout (Customer action).");
+	await rbacService.createPermission("order", "read", "View personal order logs. Staff can view all customer orders.");
 	await rbacService.createPermission(
 		"order",
 		"update",
@@ -71,11 +59,7 @@ export const permissionSeed = async () => {
 		"manage",
 		"Generate promotional campaign codes, modify values, or expire codes.",
 	);
-	await rbacService.createPermission(
-		"review",
-		"create",
-		"Submit product ratings and feedback logs (Customer action).",
-	);
+	await rbacService.createPermission("review", "create", "Submit product ratings and feedback logs (Customer action).");
 	await rbacService.createPermission(
 		"review",
 		"update",
@@ -86,11 +70,7 @@ export const permissionSeed = async () => {
 		"manage",
 		"View, update status, or delete customer contact/support submissions.",
 	);
-	await rbacService.createPermission(
-		"contact",
-		"create",
-		"Submit contact information (Customer action).",
-	);
+	await rbacService.createPermission("contact", "create", "Submit contact information (Customer action).");
 	await rbacService.createPermission(
 		"payment",
 		"read",
@@ -111,11 +91,7 @@ export const permissionSeed = async () => {
 		"broadcast",
 		"Send system/promotion notifications to one or more users (Admin/Manager).",
 	);
-	await rbacService.createPermission(
-		"transport",
-		"manage",
-		"Managing GHN transport services.",
-	);
+	await rbacService.createPermission("transport", "manage", "Managing GHN transport services.");
 	await rbacService.createPermission(
 		"conversation",
 		"manage",
@@ -125,6 +101,21 @@ export const permissionSeed = async () => {
 		"conversation",
 		"create",
 		"Tạo/gửi tin nhắn trong hội thoại hỗ trợ của chính mình.",
+	);
+	await rbacService.createPermission(
+		"warranty_policy",
+		"manage",
+		"Create, update, or delete warranty policies and assign them to products.",
+	);
+	await rbacService.createPermission(
+		"warranty_claim",
+		"create",
+		"Tạo yêu cầu bảo hành cho sản phẩm chính mình đã mua.",
+	);
+	await rbacService.createPermission(
+		"warranty_claim",
+		"manage",
+		"Xem, duyệt/từ chối, cập nhật trạng thái các yêu cầu bảo hành của khách.",
 	);
 	console.log("Seeding: Permissions created successfully");
 };
@@ -146,6 +137,8 @@ const managerPermissionKeys = [
 	"dashboard:read",
 	"notification:broadcast",
 	"conversation:manage",
+	"warranty_policy:manage",
+	"warranty_claim:manage",
 ];
 
 const customerPermissionKeys = [
@@ -157,6 +150,7 @@ const customerPermissionKeys = [
 	"contact:create",
 	"payment:read",
 	"conversation:create",
+	"warranty_claim:create",
 ];
 
 /**
@@ -168,20 +162,13 @@ export const rolePermissionSeed = async () => {
 	const existingLinks = await prisma.rolePermission.count();
 	if (existingLinks > 0) return;
 
-	const [roles, permissions] = await Promise.all([
-		prisma.role.findMany(),
-		prisma.permission.findMany(),
-	]);
+	const [roles, permissions] = await Promise.all([prisma.role.findMany(), prisma.permission.findMany()]);
 
 	const roleIdByName = new Map(roles.map((r) => [r.name, r.id]));
-	const permissionIdByKey = new Map(
-		permissions.map((p) => [`${p.resource}:${p.name}`, p.id]),
-	);
+	const permissionIdByKey = new Map(permissions.map((p) => [`${p.resource}:${p.name}`, p.id]));
 
 	const resolveIds = (keys: string[]) =>
-		keys
-			.map((key) => permissionIdByKey.get(key))
-			.filter((id): id is number => id !== undefined);
+		keys.map((key) => permissionIdByKey.get(key)).filter((id): id is number => id !== undefined);
 
 	const rolePermissionMap: Record<string, number[]> = {
 		admin: permissions.map((p) => p.id),

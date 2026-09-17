@@ -1,7 +1,11 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
 import type { OrderStatus } from "../../generated/prisma/index.js";
-import type { BroadcastNotificationInput, ListOwnNotificationsParams, NotificationPayload } from "./notification.validation.js";
+import type {
+	BroadcastNotificationInput,
+	ListOwnNotificationsParams,
+	NotificationPayload,
+} from "./notification.validation.js";
 import { activeChannels } from "./channels/channel.registry.js";
 import {
 	buildOrderPlacedNotification,
@@ -16,6 +20,8 @@ import {
 	buildAdminNewReviewContent,
 	buildAdminSystemAlertContent,
 	buildAdminNewContactContent,
+	buildAdminNewWarrantyClaimContent,
+	buildWarrantyClaimStatusChangedNotification,
 } from "./notification.utils.js";
 
 /** Số user xử lý mỗi vòng lặp khi broadcast — vừa đủ nhỏ để 1 câu INSERT không phình to bất thường, vừa đủ lớn để không tốn quá nhiều round-trip DB. */
@@ -100,7 +106,12 @@ class NotificationService {
 		await this.dispatch(buildOrderPlacedNotification(userId, orderId, orderNumber));
 	}
 
-	async notifyOrderStatusChanged(userId: number, orderId: number, orderNumber: string, status: OrderStatus): Promise<void> {
+	async notifyOrderStatusChanged(
+		userId: number,
+		orderId: number,
+		orderNumber: string,
+		status: OrderStatus,
+	): Promise<void> {
 		await this.dispatch(buildOrderStatusChangedNotification(userId, orderId, orderNumber, status));
 	}
 
@@ -137,22 +148,40 @@ class NotificationService {
 	// ==========================================
 	/** "Đơn hàng mới" — gọi ngay sau khi checkout() tạo đơn thành công. Nhận: ai có quyền xử lý đơn ("order:update"). */
 	async notifyAdminNewOrder(orderId: number, orderNumber: string, totalAmount: number): Promise<void> {
-		await this.notifyAdmins(buildAdminNewOrderContent(orderId, orderNumber, totalAmount), { resource: "order", name: "update" });
+		await this.notifyAdmins(buildAdminNewOrderContent(orderId, orderNumber, totalAmount), {
+			resource: "order",
+			name: "update",
+		});
 	}
 
 	/** "Tồn kho thấp" — gọi khi 1 SKU giảm xuống bằng/dưới LOW_STOCK_THRESHOLD. Nhận: ai quản lý kho ("inventory:update"). */
-	async notifyAdminLowStock(skuId: number, skuLabel: string, productId: number, productName: string, stockQuantity: number): Promise<void> {
-		await this.notifyAdmins(buildAdminLowStockContent(skuId, skuLabel, productId, productName, stockQuantity), { resource: "inventory", name: "update" });
+	async notifyAdminLowStock(
+		skuId: number,
+		skuLabel: string,
+		productId: number,
+		productName: string,
+		stockQuantity: number,
+	): Promise<void> {
+		await this.notifyAdmins(buildAdminLowStockContent(skuId, skuLabel, productId, productName, stockQuantity), {
+			resource: "inventory",
+			name: "update",
+		});
 	}
 
 	/** "Thanh toán lỗi" — gọi khi 1 giao dịch chuyển sang trạng thái "failed". Nhận: ai xem được thanh toán ("payment:read"). */
 	async notifyAdminPaymentFailed(orderId: number, orderNumber: string): Promise<void> {
-		await this.notifyAdmins(buildAdminPaymentFailedContent(orderId, orderNumber), { resource: "payment", name: "read" });
+		await this.notifyAdmins(buildAdminPaymentFailedContent(orderId, orderNumber), {
+			resource: "payment",
+			name: "read",
+		});
 	}
 
 	/** "Khách hàng đánh giá" — gọi ngay sau khi khách tạo 1 đánh giá mới. Nhận: ai kiểm duyệt đánh giá ("review:update"). */
 	async notifyAdminNewReview(reviewId: number, productName: string, rating: number): Promise<void> {
-		await this.notifyAdmins(buildAdminNewReviewContent(reviewId, productName, rating), { resource: "review", name: "update" });
+		await this.notifyAdmins(buildAdminNewReviewContent(reviewId, productName, rating), {
+			resource: "review",
+			name: "update",
+		});
 	}
 
 	/**
@@ -167,7 +196,28 @@ class NotificationService {
 
 	/** "Liên hệ mới" — gọi ngay sau khi có người gửi form liên hệ. Nhận: ai xử lý liên hệ ("contact:manage" — KHÔNG phải "contact:create", đó là quyền của customer). */
 	async notifyAdminNewContact(contactId: number, name: string, subject?: string | null): Promise<void> {
-		await this.notifyAdmins(buildAdminNewContactContent(contactId, name, subject), { resource: "contact", name: "manage" });
+		await this.notifyAdmins(buildAdminNewContactContent(contactId, name, subject), {
+			resource: "contact",
+			name: "manage",
+		});
+	}
+
+	/** "Yêu cầu bảo hành mới" — gọi ngay sau khi khách gửi claim thành công. */
+	async notifyAdminNewWarrantyClaim(claimId: number, claimNumber: string, productName: string): Promise<void> {
+		await this.notifyAdmins(buildAdminNewWarrantyClaimContent(claimId, claimNumber, productName), {
+			resource: "warranty_claim",
+			name: "manage",
+		});
+	}
+
+	/** Gửi cho khách khi staff đổi trạng thái claim (Phase 3). */
+	async notifyWarrantyClaimStatusChanged(
+		userId: number,
+		claimId: number,
+		claimNumber: string,
+		statusText: string,
+	): Promise<void> {
+		await this.dispatch(buildWarrantyClaimStatusChangedNotification(userId, claimId, claimNumber, statusText));
 	}
 
 	// ==========================================
@@ -234,7 +284,10 @@ class NotificationService {
 	 * chục nhân viên là cùng) nên KHÔNG cần xử lý theo batch/cursor như broadcastToAllCustomers()
 	 * (dành cho lượng customer có thể lên tới hàng trăm nghìn).
 	 */
-	private async notifyAdmins(content: Omit<NotificationPayload, "userId">, permission: { resource: string; name: string }): Promise<void> {
+	private async notifyAdmins(
+		content: Omit<NotificationPayload, "userId">,
+		permission: { resource: string; name: string },
+	): Promise<void> {
 		const recipientIds = await this.getUserIdsWithPermission(permission.resource, permission.name);
 		if (recipientIds.length === 0) return;
 

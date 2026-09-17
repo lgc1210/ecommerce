@@ -79,6 +79,7 @@ enum NotificationType {
   system
   review
   contact
+  warranty
 }
 
 enum DurationUnit {
@@ -90,6 +91,30 @@ enum DurationUnit {
 enum WarrantyProviderType {
   manufacturer // Bảo hành từ nhà sản xuất
   store        // Bảo hành từ cửa hàng
+}
+
+enum WarrantyClaimStatus {
+  pending      // Chờ xử lý
+  approved     // Đã duyệt yêu cầu
+  rejected     // Từ chối (hết hạn, không đủ điều kiện...)
+  in_repair    // Đang sửa chữa/đổi mới
+  completed    // Hoàn tất
+  cancelled    // Khách tự huỷ yêu cầu
+}
+
+enum WarrantyResolutionType {
+  repaired       // Đã sửa chữa
+  replaced       // Đổi sản phẩm/linh kiện mới
+  refunded       // Hoàn tiền
+  no_fault_found // Kiểm tra không phát hiện lỗi
+  rejected       // Từ chối bảo hành
+}
+
+enum ProductUnitStatus {
+  in_stock  // Đang trong kho, chưa bán
+  sold      // Đã bán, gắn với 1 OrderItem
+  returned  // Bị khách trả lại
+  defective // Lỗi, không bán được (loại khỏi kho khả dụng)
 }
 
 enum ConversationStatus {
@@ -176,6 +201,9 @@ model User {
   messages                     Message[]
   conversationsAsCustomer      Conversation[] @relation("ConversationAsCustomer")
   conversationsAsAssignedStaff Conversation[] @relation("ConversationAsAssignedStaff")
+  warrantyClaimsAsCustomer     WarrantyClaim[] @relation("WarrantyClaimsAsCustomer")
+  warrantyClaimsAsStaff        WarrantyClaim[] @relation("WarrantyClaimsAsStaff")
+  warrantyClaimStatusLogs      WarrantyClaimStatusLog[]
 
   @@index([provider, providerId])
   @@map("users")
@@ -279,6 +307,11 @@ model ProductSku {
   price            Decimal     @db.Decimal(14, 2)
   oldPrice         Decimal?     @db.Decimal(14, 2) @map("old_price")
   stockQuantity    Int         @default(0) @map("stock_quantity")
+  // true = tồn kho của SKU này được quản lý theo ProductUnit (từng serial vật lý riêng biệt),
+  // stockQuantity lúc đó chỉ là cache đồng bộ 1 chiều từ ProductUnit, KHÔNG được sửa trực tiếp
+  // (xem product-inventory.service.ts). false (mặc định) = stockQuantity vẫn là nguồn sự thật
+  // duy nhất như trước đây, không có dòng ProductUnit nào cho SKU này (approach 3).
+  trackSerial      Boolean     @default(false) @map("track_serial")
   variationDetails Json        @map("variation_details")
   // Kích thước & khối lượng vật lý của CHÍNH biến thể này — dùng để tính phí vận chuyển thật
   // (GHN) theo từng đơn hàng thay vì 1 giá trị mặc định cấu hình cứng ở .env. Có default hợp lý
@@ -295,6 +328,7 @@ model ProductSku {
   cartItems        CartItem[]
   orderItems       OrderItem[]
   images           ProductImage[]
+  units            ProductUnit[] // Chỉ có dữ liệu nếu SKU này thuộc diện quản lý serial (xem ProductUnit)
 
   @@map("product_sku")
 }
@@ -434,6 +468,8 @@ model OrderItem {
   order             Order       @relation(fields: [orderId], references: [id])
   productSku        ProductSku? @relation(fields: [productSkuId], references: [id])
   review            Review?     // Review chứng minh user đã mua sản phẩm này trước khi được phép đánh giá
+  productUnits      ProductUnit[]   // Đơn vị vật lý cụ thể đã xuất kho cho dòng đơn hàng này (nếu SKU có track serial)
+  warrantyClaims    WarrantyClaim[]
 
   @@map("order_items")
 }
@@ -642,11 +678,113 @@ model WarrantyPolicy {
   durationUnit  DurationUnit         @map("duration_unit") // Đơn vị đi kèm duration_value (vd: month)
   warrantyType  WarrantyProviderType @map("warranty_type") // Bên chịu trách nhiệm bảo hành
 
+  // Giai đoạn "đổi mới 1 đổi 1" nếu lỗi do NSX, nằm trong phần đầu của durationValue/durationUnit ở trên.
+  // NULL = không áp dụng đổi mới, toàn bộ thời hạn chỉ có sửa chữa.
+  exchangePeriodValue Int?          @map("exchange_period_value")
+  exchangePeriodUnit  DurationUnit? @map("exchange_period_unit")
+
   description   String?              @db.Text
   createdAt     DateTime?            @default(now()) @map("created_at")
   updatedAt     DateTime?            @updatedAt @map("updated_at")
 
   products      Product[] // Danh sách sản phẩm đang áp dụng chính sách bảo hành này
+  claims        WarrantyClaim[] // Các claim đã snapshot policy này tại thời điểm tạo
 
   @@map("warranty_policies")
+}
+
+// ==========================================
+// 7. SERIALIZED INVENTORY (chỉ áp dụng cho SKU cần track serial)
+// ==========================================
+
+/// Mỗi dòng = 1 đơn vị vật lý cụ thể, có serial riêng — khác với ProductSku (đại diện 1 SKU/biến thể chung).
+/// Chỉ tạo dòng khi hàng thực tế về kho (nhập kho), KHÔNG tạo lúc thêm mới ProductSku.
+/// Chỉ dùng cho SKU thuộc ngành hàng cần track serial (approach 3) — SKU không cần thì chỉ dùng
+/// ProductSku.stockQuantity như bình thường, không có dòng ProductUnit nào.
+model ProductUnit {
+  id           Int               @id @default(autoincrement())
+  productSkuId Int               @map("product_sku_id")
+  serialNumber String            @unique @map("serial_number") @db.VarChar(100)
+  status       ProductUnitStatus @default(in_stock)
+
+  // Gán khi xuất kho bán ra (hệ thống tự chọn 1 đơn vị đang in_stock theo FIFO, không phải khách chọn)
+  orderItemId  Int?              @map("order_item_id")
+
+  createdAt    DateTime?         @default(now()) @map("created_at") // = thời điểm nhập kho
+  updatedAt    DateTime?         @updatedAt @map("updated_at")
+
+  productSku     ProductSku      @relation(fields: [productSkuId], references: [id])
+  orderItem      OrderItem?      @relation(fields: [orderItemId], references: [id])
+  warrantyClaims WarrantyClaim[]
+
+  @@index([productSkuId, status]) // Truy vấn nhanh "còn bao nhiêu đơn vị in_stock của SKU này" lúc bán hàng
+  @@index([orderItemId])
+  @@map("product_units")
+}
+
+// ==========================================
+// 8. WARRANTY CLAIMS
+// ==========================================
+
+/// Yêu cầu bảo hành gắn với 1 OrderItem cụ thể (= 1 sản phẩm/biến thể khách đã mua)
+model WarrantyClaim {
+  id               Int                 @id @default(autoincrement())
+  claimNumber      String              @unique @map("claim_number") @db.VarChar(50) // vd: WR-2026-000123
+
+  orderItemId      Int                 @map("order_item_id")
+  userId           Int                 @map("user_id")
+
+  // Snapshot policy tại thời điểm tạo claim — phòng trường hợp admin sửa/xoá WarrantyPolicy sau này
+  warrantyPolicyId Int?                @map("warranty_policy_id")
+  warrantyStartAt  DateTime            @map("warranty_start_at") // = Order.deliveredAt của order item liên quan
+  warrantyEndAt    DateTime            @map("warranty_end_at")   // startAt + duration của policy tại thời điểm tạo claim
+
+  issueDescription String              @map("issue_description") @db.Text
+  imageUrls        Json?               @map("image_urls") // Ảnh/video minh chứng lỗi khách upload
+
+  // Đơn vị vật lý cụ thể khách đang claim — verify bằng DB: productUnit.orderItemId phải khớp orderItemId ở trên.
+  // Optional vì không phải SKU nào cũng có ProductUnit (xem approach 3 ở ProductUnit).
+  productUnitId    Int?                @map("product_unit_id")
+
+  status           WarrantyClaimStatus     @default(pending)
+  resolutionType   WarrantyResolutionType? @map("resolution_type") // Cách claim được giải quyết — chỉ set khi status = completed/rejected
+  repairFee        Decimal?                @map("repair_fee") @db.Decimal(14, 2) // Phí nếu ngoài điều kiện bảo hành, null nếu miễn phí
+
+  staffNote        String?             @map("staff_note") @db.Text // Ghi chú nội bộ / lý do từ chối
+  handledByUserId  Int?                @map("handled_by_user_id")
+
+  slaDueAt         DateTime?           @map("sla_due_at") // Hạn dự kiến xử lý, tính từ lúc approved
+
+  createdAt        DateTime?           @default(now()) @map("created_at")
+  updatedAt        DateTime?           @updatedAt @map("updated_at")
+  resolvedAt       DateTime?           @map("resolved_at")
+
+  orderItem        OrderItem           @relation(fields: [orderItemId], references: [id])
+  user             User                @relation("WarrantyClaimsAsCustomer", fields: [userId], references: [id])
+  handledBy        User?               @relation("WarrantyClaimsAsStaff", fields: [handledByUserId], references: [id])
+  warrantyPolicy   WarrantyPolicy?     @relation(fields: [warrantyPolicyId], references: [id])
+  productUnit      ProductUnit?        @relation(fields: [productUnitId], references: [id])
+  statusLogs       WarrantyClaimStatusLog[]
+
+  @@index([userId])
+  @@index([orderItemId])
+  @@index([status])
+  @@map("warranty_claims")
+}
+
+/// Lịch sử đổi trạng thái claim — audit trail, theo mẫu ReviewModerationLog
+model WarrantyClaimStatusLog {
+  id              Int                  @id @default(autoincrement())
+  warrantyClaimId Int                  @map("warranty_claim_id")
+  fromStatus      WarrantyClaimStatus? @map("from_status")
+  toStatus        WarrantyClaimStatus  @map("to_status")
+  note            String?              @db.VarChar(255)
+  actionByUserId  Int                  @map("action_by_user_id")
+  createdAt       DateTime?            @default(now()) @map("created_at")
+
+  warrantyClaim   WarrantyClaim        @relation(fields: [warrantyClaimId], references: [id])
+  actionByUser    User                 @relation(fields: [actionByUserId], references: [id])
+
+  @@index([warrantyClaimId])
+  @@map("warranty_claim_status_logs")
 }

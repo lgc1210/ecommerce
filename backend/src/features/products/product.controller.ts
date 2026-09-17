@@ -119,6 +119,17 @@ export const updateSkuStock = async (req: Request, res: Response, next: NextFunc
 	}
 };
 
+export const receiveSkuStock = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	try {
+		const productId = Number(req.params.id);
+		const skuId = Number(req.params.skuId);
+		const result = await productService.receiveSkuStock(productId, skuId, req.body.serialNumbers);
+		res.status(200).json({ message: `Nhập kho thành công ${result.createdCount} serial.`, data: result });
+	} catch (error) {
+		handleServiceError(error, res, next);
+	}
+};
+
 export const deleteSku = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const productId = Number(req.params.id);

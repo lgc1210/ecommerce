@@ -6,6 +6,7 @@ import type {
 	DeleteSkuImagePayload,
 	DeleteSkuPayload,
 	ListProductsParams,
+	ReceiveStockPayload,
 	UpdateProductPayload,
 	UpdateSkuImagePayload,
 	UpdateSkuPayload,
@@ -53,6 +54,9 @@ const productService = {
 		apiClient.patch(`/products/id/${productId}/skus/${skuId}`, payload),
 	updateSkuStock: ({ productId, skuId, stockQuantity }: UpdateSkuStockPayload) =>
 		apiClient.patch(`/products/id/${productId}/skus/${skuId}/stock`, { stockQuantity }),
+	// Nhập kho theo serial — CHỈ dùng cho SKU có trackSerial=true (xem product-inventory.service.ts ở backend)
+	receiveStock: ({ productId, skuId, serialNumbers }: ReceiveStockPayload) =>
+		apiClient.post(`/products/id/${productId}/skus/${skuId}/receive-stock`, { serialNumbers }),
 	deleteSku: ({ productId, skuId }: DeleteSkuPayload) => apiClient.delete(`/products/id/${productId}/skus/${skuId}`),
 
 	// ---- Ảnh theo SKU ----

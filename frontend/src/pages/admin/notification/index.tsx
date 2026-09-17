@@ -104,13 +104,38 @@ const AdminNotificationPage = () => {
 			) : (
 				<form onSubmit={handleSubmit} className='max-w-2xl space-y-5 rounded-2xl border border-border bg-surface p-6'>
 					<div className='grid gap-5 sm:grid-cols-2'>
-						<FormSelect label='Loại thông báo' value={type} onChange={(e) => setType(e.target.value as BroadcastNotificationType)} options={TYPE_OPTIONS} fullWidth />
-						<FormControl label='Đường dẫn khi bấm vào (không bắt buộc)' placeholder='/shop hoặc /product/ao-thun' value={actionUrl} onChange={(e) => setActionUrl(e.target.value)} />
+						<FormSelect
+							label='Loại thông báo'
+							value={type}
+							onChange={(e) => setType(e.target.value as BroadcastNotificationType)}
+							options={TYPE_OPTIONS}
+							fullWidth
+						/>
+						<FormControl
+							label='Đường dẫn khi bấm vào (không bắt buộc)'
+							placeholder='/shop hoặc /product/ao-thun'
+							value={actionUrl}
+							onChange={(e) => setActionUrl(e.target.value)}
+						/>
 					</div>
 
-					<FormControl label='Tiêu đề' placeholder='Vd: Sale cuối tuần lên đến 50%' value={title} onChange={(e) => setTitle(e.target.value)} error={errors.title} />
+					<FormControl
+						label='Tiêu đề'
+						placeholder='Vd: Sale cuối tuần lên đến 50%'
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						error={errors.title}
+					/>
 
-					<FormControl as='textarea' label='Nội dung' placeholder='Nội dung chi tiết của thông báo...' rows={4} value={message} onChange={(e) => setMessage(e.target.value)} error={errors.message} />
+					<FormControl
+						as='textarea'
+						label='Nội dung'
+						placeholder='Nội dung chi tiết của thông báo...'
+						rows={4}
+						value={message}
+						onChange={(e) => setMessage(e.target.value)}
+						error={errors.message}
+					/>
 
 					<div className='flex justify-end border-t border-border pt-5'>
 						<Button type='submit' icon={<BellIcon className='h-4 w-4' />} iconPosition='left'>

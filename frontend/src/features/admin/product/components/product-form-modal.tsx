@@ -6,6 +6,7 @@ import FormCheckbox from "../../../../components/form-checkbox";
 import Button from "../../../../components/button";
 import { useCategoryTreeQuery } from "../../category/hooks";
 import { flattenCategoryTree } from "../../category/utils";
+import { useWarrantyPoliciesQuery } from "../../warranty-policy/hooks";
 import ImageUploadField from "./image-upload-field";
 import type { AdminProductDetail, CreateProductPayload, UpdateProductPayload } from "../types";
 
@@ -36,10 +37,15 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 	const [isActive, setIsActive] = useState(product?.isActive ?? true);
 	const [isFeatured, setIsFeatured] = useState(product?.isFeatured ?? false);
 	const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(product?.thumbnailUrl ?? null);
+	const [warrantyPolicyId, setWarrantyPolicyId] = useState<number | "">(product?.warrantyPolicyId ?? "");
 	const [errors, setErrors] = useState<Errors>({});
 
 	const { data: categoryTree = [] } = useCategoryTreeQuery();
 	const categoryOptions = flattenCategoryTree(categoryTree);
+	// limit=100: đủ dùng cho quy mô shop thông thường (không có endpoint "lấy tất cả" riêng cho
+	// dropdown như category tree — số lượng policy thường ít, không cần lazy-load/tìm kiếm).
+	const { data: warrantyPoliciesData } = useWarrantyPoliciesQuery({ limit: 100 });
+	const warrantyPolicyOptions = warrantyPoliciesData?.data ?? [];
 
 	const validate = () => {
 		const nextErrors: Errors = {};
@@ -66,6 +72,7 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 			categoryId: categoryId === "" ? null : Number(categoryId),
 			isActive,
 			isFeatured,
+			warrantyPolicyId: warrantyPolicyId === "" ? null : Number(warrantyPolicyId),
 			// CreateProductSchema chỉ nhận string|undefined (không nhận null) cho thumbnailUrl, còn
 			// UpdateProductSchema cho phép null để admin chủ động xóa thumbnail đã chọn trước đó.
 			...(isEditing ? { thumbnailUrl } : thumbnailUrl ? { thumbnailUrl } : {}),
@@ -93,7 +100,13 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 					hint='Chỉ chữ thường, số và dấu gạch ngang, vd: "ao-thun-cotton-basic".'
 					error={errors.slug}
 				/>
-				<FormControl as='textarea' label='Mô tả' rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+				<FormControl
+					as='textarea'
+					label='Mô tả'
+					rows={4}
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+				/>
 				<FormSelect
 					label='Danh mục'
 					fullWidth
@@ -102,10 +115,29 @@ const ProductFormModal = ({ product, onClose, onSubmit, isSubmitting }: ProductF
 					placeholder='— Không có danh mục —'
 					options={categoryOptions.map((option) => ({ value: option.id, label: option.label }))}
 				/>
-				<FormCheckbox label='Cho phép hiển thị và bán sản phẩm này ngay' checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-				<FormCheckbox label='Đánh dấu là sản phẩm nổi bật (hiển thị ở carousel trang chủ)' checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
+				<FormCheckbox
+					label='Cho phép hiển thị và bán sản phẩm này ngay'
+					checked={isActive}
+					onChange={(e) => setIsActive(e.target.checked)}
+				/>
+				<FormCheckbox
+					label='Đánh dấu là sản phẩm nổi bật (hiển thị ở carousel trang chủ)'
+					checked={isFeatured}
+					onChange={(e) => setIsFeatured(e.target.checked)}
+				/>
 
-				{isEditing && <p className='text-xs text-muted'>Quản lý biến thể (SKU) và hình ảnh ở trang chi tiết sau khi lưu.</p>}
+				<FormSelect
+					label='Chính sách bảo hành'
+					fullWidth
+					value={warrantyPolicyId}
+					onChange={(e) => setWarrantyPolicyId(e.target.value === "" ? "" : Number(e.target.value))}
+					placeholder='— Không bảo hành —'
+					options={warrantyPolicyOptions.map((policy) => ({ value: policy.id, label: policy.name }))}
+				/>
+
+				{isEditing && (
+					<p className='text-xs text-muted'>Quản lý biến thể (SKU) và hình ảnh ở trang chi tiết sau khi lưu.</p>
+				)}
 
 				<div className='flex justify-end gap-2 pt-2'>
 					<Button type='button' variant='outline' size='sm' onClick={onClose}>

@@ -1,13 +1,37 @@
 import prisma from "../../config/prisma.js";
 import type { Prisma } from "../../generated/prisma/index.js";
 import { computeAverageRating, buildSkuBaseCode } from "./product.utils.js";
+import { receiveSerializedStock } from "./product-inventory.service.js";
 import { parsePagination, slugify } from "../../utils/index.js";
-import type { CreateProductInput, ListProductsParams, SkuInput, UpdateProductInput, UpdateSkuInput } from "./product.type.js";
-import { DEFAULT_SKU_HEIGHT_CM, DEFAULT_SKU_LENGTH_CM, DEFAULT_SKU_WEIGHT_GRAM, DEFAULT_SKU_WIDTH_CM, productSort, type productPriceSortType } from "./product.constant.js";
+import {
+	DEFAULT_SKU_HEIGHT_CM,
+	DEFAULT_SKU_LENGTH_CM,
+	DEFAULT_SKU_WEIGHT_GRAM,
+	DEFAULT_SKU_WIDTH_CM,
+	productSort,
+	type productPriceSortType,
+} from "./product.constant.js";
+import type {
+	CreateProductInput,
+	ListProductsParams,
+	SkuInput,
+	UpdateProductInput,
+	UpdateSkuInput,
+} from "./product.validation.js";
 
 const productListInclude = {
 	category: { select: { id: true, name: true, slug: true } },
-	skus: { select: { id: true, sku: true, price: true, oldPrice: true, stockQuantity: true, variationDetails: true } },
+	skus: {
+		select: {
+			id: true,
+			sku: true,
+			price: true,
+			oldPrice: true,
+			stockQuantity: true,
+			trackSerial: true,
+			variationDetails: true,
+		},
+	},
 	_count: { select: { reviews: true } },
 	// Ảnh đại diện lấy từ cột `thumbnailUrl` (denormalized, tự đồng bộ khi ảnh SKU thay đổi) -> không cần join images ở đây
 };
@@ -17,6 +41,7 @@ const RELATED_PRODUCTS_LIMIT = 8;
 
 const productDetailInclude = {
 	category: { select: { id: true, name: true, slug: true } },
+	warrantyPolicy: { select: { id: true, name: true } },
 	skus: {
 		include: {
 			images: { orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }] },
@@ -139,6 +164,16 @@ class ProductService {
 		if (data.categoryId) {
 			await this.assertCategoryExists(data.categoryId);
 		}
+		const warrantyPolicyId = (data as CreateProductInput & { warrantyPolicyId?: number | null }).warrantyPolicyId;
+		if (warrantyPolicyId) {
+			const policyExists = await prisma.warrantyPolicy.findUnique({
+				where: { id: warrantyPolicyId },
+				select: { id: true },
+			});
+			if (!policyExists) {
+				throw new Error("NotFound: Chính sách bảo hành không tồn tại.");
+			}
+		}
 
 		const providedSkuCodes = (data.skus ?? []).map((s) => s.sku).filter((code): code is string => !!code);
 		if (providedSkuCodes.length > 0) {
@@ -158,6 +193,7 @@ class ProductService {
 			// giá trị này sẽ bị syncProductThumbnail() ghi đè ngay khi SKU đầu tiên có ảnh được
 			// thêm vào — xem addSkuImage/updateSkuImage/deleteSkuImage bên dưới.
 			thumbnailUrl: data.thumbnailUrl ?? null,
+			warrantyPolicyId: warrantyPolicyId ?? null,
 		};
 
 		if (data.skus && data.skus.length > 0) {
@@ -165,11 +201,15 @@ class ProductService {
 			const reservedCodes = new Set<string>(providedSkuCodes);
 			const resolvedSkus = [];
 			for (const s of data.skus) {
-				const sku = s.sku ?? (await this.resolveUniqueSkuCode(buildSkuBaseCode(data.name, s.variationDetails), reservedCodes));
+				const sku =
+					s.sku ?? (await this.resolveUniqueSkuCode(buildSkuBaseCode(data.name, s.variationDetails), reservedCodes));
+				const trackSerial = s.trackSerial ?? false;
 				resolvedSkus.push({
 					sku,
 					price: s.price,
-					stockQuantity: s.stockQuantity ?? 0,
+					// SKU trackSerial luôn khởi tạo tồn kho = 0 — xem lý do ở createSku() bên dưới.
+					stockQuantity: trackSerial ? 0 : (s.stockQuantity ?? 0),
+					trackSerial,
 					variationDetails: s.variationDetails as Prisma.InputJsonValue,
 					weightGram: s.weightGram ?? DEFAULT_SKU_WEIGHT_GRAM,
 					lengthCm: s.lengthCm ?? DEFAULT_SKU_LENGTH_CM,
@@ -200,6 +240,20 @@ class ProductService {
 		if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
 		// Cũng có thể bị syncProductThumbnail() ghi đè sau đó nếu ảnh biến thể thay đổi (xem createProduct).
 		if (data.thumbnailUrl !== undefined) updateData.thumbnailUrl = data.thumbnailUrl;
+
+		const warrantyPolicyId = (data as UpdateProductInput & { warrantyPolicyId?: number | null }).warrantyPolicyId;
+		if (warrantyPolicyId !== undefined) {
+			if (warrantyPolicyId !== null) {
+				const policyExists = await prisma.warrantyPolicy.findUnique({
+					where: { id: warrantyPolicyId },
+					select: { id: true },
+				});
+				if (!policyExists) {
+					throw new Error("NotFound: Chính sách bảo hành không tồn tại.");
+				}
+			}
+			updateData.warrantyPolicyId = warrantyPolicyId;
+		}
 
 		if (data.slug !== undefined && data.slug !== existing.slug) {
 			const slugOwner = await prisma.product.findUnique({ where: { slug: data.slug } });
@@ -233,12 +287,16 @@ class ProductService {
 		}
 
 		if (product._count.reviews > 0) {
-			throw new Error("Conflict: Không thể xóa sản phẩm vì đã có đánh giá. Hãy vô hiệu hóa (isActive=false) thay vì xóa.");
+			throw new Error(
+				"Conflict: Không thể xóa sản phẩm vì đã có đánh giá. Hãy vô hiệu hóa (isActive=false) thay vì xóa.",
+			);
 		}
 
 		const hasReferencedSku = product.skus.some((s) => s._count.cartItems > 0 || s._count.orderItems > 0);
 		if (hasReferencedSku) {
-			throw new Error("Conflict: Không thể xóa sản phẩm vì có biến thể đang nằm trong giỏ hàng hoặc đơn hàng. Hãy vô hiệu hóa thay vì xóa.");
+			throw new Error(
+				"Conflict: Không thể xóa sản phẩm vì có biến thể đang nằm trong giỏ hàng hoặc đơn hàng. Hãy vô hiệu hóa thay vì xóa.",
+			);
 		}
 
 		await prisma.$transaction([
@@ -262,13 +320,18 @@ class ProductService {
 			sku = await this.resolveUniqueSkuCode(buildSkuBaseCode(product.name, data.variationDetails), new Set());
 		}
 
+		const trackSerial = data.trackSerial ?? false;
+
 		return prisma.productSku.create({
 			data: {
 				productId,
 				sku,
 				price: data.price,
 				oldPrice: data.oldPrice ?? null,
-				stockQuantity: data.stockQuantity ?? 0,
+				// SKU trackSerial luôn khởi tạo tồn kho = 0, bất kể client gửi gì — chưa có serial thật
+				// nào được ghi nhận tại thời điểm tạo SKU, phải nhập kho qua receiveSkuStock() sau đó.
+				stockQuantity: trackSerial ? 0 : (data.stockQuantity ?? 0),
+				trackSerial,
 				variationDetails: data.variationDetails as Prisma.InputJsonValue,
 				weightGram: data.weightGram ?? DEFAULT_SKU_WEIGHT_GRAM,
 				lengthCm: data.lengthCm ?? DEFAULT_SKU_LENGTH_CM,
@@ -281,11 +344,30 @@ class ProductService {
 	async updateSku(productId: number, skuId: number, data: UpdateSkuInput) {
 		const existing = await this.assertSkuBelongsToProduct(productId, skuId);
 
+		// SKU đã trackSerial (hoặc vừa được bật trackSerial ở chính request này) thì không cho sửa
+		// thẳng stockQuantity qua đây — phải đi qua receiveSkuStock() (nhập kho kèm serial) để
+		// ProductUnit không bị lệch khỏi con số cache này.
+		const resultingTrackSerial = data.trackSerial ?? existing.trackSerial;
+		if (data.stockQuantity !== undefined && resultingTrackSerial) {
+			throw new Error(
+				"BadRequest: Biến thể này quản lý tồn kho theo serial, không thể sửa trực tiếp số lượng. Hãy dùng chức năng nhập kho theo serial.",
+			);
+		}
+
+		// BUG FIX: nếu request này BẬT trackSerial (false -> true) mà không đụng tới stockQuantity,
+		// con số stockQuantity CŨ (từ lúc còn là SKU thường) sẽ bị bỏ lại — không có ProductUnit
+		// nào đứng sau nó, lệch dữ liệu ngay từ giây phút bật lên. Reset về 0 giống hệt lúc tạo mới
+		// SKU trackSerial (xem createSku) — admin phải nhập kho lại qua receiveSkuStock() sau đó.
+		const isEnablingTrackSerial = data.trackSerial === true && !existing.trackSerial;
+
 		const updateData: Record<string, unknown> = {};
 		if (data.price !== undefined) updateData.price = data.price;
 		if (data.oldPrice !== undefined) updateData.oldPrice = data.oldPrice;
 		if (data.stockQuantity !== undefined) updateData.stockQuantity = data.stockQuantity;
-		if (data.variationDetails !== undefined) updateData.variationDetails = data.variationDetails as Prisma.InputJsonValue;
+		if (isEnablingTrackSerial) updateData.stockQuantity = 0;
+		if (data.trackSerial !== undefined) updateData.trackSerial = data.trackSerial;
+		if (data.variationDetails !== undefined)
+			updateData.variationDetails = data.variationDetails as Prisma.InputJsonValue;
 		if (data.weightGram !== undefined) updateData.weightGram = data.weightGram;
 		if (data.lengthCm !== undefined) updateData.lengthCm = data.lengthCm;
 		if (data.widthCm !== undefined) updateData.widthCm = data.widthCm;
@@ -300,8 +382,19 @@ class ProductService {
 	}
 
 	async updateSkuStock(productId: number, skuId: number, stockQuantity: number) {
-		await this.assertSkuBelongsToProduct(productId, skuId);
+		const existing = await this.assertSkuBelongsToProduct(productId, skuId);
+		if (existing.trackSerial) {
+			throw new Error(
+				"BadRequest: Biến thể này quản lý tồn kho theo serial, không thể sửa trực tiếp số lượng. Hãy dùng chức năng nhập kho theo serial.",
+			);
+		}
 		return prisma.productSku.update({ where: { id: skuId }, data: { stockQuantity } });
+	}
+
+	/** Nhập kho theo serial cho SKU có trackSerial = true — xem product-inventory.service.ts */
+	async receiveSkuStock(productId: number, skuId: number, serialNumbers: string[]) {
+		await this.assertSkuBelongsToProduct(productId, skuId);
+		return receiveSerializedStock(skuId, serialNumbers);
 	}
 
 	async deleteSku(productId: number, skuId: number) {
@@ -327,7 +420,11 @@ class ProductService {
 	// Admin - Product SKU Images (ảnh theo từng biến thể)
 	// ==========================================
 	/** Thêm ảnh cho 1 SKU. Ảnh đầu tiên của SKU đó luôn tự động là ảnh đại diện (isPrimary), bất kể input truyền vào. */
-	async addSkuImage(productId: number, skuId: number, data: { imageUrl: string; altText?: string; isPrimary?: boolean; sortOrder?: number }) {
+	async addSkuImage(
+		productId: number,
+		skuId: number,
+		data: { imageUrl: string; altText?: string; isPrimary?: boolean; sortOrder?: number },
+	) {
 		await this.assertSkuBelongsToProduct(productId, skuId);
 
 		const existingCount = await prisma.productImage.count({ where: { productSkuId: skuId } });
@@ -356,7 +453,12 @@ class ProductService {
 		});
 	}
 
-	async updateSkuImage(productId: number, skuId: number, imageId: number, data: { imageUrl?: string; altText?: string | null; isPrimary?: boolean; sortOrder?: number }) {
+	async updateSkuImage(
+		productId: number,
+		skuId: number,
+		imageId: number,
+		data: { imageUrl?: string; altText?: string | null; isPrimary?: boolean; sortOrder?: number },
+	) {
 		await this.assertImageBelongsToSku(skuId, imageId);
 		await this.assertSkuBelongsToProduct(productId, skuId);
 
@@ -447,7 +549,12 @@ class ProductService {
 	 * listProducts). Sản phẩm chưa có SKU nào (không có giá) luôn bị xếp CUỐI, bất kể tăng/giảm dần,
 	 * vì không có gì để so sánh.
 	 */
-	private async resolvePriceSortedProducts(where: Record<string, unknown>, sort: productPriceSortType, skip: number, take: number) {
+	private async resolvePriceSortedProducts(
+		where: Record<string, unknown>,
+		sort: productPriceSortType,
+		skip: number,
+		take: number,
+	) {
 		const candidates = await prisma.product.findMany({ where, select: { id: true } });
 		const candidateIds = candidates.map((product) => product.id);
 		if (candidateIds.length === 0) return [];
@@ -457,7 +564,11 @@ class ProductService {
 			where: { productId: { in: candidateIds } },
 			_min: { price: true },
 		});
-		const minPriceById = new Map(priceGroups.filter((group): group is typeof group & { productId: number } => group.productId !== null).map((group) => [group.productId, Number(group._min.price)]));
+		const minPriceById = new Map(
+			priceGroups
+				.filter((group): group is typeof group & { productId: number } => group.productId !== null)
+				.map((group) => [group.productId, Number(group._min.price)]),
+		);
 
 		const direction = sort === productSort.price_asc ? 1 : -1;
 		const sortedIds = [...candidateIds].sort((a, b) => {

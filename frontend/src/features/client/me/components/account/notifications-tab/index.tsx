@@ -5,7 +5,13 @@ import Pagination from "../../../../../../components/pagination";
 import Button from "../../../../../../components/button";
 import Popup from "../../../../../../components/popup";
 import { formatDate } from "../../../../../../utils";
-import { useDeleteAllReadNotifications, useDeleteNotification, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../../notification/hooks";
+import {
+	useDeleteAllReadNotifications,
+	useDeleteNotification,
+	useMarkAllNotificationsAsRead,
+	useMarkNotificationAsRead,
+	useMyNotificationsQuery,
+} from "../../../../notification/hooks";
 import { resolveNotificationLink } from "../../../../notification/utils";
 import NotificationsTabSkeleton from "./skeleton";
 import { NOTIFICATION_TYPE_ICON, NOTIFICATION_TYPE_LABEL } from "../../../../../../shared/constants/notification";
@@ -58,7 +64,13 @@ const NotificationsTab = () => {
 			{(unreadCount > 0 || readCount > 0) && (
 				<div className='flex flex-wrap justify-end gap-2'>
 					{unreadCount > 0 && (
-						<Button variant='outline' size='sm' icon={<CheckIcon className='h-4 w-4' />} iconPosition='left' onClick={() => markAllAsReadMutation.mutate()} disabled={markAllAsReadMutation.isPending}>
+						<Button
+							variant='outline'
+							size='sm'
+							icon={<CheckIcon className='h-4 w-4' />}
+							iconPosition='left'
+							onClick={() => markAllAsReadMutation.mutate()}
+							disabled={markAllAsReadMutation.isPending}>
 							Đánh dấu tất cả đã đọc
 						</Button>
 					)}
@@ -80,7 +92,9 @@ const NotificationsTab = () => {
 				{notifications.map((notification) => {
 					const Icon = NOTIFICATION_TYPE_ICON[notification.type];
 					return (
-						<div key={notification.id} className={`flex items-start gap-3 rounded-2xl border p-5 ${notification.isRead ? "border-border bg-surface" : "border-primary-light bg-primary-light/30"}`}>
+						<div
+							key={notification.id}
+							className={`flex items-start gap-3 rounded-2xl border p-5 ${notification.isRead ? "border-border bg-surface" : "border-primary-light bg-primary-light/30"}`}>
 							<span className='mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream-soft text-ink/70'>
 								<Icon className='h-4.5 w-4.5' />
 							</span>
@@ -93,7 +107,9 @@ const NotificationsTab = () => {
 											{NOTIFICATION_TYPE_LABEL[notification.type]} · {formatDate(notification.createdAt)}
 										</p>
 									</div>
-									{!notification.isRead && <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white'>Mới</span>}
+									{!notification.isRead && (
+										<span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white'>Mới</span>
+									)}
 								</div>
 
 								<p className='mt-2 text-sm text-ink/80'>{notification.message}</p>
@@ -137,7 +153,9 @@ const NotificationsTab = () => {
 				})}
 			</div>
 
-			{data && <Pagination total={data.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoading} />}
+			{data && (
+				<Pagination total={data.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoading} />
+			)}
 
 			{confirmingDeleteAllRead && (
 				<Popup
@@ -146,7 +164,9 @@ const NotificationsTab = () => {
 					variant='danger'
 					confirmLabel='Xóa tất cả'
 					isConfirming={deleteAllReadMutation.isPending}
-					onConfirm={() => deleteAllReadMutation.mutate(undefined, { onSuccess: () => setConfirmingDeleteAllRead(false) })}
+					onConfirm={() =>
+						deleteAllReadMutation.mutate(undefined, { onSuccess: () => setConfirmingDeleteAllRead(false) })
+					}
 					onClose={() => setConfirmingDeleteAllRead(false)}
 				/>
 			)}

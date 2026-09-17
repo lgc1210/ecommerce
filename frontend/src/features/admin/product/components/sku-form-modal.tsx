@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from "react";
 import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
+import FormCheckbox from "../../../../components/form-checkbox";
 import Button from "../../../../components/button";
 import { PlusIcon, TrashIcon } from "../../../../components/icons";
 import type { ProductSku, SkuPayload, VariationDetails } from "../types";
@@ -41,6 +42,7 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 	const [price, setPrice] = useState(sku ? String(Number(sku.price)) : "");
 	const [oldPrice, setOldPrice] = useState(sku?.oldPrice ? String(Number(sku.oldPrice)) : "");
 	const [stockQuantity, setStockQuantity] = useState(sku ? String(sku.stockQuantity) : "0");
+	const [trackSerial, setTrackSerial] = useState(sku?.trackSerial ?? false);
 	const [rows, setRows] = useState<VariationRow[]>(toRows(sku?.variationDetails));
 	const [weightGram, setWeightGram] = useState(sku ? String(sku.weightGram) : DEFAULT_WEIGHT_GRAM);
 	const [lengthCm, setLengthCm] = useState(sku ? String(sku.lengthCm) : DEFAULT_DIMENSION_CM);
@@ -73,7 +75,7 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 				nextErrors.oldPrice = "Giá cũ phải lớn hơn giá bán hiện tại.";
 			}
 		}
-		if (stockQuantity.trim() && Number(stockQuantity) < 0) {
+		if (!trackSerial && stockQuantity.trim() && Number(stockQuantity) < 0) {
 			nextErrors.stockQuantity = "Tồn kho không được âm.";
 		}
 		if (!weightGram.trim() || Number(weightGram) <= 0) {
@@ -111,7 +113,10 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 			...(skuCode.trim() ? { sku: skuCode.trim() } : {}),
 			price: Number(price),
 			oldPrice: oldPrice.trim() ? Number(oldPrice) : null,
-			stockQuantity: stockQuantity.trim() ? Number(stockQuantity) : 0,
+			// Nếu trackSerial=true, không gửi stockQuantity — backend luôn tự ép về 0 lúc tạo mới,
+			// và chặn hẳn việc sửa trực tiếp lúc update (phải nhập kho theo serial thay vào đó).
+			...(trackSerial ? {} : { stockQuantity: stockQuantity.trim() ? Number(stockQuantity) : 0 }),
+			trackSerial,
 			variationDetails,
 			weightGram: Number(weightGram),
 			lengthCm: Number(lengthCm),
@@ -125,28 +130,67 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 	return (
 		<ModalShell title={isEditing ? "Sửa biến thể" : "Thêm biến thể"} onClose={onClose} maxWidthClassName='max-w-2xl'>
 			<form onSubmit={handleSubmit} className='space-y-4'>
-				<FormControl label='Mã SKU' value={skuCode} onChange={(e) => setSkuCode(e.target.value)} placeholder='Tự sinh từ tên sản phẩm + biến thể nếu để trống' error={errors.skuCode} />
+				<FormControl
+					label='Mã SKU'
+					value={skuCode}
+					onChange={(e) => setSkuCode(e.target.value)}
+					placeholder='Tự sinh từ tên sản phẩm + biến thể nếu để trống'
+					error={errors.skuCode}
+				/>
 
 				<div className='grid gap-4 sm:grid-cols-3'>
-					<FormControl label='Giá (đ)' type='number' step='any' value={price} onChange={(e) => setPrice(e.target.value)} error={errors.price} />
-					<FormControl label='Giá cũ (đ)' type='number' step='any' value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} placeholder='Để trống nếu không giảm giá' error={errors.oldPrice} />
 					<FormControl
-						label='Tồn kho'
+						label='Giá (đ)'
 						type='number'
 						step='any'
-						value={stockQuantity}
-						onChange={(e) => {
-							const value = Number(e.target.value);
-							setStockQuantity(value < 0 ? "0" : String(value));
-						}}
-						error={errors.stockQuantity}
+						value={price}
+						onChange={(e) => setPrice(e.target.value)}
+						error={errors.price}
 					/>
+					<FormControl
+						label='Giá cũ (đ)'
+						type='number'
+						step='any'
+						value={oldPrice}
+						onChange={(e) => setOldPrice(e.target.value)}
+						placeholder='Để trống nếu không giảm giá'
+						error={errors.oldPrice}
+					/>
+					{!trackSerial && (
+						<FormControl
+							label='Tồn kho'
+							type='number'
+							step='any'
+							value={stockQuantity}
+							onChange={(e) => {
+								const value = Number(e.target.value);
+								setStockQuantity(value < 0 ? "0" : String(value));
+							}}
+							error={errors.stockQuantity}
+						/>
+					)}
+				</div>
+
+				<div className='rounded-xl border border-border p-4'>
+					<FormCheckbox
+						label='Quản lý tồn kho theo serial (IMEI/số seri từng máy)'
+						checked={trackSerial}
+						onChange={(e) => setTrackSerial(e.target.checked)}
+					/>
+					<p className='mt-1.5 ml-6 text-xs text-muted'>
+						{isEditing && !sku?.trackSerial
+							? 'Bật lên sẽ đặt lại tồn kho hiện tại về 0 — cần "Nhập kho theo serial" ở trang chi tiết sau khi lưu.'
+							: 'Sau khi lưu, tồn kho chỉ nhập được qua chức năng "Nhập kho theo serial" ở trang chi tiết sản phẩm, không sửa trực tiếp số lượng được nữa.'}
+					</p>
 				</div>
 
 				<div>
 					<div className='mb-1.5 flex items-center justify-between'>
 						<span className='text-sm font-medium text-ink'>Thuộc tính biến thể</span>
-						<button type='button' onClick={addRow} className='flex items-center gap-1 text-xs font-semibold text-primary-dark hover:underline cursor-pointer'>
+						<button
+							type='button'
+							onClick={addRow}
+							className='flex items-center gap-1 text-xs font-semibold text-primary-dark hover:underline cursor-pointer'>
 							<PlusIcon className='h-3.5 w-3.5' />
 							Thêm thuộc tính
 						</button>
@@ -155,8 +199,18 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 					<div className='space-y-2'>
 						{rows.map((row, index) => (
 							<div key={index} className='flex items-center gap-2'>
-								<FormControl wrapperClassName='flex-1' placeholder='Tên thuộc tính (vd: color)' value={row.key} onChange={(e) => updateRow(index, { key: e.target.value })} />
-								<FormControl wrapperClassName='flex-1' placeholder='Giá trị (vd: Đỏ)' value={row.value} onChange={(e) => updateRow(index, { value: e.target.value })} />
+								<FormControl
+									wrapperClassName='flex-1'
+									placeholder='Tên thuộc tính (vd: color)'
+									value={row.key}
+									onChange={(e) => updateRow(index, { key: e.target.value })}
+								/>
+								<FormControl
+									wrapperClassName='flex-1'
+									placeholder='Giá trị (vd: Đỏ)'
+									value={row.value}
+									onChange={(e) => updateRow(index, { value: e.target.value })}
+								/>
 								<button
 									type='button'
 									disabled={rows.length === 1}
@@ -175,10 +229,38 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 					<p className='mb-2 text-xs text-muted'>Dùng để tính phí vận chuyển GHN thực tế cho biến thể này.</p>
 
 					<div className='grid gap-4 sm:grid-cols-4'>
-						<FormControl label='Khối lượng (g)' type='number' step='any' value={weightGram} onChange={(e) => setWeightGram(e.target.value)} error={errors.weightGram} />
-						<FormControl label='Dài (cm)' type='number' step='any' value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} error={errors.lengthCm} />
-						<FormControl label='Rộng (cm)' type='number' step='any' value={widthCm} onChange={(e) => setWidthCm(e.target.value)} error={errors.widthCm} />
-						<FormControl label='Cao (cm)' type='number' step='any' value={heightCm} onChange={(e) => setHeightCm(e.target.value)} error={errors.heightCm} />
+						<FormControl
+							label='Khối lượng (g)'
+							type='number'
+							step='any'
+							value={weightGram}
+							onChange={(e) => setWeightGram(e.target.value)}
+							error={errors.weightGram}
+						/>
+						<FormControl
+							label='Dài (cm)'
+							type='number'
+							step='any'
+							value={lengthCm}
+							onChange={(e) => setLengthCm(e.target.value)}
+							error={errors.lengthCm}
+						/>
+						<FormControl
+							label='Rộng (cm)'
+							type='number'
+							step='any'
+							value={widthCm}
+							onChange={(e) => setWidthCm(e.target.value)}
+							error={errors.widthCm}
+						/>
+						<FormControl
+							label='Cao (cm)'
+							type='number'
+							step='any'
+							value={heightCm}
+							onChange={(e) => setHeightCm(e.target.value)}
+							error={errors.heightCm}
+						/>
 					</div>
 				</div>
 

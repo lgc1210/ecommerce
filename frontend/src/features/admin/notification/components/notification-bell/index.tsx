@@ -87,7 +87,7 @@ const AdminNotificationBell = () => {
 			<div className='max-h-96 overflow-y-auto'>
 				{isLoading ? (
 					<NotificationBellSkeleton />
-				) : !isLoading && notifications.length === 0 ? (
+				) : !isLoading && notifications?.length === 0 ? (
 					<p className='px-4 py-6 text-center text-sm text-muted'>Chưa có thông báo nào.</p>
 				) : (
 					notifications.map((notification) => {

@@ -25,3 +25,23 @@ export const uploadProductImage = (req: Request, res: Response, next: NextFuncti
 		next(error);
 	}
 };
+
+/** Khách hàng tự upload ảnh/video minh chứng lỗi khi gửi yêu cầu bảo hành (WarrantyClaim.imageUrls). */
+export const uploadWarrantyClaimImage = (req: Request, res: Response, next: NextFunction): void => {
+	try {
+		if (!req.file) {
+			res.status(400).json({ error: "Vui lòng chọn 1 file ảnh để tải lên." });
+			return;
+		}
+
+		const baseUrl = `${req.protocol}://${req.get("host")}`;
+		const url = `${baseUrl}/uploads/warranty-claims/${req.file.filename}`;
+
+		res.status(201).json({
+			message: "Tải ảnh lên thành công.",
+			data: { url, filename: req.file.filename },
+		});
+	} catch (error) {
+		next(error);
+	}
+};

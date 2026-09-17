@@ -49,6 +49,13 @@ const permissions = Object.freeze({
 		manage: "conversation:manage",
 		create: "conversation:create",
 	},
+	warrantyPolicy: {
+		manage: "warranty_policy:manage",
+	},
+	warrantyClaim: {
+		create: "warranty_claim:create",
+		manage: "warranty_claim:manage",
+	},
 } as const);
 
 export default permissions;

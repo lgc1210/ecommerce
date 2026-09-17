@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { BellIcon, BoxIcon, MailIcon, MapPinIcon, StarIcon, UserIcon } from "../../../components/icons";
+import {
+	BellIcon,
+	BoxIcon,
+	MailIcon,
+	MapPinIcon,
+	ShieldCheckIcon,
+	StarIcon,
+	UserIcon,
+} from "../../../components/icons";
 import { TabItem, Tabs } from "../../../components/tabs";
 
 import BreadCrumb from "../../../components/breadcrumb";
@@ -10,6 +18,7 @@ import NotificationsTab from "../../../features/client/me/components/account/not
 import OrdersTab from "../../../features/client/me/components/account/order-tab";
 import ProfileTab from "../../../features/client/me/components/account/profile-tab";
 import ReviewsTab from "../../../features/client/me/components/account/review-tab";
+import WarrantyTab from "../../../features/client/me/components/account/warranty-tab";
 import { useAuth } from "../../../features/auth/hooks/useAuth";
 import permissions from "../../../configs/constants/permissions";
 
@@ -33,6 +42,11 @@ const TABS = [
 		name: "reviews",
 		icon: <StarIcon className='h-4 w-4' />,
 		label: "Đánh giá của tôi",
+	},
+	{
+		name: "warranty",
+		icon: <ShieldCheckIcon className='h-4 w-4' />,
+		label: "Bảo hành",
 	},
 	{
 		name: "contacts",
@@ -68,7 +82,12 @@ const AccountPage = () => {
 	// này. Ẩn hẳn tab thay vì chỉ ẩn nút ghi/sửa, để tránh gọi API chắc chắn sẽ bị 403 và tránh
 	// hiện ra 1 tab rỗng/lỗi không rõ nguyên nhân với người không có quyền.
 	const canManageReviews = can(permissions.review.create);
-	const visibleTabs = TABS.filter((item) => item.name !== "reviews" || canManageReviews);
+	// Cùng lý do ẩn hẳn tab như "reviews" ở trên — toàn bộ endpoint /warranty-claims/* phía khách
+	// (kể cả GET warrantable-items, GET me) đều yêu cầu "warranty_claim:create" ở backend.
+	const canManageWarrantyClaims = can(permissions.warrantyClaim.create);
+	const visibleTabs = TABS.filter(
+		(item) => (item.name !== "reviews" || canManageReviews) && (item.name !== "warranty" || canManageWarrantyClaims),
+	);
 
 	const [tab, setTab] = useState<Tab>(state?.tab ?? TABS[0].name);
 	const [initialOrderId, setInitialOrderId] = useState<number | null>(state?.orderId ?? null);
@@ -119,6 +138,7 @@ const AccountPage = () => {
 				{tab === "addresses" && <AddressesTab />}
 				{tab === "orders" && <OrdersTab initialSelectedOrderId={initialOrderId} />}
 				{tab === "reviews" && canManageReviews && <ReviewsTab />}
+				{tab === "warranty" && canManageWarrantyClaims && <WarrantyTab />}
 				{tab === "contacts" && <MyContactsTab />}
 				{tab === "notifications" && <NotificationsTab />}
 			</div>

@@ -10,6 +10,8 @@ import type {
 	DeleteSkuPayload,
 	ListProductsParams,
 	ListProductsResult,
+	ReceiveStockPayload,
+	ReceiveStockResult,
 	UpdateProductPayload,
 	UpdateSkuImagePayload,
 	UpdateSkuPayload,
@@ -149,6 +151,22 @@ export const useDeleteSku = () => {
 			toast.success(res.data.message ?? "Xóa biến thể thành công.");
 		},
 		onError: (error) => toast.error(getApiErrorMessage(error, "Xóa biến thể thất bại.")),
+	});
+};
+
+/** Nhập kho theo serial cho SKU có trackSerial=true — trả về {createdCount, stockQuantity} mới. */
+export const useReceiveStock = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: ReceiveStockPayload) => {
+			const res = await productService.receiveStock(payload);
+			return res.data as { message: string; data: ReceiveStockResult };
+		},
+		onSuccess: (res) => {
+			invalidateProducts(queryClient);
+			toast.success(res.message);
+		},
+		onError: (error) => toast.error(getApiErrorMessage(error, "Nhập kho thất bại.")),
 	});
 };
 

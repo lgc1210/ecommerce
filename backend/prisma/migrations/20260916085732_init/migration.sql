@@ -129,6 +129,7 @@ CREATE TABLE `product_sku` (
     `price` DECIMAL(14, 2) NOT NULL,
     `old_price` DECIMAL(14, 2) NULL,
     `stock_quantity` INTEGER NOT NULL DEFAULT 0,
+    `track_serial` BOOLEAN NOT NULL DEFAULT false,
     `variation_details` JSON NOT NULL,
     `weight_gram` INTEGER NOT NULL DEFAULT 500,
     `length_cm` INTEGER NOT NULL DEFAULT 20,
@@ -349,7 +350,7 @@ CREATE TABLE `contacts` (
 CREATE TABLE `notifications` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
-    `type` ENUM('order', 'payment', 'promotion', 'stock', 'system', 'review', 'contact') NOT NULL,
+    `type` ENUM('order', 'payment', 'promotion', 'stock', 'system', 'review', 'contact', 'warranty') NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `message` TEXT NOT NULL,
     `is_read` BOOLEAN NOT NULL DEFAULT false,
@@ -403,10 +404,71 @@ CREATE TABLE `warranty_policies` (
     `duration_value` INTEGER NOT NULL,
     `duration_unit` ENUM('day', 'month', 'year') NOT NULL,
     `warranty_type` ENUM('manufacturer', 'store') NOT NULL,
+    `exchange_period_value` INTEGER NULL,
+    `exchange_period_unit` ENUM('day', 'month', 'year') NULL,
     `description` TEXT NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `product_units` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `product_sku_id` INTEGER NOT NULL,
+    `serial_number` VARCHAR(100) NOT NULL,
+    `status` ENUM('in_stock', 'sold', 'returned', 'defective') NOT NULL DEFAULT 'in_stock',
+    `order_item_id` INTEGER NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NULL,
+
+    UNIQUE INDEX `product_units_serial_number_key`(`serial_number`),
+    INDEX `product_units_product_sku_id_status_idx`(`product_sku_id`, `status`),
+    INDEX `product_units_order_item_id_idx`(`order_item_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `warranty_claims` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `claim_number` VARCHAR(50) NOT NULL,
+    `order_item_id` INTEGER NOT NULL,
+    `user_id` INTEGER NOT NULL,
+    `warranty_policy_id` INTEGER NULL,
+    `warranty_start_at` DATETIME(3) NOT NULL,
+    `warranty_end_at` DATETIME(3) NOT NULL,
+    `issue_description` TEXT NOT NULL,
+    `image_urls` JSON NULL,
+    `product_unit_id` INTEGER NULL,
+    `status` ENUM('pending', 'approved', 'rejected', 'in_repair', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
+    `resolution_type` ENUM('repaired', 'replaced', 'refunded', 'no_fault_found', 'rejected') NULL,
+    `repair_fee` DECIMAL(14, 2) NULL,
+    `staff_note` TEXT NULL,
+    `handled_by_user_id` INTEGER NULL,
+    `sla_due_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NULL,
+    `resolved_at` DATETIME(3) NULL,
+
+    UNIQUE INDEX `warranty_claims_claim_number_key`(`claim_number`),
+    INDEX `warranty_claims_user_id_idx`(`user_id`),
+    INDEX `warranty_claims_order_item_id_idx`(`order_item_id`),
+    INDEX `warranty_claims_status_idx`(`status`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `warranty_claim_status_logs` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `warranty_claim_id` INTEGER NOT NULL,
+    `from_status` ENUM('pending', 'approved', 'rejected', 'in_repair', 'completed', 'cancelled') NULL,
+    `to_status` ENUM('pending', 'approved', 'rejected', 'in_repair', 'completed', 'cancelled') NOT NULL,
+    `note` VARCHAR(255) NULL,
+    `action_by_user_id` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `warranty_claim_status_logs_warranty_claim_id_idx`(`warranty_claim_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -511,3 +573,30 @@ ALTER TABLE `messages` ADD CONSTRAINT `messages_conversation_id_fkey` FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE `messages` ADD CONSTRAINT `messages_sender_id_fkey` FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `product_units` ADD CONSTRAINT `product_units_product_sku_id_fkey` FOREIGN KEY (`product_sku_id`) REFERENCES `product_sku`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `product_units` ADD CONSTRAINT `product_units_order_item_id_fkey` FOREIGN KEY (`order_item_id`) REFERENCES `order_items`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claims` ADD CONSTRAINT `warranty_claims_order_item_id_fkey` FOREIGN KEY (`order_item_id`) REFERENCES `order_items`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claims` ADD CONSTRAINT `warranty_claims_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claims` ADD CONSTRAINT `warranty_claims_handled_by_user_id_fkey` FOREIGN KEY (`handled_by_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claims` ADD CONSTRAINT `warranty_claims_warranty_policy_id_fkey` FOREIGN KEY (`warranty_policy_id`) REFERENCES `warranty_policies`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claims` ADD CONSTRAINT `warranty_claims_product_unit_id_fkey` FOREIGN KEY (`product_unit_id`) REFERENCES `product_units`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claim_status_logs` ADD CONSTRAINT `warranty_claim_status_logs_warranty_claim_id_fkey` FOREIGN KEY (`warranty_claim_id`) REFERENCES `warranty_claims`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `warranty_claim_status_logs` ADD CONSTRAINT `warranty_claim_status_logs_action_by_user_id_fkey` FOREIGN KEY (`action_by_user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

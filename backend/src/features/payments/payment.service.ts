@@ -2,6 +2,7 @@ import prisma from "../../config/prisma.js";
 import { OrderStatus, PaymentMethod, PaymentStatus } from "../../generated/prisma/index.js";
 import { parsePagination } from "../../utils/index.js";
 import { isValidPaymentStatusTransition } from "./payment.utils.js";
+import { releaseSerializedUnitsForOrderItem } from "../products/product-inventory.service.js";
 import orderService from "../orders/order.service.js";
 import notificationService from "../notifications/notification.service.js";
 import type { ListPaymentsAdminParams } from "./payment.validation.js";
@@ -136,10 +137,14 @@ class PaymentService {
 			throw new Error("NotFound: Không tìm thấy thông tin thanh toán cho đơn hàng này.");
 		}
 		if (payment.paymentMethod === PaymentMethod.cod) {
-			throw new Error("BadRequest: Đơn hàng thanh toán khi nhận hàng (COD) không thể tạo giao dịch qua cổng thanh toán online.");
+			throw new Error(
+				"BadRequest: Đơn hàng thanh toán khi nhận hàng (COD) không thể tạo giao dịch qua cổng thanh toán online.",
+			);
 		}
 		if (payment.paymentStatus === PaymentStatus.completed || payment.paymentStatus === PaymentStatus.refunded) {
-			throw new Error(`BadRequest: Đơn hàng này đã ở trạng thái thanh toán "${payment.paymentStatus}", không thể tạo giao dịch mới.`);
+			throw new Error(
+				`BadRequest: Đơn hàng này đã ở trạng thái thanh toán "${payment.paymentStatus}", không thể tạo giao dịch mới.`,
+			);
 		}
 		// Đơn hủy thì paymentStatus bị chuyển về "failed" (xem
 		// order.service.ts -> transitionOrderStatus), mà "failed" KHÔNG nằm trong check phía trên
@@ -184,7 +189,11 @@ class PaymentService {
 		if (params.method) where.paymentMethod = params.method;
 		if (params.search) {
 			where.order = {
-				OR: [{ orderNumber: { contains: params.search } }, { user: { email: { contains: params.search } } }, { user: { name: { contains: params.search } } }],
+				OR: [
+					{ orderNumber: { contains: params.search } },
+					{ user: { email: { contains: params.search } } },
+					{ user: { name: { contains: params.search } } },
+				],
 			};
 		}
 		if (params.dateFrom || params.dateTo) {
@@ -272,7 +281,11 @@ class PaymentService {
 				});
 			}
 
-			if (nextStatus === PaymentStatus.refunded && payment.order.orderStatus !== OrderStatus.cancelled && payment.order.orderStatus !== OrderStatus.delivered) {
+			if (
+				nextStatus === PaymentStatus.refunded &&
+				payment.order.orderStatus !== OrderStatus.cancelled &&
+				payment.order.orderStatus !== OrderStatus.delivered
+			) {
 				// Hoàn tiền -> hoàn tồn kho + hoàn lượt dùng coupon + hủy đơn, tương tự luồng hủy đơn thông thường
 				const items = await tx.orderItem.findMany({ where: { orderId: payment.order.id } });
 				for (const item of items) {
@@ -281,6 +294,9 @@ class PaymentService {
 							where: { id: item.productSkuId },
 							data: { stockQuantity: { increment: item.quantity } },
 						});
+						// Đối xứng với allocateSerializedUnitsForOrderItem() lúc checkout — xem chú thích ở
+						// order.service.ts (transitionOrderStatus), cùng lý do phải chạy trong transaction này.
+						await releaseSerializedUnitsForOrderItem(tx, item.id);
 					}
 				}
 				if (payment.order.couponId) {
@@ -303,7 +319,10 @@ class PaymentService {
 			try {
 				await orderService.createShipmentAfterPayment(payment.order.id);
 			} catch (error: any) {
-				console.error(`[payment] Tạo vận đơn GHN sau khi thanh toán thành công thất bại cho orderId=${payment.order.id}:`, error?.message ?? error);
+				console.error(
+					`[payment] Tạo vận đơn GHN sau khi thanh toán thành công thất bại cho orderId=${payment.order.id}:`,
+					error?.message ?? error,
+				);
 				// Tiền đã thu thật nhưng chưa tạo được vận đơn -> cần admin can thiệp thủ công. Bọc
 				// try/catch riêng: bắn thông báo thất bại KHÔNG được phép làm hỏng luồng thanh toán
 				// chính đã thành công (cùng tinh thần với dispatch() ở notification.service.ts).
@@ -333,11 +352,23 @@ class PaymentService {
 		// notification.service), không được phép làm fail luồng thanh toán chính.
 		if (payment.order.userId) {
 			if (nextStatus === PaymentStatus.completed) {
-				await notificationService.notifyPaymentCompleted(payment.order.userId, payment.order.id, payment.order.orderNumber);
+				await notificationService.notifyPaymentCompleted(
+					payment.order.userId,
+					payment.order.id,
+					payment.order.orderNumber,
+				);
 			} else if (nextStatus === PaymentStatus.failed) {
-				await notificationService.notifyPaymentFailed(payment.order.userId, payment.order.id, payment.order.orderNumber);
+				await notificationService.notifyPaymentFailed(
+					payment.order.userId,
+					payment.order.id,
+					payment.order.orderNumber,
+				);
 			} else if (nextStatus === PaymentStatus.refunded) {
-				await notificationService.notifyPaymentRefunded(payment.order.userId, payment.order.id, payment.order.orderNumber);
+				await notificationService.notifyPaymentRefunded(
+					payment.order.userId,
+					payment.order.id,
+					payment.order.orderNumber,
+				);
 			}
 		}
 

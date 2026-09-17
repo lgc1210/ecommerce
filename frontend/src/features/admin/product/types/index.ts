@@ -25,6 +25,9 @@ export interface ProductSku {
 	price: string;
 	oldPrice?: string | null;
 	stockQuantity: number;
+	/** true = tồn kho SKU này quản lý theo từng serial vật lý (ProductUnit) — không sửa tay
+	 * stockQuantity được nữa, phải "nhập kho" qua receiveStock(). */
+	trackSerial: boolean;
 	variationDetails: VariationDetails;
 	weightGram: number;
 	lengthCm: number;
@@ -41,6 +44,7 @@ export interface ProductSkuSummary {
 	price: string;
 	oldPrice?: string | null;
 	stockQuantity: number;
+	trackSerial: boolean;
 	variationDetails: VariationDetails;
 }
 
@@ -53,6 +57,7 @@ export interface AdminProductListItem {
 	isActive: boolean;
 	isFeatured: boolean;
 	thumbnailUrl: string | null;
+	warrantyPolicyId: number | null;
 	createdAt: string;
 	updatedAt: string;
 	category: ProductCategoryRef | null;
@@ -77,6 +82,8 @@ export interface AdminProductDetail {
 	isActive: boolean;
 	isFeatured: boolean;
 	thumbnailUrl: string | null;
+	warrantyPolicyId: number | null;
+	warrantyPolicy: { id: number; name: string } | null;
 	createdAt: string;
 	updatedAt: string;
 	category: ProductCategoryRef | null;
@@ -117,6 +124,7 @@ export interface CreateProductPayload {
 	isActive?: boolean;
 	isFeatured?: boolean;
 	thumbnailUrl?: string | null;
+	warrantyPolicyId?: number | null;
 }
 
 export interface UpdateProductPayload extends Partial<CreateProductPayload> {
@@ -128,6 +136,7 @@ export interface SkuPayload {
 	price: number;
 	oldPrice?: number | null;
 	stockQuantity?: number;
+	trackSerial?: boolean;
 	variationDetails: VariationDetails;
 	weightGram?: number;
 	lengthCm?: number;
@@ -152,6 +161,17 @@ export interface DeleteSkuPayload {
 export interface UpdateSkuStockPayload {
 	productId: number;
 	skuId: number;
+	stockQuantity: number;
+}
+
+export interface ReceiveStockPayload {
+	productId: number;
+	skuId: number;
+	serialNumbers: string[];
+}
+
+export interface ReceiveStockResult {
+	createdCount: number;
 	stockQuantity: number;
 }
 

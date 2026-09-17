@@ -96,7 +96,12 @@ const AdminProductDetailPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-start justify-between gap-3'>
-				<AdminTitle title={product.name} description={product.category?.name ?? "Chưa phân loại danh mục"} />
+				<div>
+					<AdminTitle title={product.name} description={product.category?.name ?? "Chưa phân loại danh mục"} />
+					<p className='mt-1 text-xs text-muted'>
+						{product.warrantyPolicy ? `Bảo hành: ${product.warrantyPolicy.name}` : "Chưa gán chính sách bảo hành"}
+					</p>
+				</div>
 				{canWriteCatalog && (
 					<div className='flex items-center gap-2'>
 						<Button

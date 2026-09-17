@@ -28,6 +28,8 @@ import AdminUserPage from "../../pages/admin/user";
 import AdminRbacPage from "../../pages/admin/rbac";
 import AdminCategoryPage from "../../pages/admin/category";
 import AdminCouponPage from "../../pages/admin/coupon";
+import AdminWarrantyPolicyPage from "../../pages/admin/warranty-policy";
+import AdminWarrantyClaimPage from "../../pages/admin/warranty-claim";
 import AdminOrderPage from "../../pages/admin/order";
 import AdminPaymentPage from "../../pages/admin/payment";
 import AdminContactPage from "../../pages/admin/contact";
@@ -67,12 +69,21 @@ const router = createBrowserRouter([
 			{
 				path: paths.client.about,
 				Component: AboutPage,
-				handle: { title: "Giới thiệu", description: "Tìm hiểu về Ecommerce và cam kết mang đến trải nghiệm mua sắm tốt hơn.", crumb: () => "Giới thiệu" },
+				handle: {
+					title: "Giới thiệu",
+					description: "Tìm hiểu về Ecommerce và cam kết mang đến trải nghiệm mua sắm tốt hơn.",
+					crumb: () => "Giới thiệu",
+				},
 			},
 			{
 				path: paths.client.shop,
 				Component: ShopPage,
-				handle: { title: "Cửa hàng", description: "Khám phá toàn bộ sản phẩm và tìm lựa chọn phù hợp với bạn.", crumb: () => "Cửa hàng", preventScrollReset: true },
+				handle: {
+					title: "Cửa hàng",
+					description: "Khám phá toàn bộ sản phẩm và tìm lựa chọn phù hợp với bạn.",
+					crumb: () => "Cửa hàng",
+					preventScrollReset: true,
+				},
 			},
 			{
 				// Route cha thuần logic (không path, không render gì thêm ngoài Outlet) — chỉ để
@@ -85,14 +96,18 @@ const router = createBrowserRouter([
 					{
 						path: "product/:slug",
 						Component: ProductDetailPage,
-						handle: { title: "Sản phẩm", description: "Xem thông tin, lựa chọn biến thể và đặt mua sản phẩm.", },
+						handle: { title: "Sản phẩm", description: "Xem thông tin, lựa chọn biến thể và đặt mua sản phẩm." },
 					},
 				],
 			},
 			{
 				path: paths.client.contact,
 				Component: ContactPage,
-				handle: { title: "Liên hệ", description: "Liên hệ với đội ngũ Ecommerce để được hỗ trợ.", crumb: () => "Liên hệ" },
+				handle: {
+					title: "Liên hệ",
+					description: "Liên hệ với đội ngũ Ecommerce để được hỗ trợ.",
+					crumb: () => "Liên hệ",
+				},
 			},
 			{
 				// Giỏ hàng KHÔNG gắn requireAuthLoader: khách chưa đăng nhập vẫn phải
@@ -220,6 +235,18 @@ const router = createBrowserRouter([
 				loader: requirePermissionLoader(permissions.coupon.manage),
 				Component: AdminCouponPage,
 				handle: { title: "Coupon", crumb: () => "Coupon" },
+			},
+			{
+				path: paths.admin.warrantyPolicy,
+				loader: requirePermissionLoader(permissions.warrantyPolicy.manage),
+				Component: AdminWarrantyPolicyPage,
+				handle: { title: "Warranty Policy", crumb: () => "Warranty Policy" },
+			},
+			{
+				path: paths.admin.warrantyClaim,
+				loader: requirePermissionLoader(permissions.warrantyClaim.manage),
+				Component: AdminWarrantyClaimPage,
+				handle: { title: "Warranty Claim", crumb: () => "Warranty Claim" },
 			},
 			{
 				path: paths.admin.order,

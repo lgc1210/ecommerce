@@ -42,31 +42,82 @@ const PaymentResultPage = () => {
 
 	const renderContent = () => {
 		if (orderId === null) {
-			return <ResultCard tone='failed' title='Không xác định được đơn hàng' description='Đường dẫn quay về từ cổng thanh toán không hợp lệ hoặc đã hết hạn.' />;
+			return (
+				<ResultCard
+					tone='failed'
+					title='Không xác định được đơn hàng'
+					description='Đường dẫn quay về từ cổng thanh toán không hợp lệ hoặc đã hết hạn.'
+				/>
+			);
 		}
 		if (isLoading && !payment) {
-			return <ResultCard tone='pending' title='Đang tải thông tin thanh toán...' description='Vui lòng đợi trong giây lát.' />;
+			return (
+				<ResultCard
+					tone='pending'
+					title='Đang tải thông tin thanh toán...'
+					description='Vui lòng đợi trong giây lát.'
+				/>
+			);
 		}
 		if (isError || !payment) {
-			return <ResultCard tone='failed' title='Không tải được thông tin thanh toán' description='Vui lòng kiểm tra lại trong mục "Đơn hàng của tôi".' />;
+			return (
+				<ResultCard
+					tone='failed'
+					title='Không tải được thông tin thanh toán'
+					description='Vui lòng kiểm tra lại trong mục "Đơn hàng của tôi".'
+				/>
+			);
 		}
 		if (payment.paymentStatus === PAYMENT_STATUS.pending) {
 			// COD không đi qua cổng thanh toán online -> đơn đã đặt thành công ngay, "pending" ở đây
 			// nghĩa là chờ thu tiền mặt lúc giao hàng chứ không phải chờ cổng thanh toán xác nhận như
 			// VNPay/ZaloPay, nên cần thông điệp riêng để tránh gây hiểu nhầm là thanh toán chưa xong.
 			if (!ONLINE_GATEWAY_METHODS.includes(payment.paymentMethod)) {
-				return <ResultCard tone='success' title='Đặt hàng thành công' description='Đơn hàng của bạn đã được ghi nhận và đang xử lý. Vui lòng thanh toán khi nhận hàng (COD).' payment={payment} />;
+				return (
+					<ResultCard
+						tone='success'
+						title='Đặt hàng thành công'
+						description='Đơn hàng của bạn đã được ghi nhận và đang xử lý. Vui lòng thanh toán khi nhận hàng (COD).'
+						payment={payment}
+					/>
+				);
 			}
-			return <ResultCard tone='pending' title='Đang xác nhận thanh toán...' description='Hệ thống đang chờ xác nhận từ cổng thanh toán, trang sẽ tự cập nhật ngay khi có kết quả.' payment={payment} />;
+			return (
+				<ResultCard
+					tone='pending'
+					title='Đang xác nhận thanh toán...'
+					description='Hệ thống đang chờ xác nhận từ cổng thanh toán, trang sẽ tự cập nhật ngay khi có kết quả.'
+					payment={payment}
+				/>
+			);
 		}
 		if (payment.paymentStatus === PAYMENT_STATUS.completed) {
-			return <ResultCard tone='success' title='Thanh toán thành công' description='Cảm ơn bạn đã đặt hàng! Đơn hàng của bạn đang được xử lý.' payment={payment} />;
+			return (
+				<ResultCard
+					tone='success'
+					title='Thanh toán thành công'
+					description='Cảm ơn bạn đã đặt hàng! Đơn hàng của bạn đang được xử lý.'
+					payment={payment}
+				/>
+			);
 		}
 		if (payment.paymentStatus === PAYMENT_STATUS.refunded) {
-			return <ResultCard tone='pending' title='Đơn hàng đã được hoàn tiền' description='Giao dịch này đã được hoàn tiền, vui lòng kiểm tra chi tiết trong "Đơn hàng của tôi".' payment={payment} />;
+			return (
+				<ResultCard
+					tone='pending'
+					title='Đơn hàng đã được hoàn tiền'
+					description='Giao dịch này đã được hoàn tiền, vui lòng kiểm tra chi tiết trong "Đơn hàng của tôi".'
+					payment={payment}
+				/>
+			);
 		}
 		return (
-			<ResultCard tone='failed' title='Thanh toán thất bại' description='Giao dịch không thành công hoặc đã bị hủy. Bạn có thể thử thanh toán lại từ trang chi tiết đơn hàng.' payment={payment} />
+			<ResultCard
+				tone='failed'
+				title='Thanh toán thất bại'
+				description='Giao dịch không thành công hoặc đã bị hủy. Bạn có thể thử thanh toán lại từ trang chi tiết đơn hàng.'
+				payment={payment}
+			/>
 		);
 	};
 
@@ -124,12 +175,12 @@ const ResultCard = ({ tone, title, description, payment }: ResultCardProps) => {
 
 			<div className='mt-8 flex flex-wrap items-center justify-center gap-3'>
 				<Link to={paths.client.account} state={{ tab: "orders" }} className='w-full!'>
-					<Button variant='outline' className='w-full!'>
+					<Button variant='outline' className='w-full! cursor-pointer!'>
 						Xem đơn hàng của tôi
 					</Button>
 				</Link>
 				<Link to={paths.client.shop} className='w-full!'>
-					<Button className='w-full!'>Tiếp tục mua sắm</Button>
+					<Button className='w-full! cursor-pointer!'>Tiếp tục mua sắm</Button>
 				</Link>
 			</div>
 		</div>

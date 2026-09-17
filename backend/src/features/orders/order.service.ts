@@ -1,9 +1,24 @@
 import prisma from "../../config/prisma.js";
 import { parsePagination } from "../../utils/index.js";
-import { normalizeCouponCode, checkCouponUsability, checkCouponEmailOwnership, computeDiscountAmount } from "../coupons/coupon.utils.js";
+import {
+	normalizeCouponCode,
+	checkCouponUsability,
+	checkCouponEmailOwnership,
+	computeDiscountAmount,
+} from "../coupons/coupon.utils.js";
 import { calculateShippingFee, createShippingOrder, cancelShippingOrder } from "../../external/ghn/ghn.service.js";
-import { generateOrderNumber, computeCartPackage, isValidOrderStatusTransition, isCancellation, mapGhnStatusToOrderStatus } from "./order.utils.js";
+import {
+	generateOrderNumber,
+	computeCartPackage,
+	isValidOrderStatusTransition,
+	isCancellation,
+	mapGhnStatusToOrderStatus,
+} from "./order.utils.js";
 import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from "../../generated/prisma/index.js";
+import {
+	allocateSerializedUnitsForOrderItem,
+	releaseSerializedUnitsForOrderItem,
+} from "../products/product-inventory.service.js";
 import notificationService from "../notifications/notification.service.js";
 import { env } from "../../config/dotenv.js";
 import type { BuyNowInput, CreateOrderInput, ListOrdersAdminParams, ListOwnOrdersParams } from "./order.validation.js";
@@ -22,6 +37,7 @@ type CheckoutLineItem = {
 		price: Prisma.Decimal;
 		variationDetails: unknown;
 		stockQuantity: number;
+		trackSerial: boolean;
 		weightGram: number;
 		lengthCm: number;
 		widthCm: number;
@@ -92,7 +108,12 @@ class OrderService {
 	 * COD, thông báo...) dùng chung processCheckout() với checkout() từ giỏ hàng.
 	 */
 	async buyNow(userId: number, data: BuyNowInput, userEmail?: string | null) {
-		const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(userId, data.shippingAddressId, data.productSkuId, data.quantity);
+		const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(
+			userId,
+			data.shippingAddressId,
+			data.productSkuId,
+			data.quantity,
+		);
 
 		return this.processCheckout({
 			userId,
@@ -134,7 +155,18 @@ class OrderService {
 		 */
 		idempotencyKey?: string | undefined;
 	}) {
-		const { userId, userEmail, address, items, subtotalAmount, couponCode, shippingAddressId, paymentMethod, cartCleanup, idempotencyKey } = params;
+		const {
+			userId,
+			userEmail,
+			address,
+			items,
+			subtotalAmount,
+			couponCode,
+			shippingAddressId,
+			paymentMethod,
+			cartCleanup,
+			idempotencyKey,
+		} = params;
 
 		let couponId: number | null = null;
 		let couponUsageLimit: number | null = null;
@@ -157,7 +189,9 @@ class OrderService {
 				throw new Error(`BadRequest: ${usability.reason}`);
 			}
 			if (subtotalAmount < Number(coupon.minOrderValue)) {
-				throw new Error(`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`);
+				throw new Error(
+					`BadRequest: Đơn hàng tối thiểu ${Number(coupon.minOrderValue).toLocaleString("vi-VN")}đ để áp dụng mã này.`,
+				);
 			}
 
 			couponId = coupon.id;
@@ -170,7 +204,13 @@ class OrderService {
 
 		// Gom các SKU rơi xuống bằng/dưới LOW_STOCK_THRESHOLD sau khi trừ kho trong transaction bên
 		// dưới — thông báo admin thực sự được bắn SAU KHI transaction commit (xem cuối hàm).
-		const lowStockSkus: Array<{ skuId: number; skuLabel: string; productId: number; productName: string; stockQuantity: number }> = [];
+		const lowStockSkus: Array<{
+			skuId: number;
+			skuLabel: string;
+			productId: number;
+			productName: string;
+			stockQuantity: number;
+		}> = [];
 
 		const order = await prisma.$transaction(
 			async (tx) => {
@@ -186,7 +226,9 @@ class OrderService {
 						await tx.checkoutIdempotencyKey.create({ data: { userId, key: idempotencyKey } });
 					} catch (error) {
 						if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-							throw new Error("BadRequest: Yêu cầu đặt hàng này đã được xử lý (hoặc đang được xử lý), vui lòng kiểm tra lại đơn hàng của bạn.");
+							throw new Error(
+								"BadRequest: Yêu cầu đặt hàng này đã được xử lý (hoặc đang được xử lý), vui lòng kiểm tra lại đơn hàng của bạn.",
+							);
 						}
 						throw error;
 					}
@@ -204,9 +246,13 @@ class OrderService {
 				// hoàn toàn — cơ chế chống double-submit tương đương cho buyNow là bước insert
 				// idempotencyKey ở TRÊN (chạy trước cả bước này).
 				if (cartCleanup) {
-					const deletedCartItems = await tx.cartItem.deleteMany({ where: { id: { in: cartCleanup.cartItemIds }, cartId: cartCleanup.cartId } });
+					const deletedCartItems = await tx.cartItem.deleteMany({
+						where: { id: { in: cartCleanup.cartItemIds }, cartId: cartCleanup.cartId },
+					});
 					if (deletedCartItems.count !== cartCleanup.cartItemIds.length) {
-						throw new Error("BadRequest: Giỏ hàng này vừa được đặt hàng ở 1 yêu cầu khác, vui lòng kiểm tra lại đơn hàng của bạn.");
+						throw new Error(
+							"BadRequest: Giỏ hàng này vừa được đặt hàng ở 1 yêu cầu khác, vui lòng kiểm tra lại đơn hàng của bạn.",
+						);
 					}
 				}
 
@@ -229,7 +275,11 @@ class OrderService {
 					});
 					// productId nullable trên schema (SKU mồ côi, không còn gắn với product nào) — bỏ qua
 					// thông báo "tồn kho thấp" cho trường hợp hiếm này vì không có trang admin nào để dẫn tới.
-					if (skuAfterDecrement && skuAfterDecrement.stockQuantity <= env.LOW_STOCK_THRESHOLD && item.productSku.productId) {
+					if (
+						skuAfterDecrement &&
+						skuAfterDecrement.stockQuantity <= env.LOW_STOCK_THRESHOLD &&
+						item.productSku.productId
+					) {
 						lowStockSkus.push({
 							skuId: item.productSkuId,
 							skuLabel: item.productSku.sku,
@@ -289,6 +339,30 @@ class OrderService {
 					include: orderDetailInclude,
 				});
 
+				// Gán serial vật lý (nếu SKU có trackSerial) cho từng OrderItem vừa tạo — PHẢI làm ngay
+				// trong transaction này (cùng với bước trừ stockQuantity ở trên) để 2 việc luôn
+				// commit/rollback cùng nhau, không bao giờ lệch dữ liệu. `items` và `createdOrder.items`
+				// cùng bắt nguồn từ 1 mảng `items` truyền vào `create` nên thứ tự tương ứng 1-1 theo index.
+				for (let i = 0; i < items.length; i++) {
+					const sourceItem = items[i]!;
+					const createdItem = createdOrder.items[i]!;
+					// Safety check: đảm bảo đúng giả định thứ tự — nếu Prisma trả `items` không theo thứ
+					// tự insert nữa (vd đổi phiên bản sau này thêm orderBy mặc định), lỗi này sẽ lộ ra
+					// ngay thay vì âm thầm gán nhầm serial cho sai OrderItem.
+					if (createdItem.productSkuId !== sourceItem.productSkuId) {
+						throw new Error(
+							"Conflict: Thứ tự OrderItem trả về không khớp với thứ tự đã tạo, không thể gán serial an toàn.",
+						);
+					}
+					await allocateSerializedUnitsForOrderItem(
+						tx,
+						createdItem.id,
+						sourceItem.productSkuId,
+						sourceItem.quantity,
+						sourceItem.productSku.trackSerial,
+					);
+				}
+
 				// COD: tiền được thu trực tiếp khi giao hàng nên "đặt hàng thành công" = tạo vận đơn
 				// GHN ngay. Nếu GHN tạo đơn thất bại, ném lỗi ở đây sẽ rollback toàn bộ (trừ kho,
 				// dùng coupon, tạo đơn) — khách sẽ thấy checkout thất bại thay vì có 1 đơn "mồ côi".
@@ -339,7 +413,13 @@ class OrderService {
 		// thành công (tương tự tinh thần try/catch riêng của từng channel ở notification.service.ts).
 		await notificationService.notifyAdminNewOrder(order.id, order.orderNumber, totalAmount);
 		for (const sku of lowStockSkus) {
-			await notificationService.notifyAdminLowStock(sku.skuId, sku.skuLabel, sku.productId, sku.productName, sku.stockQuantity);
+			await notificationService.notifyAdminLowStock(
+				sku.skuId,
+				sku.skuLabel,
+				sku.productId,
+				sku.productName,
+				sku.stockQuantity,
+			);
 		}
 
 		return order;
@@ -361,7 +441,12 @@ class OrderService {
 	 * TRƯỚC khi họ bấm đặt hàng (không tạo đơn, không trừ tồn kho).
 	 */
 	async previewBuyNowShippingFee(userId: number, shippingAddressId: number, productSkuId: number, quantity: number) {
-		const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(userId, shippingAddressId, productSkuId, quantity);
+		const { address, items, subtotalAmount } = await this.loadValidatedBuyNowItem(
+			userId,
+			shippingAddressId,
+			productSkuId,
+			quantity,
+		);
 		const shippingFee = await this.computeShippingFeeForCart(address, items, subtotalAmount);
 		return { subtotalAmount, shippingFee };
 	}
@@ -374,7 +459,10 @@ class OrderService {
 		if (params.status) where.orderStatus = params.status;
 
 		const { page, limit, skip } = parsePagination(params);
-		const [orders, total] = await Promise.all([prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }), prisma.order.count({ where })]);
+		const [orders, total] = await Promise.all([
+			prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }),
+			prisma.order.count({ where }),
+		]);
 
 		return {
 			data: orders,
@@ -463,7 +551,10 @@ class OrderService {
 				succeeded++;
 				console.log(`[ghn-retry] Đã tạo lại vận đơn GHN thành công cho đơn ${order.orderNumber}.`);
 			} catch (error: any) {
-				console.error(`[ghn-retry] Vẫn chưa tạo được vận đơn GHN cho đơn ${order.orderNumber}:`, error?.message ?? error);
+				console.error(
+					`[ghn-retry] Vẫn chưa tạo được vận đơn GHN cho đơn ${order.orderNumber}:`,
+					error?.message ?? error,
+				);
 			}
 		}
 
@@ -479,7 +570,11 @@ class OrderService {
 		if (params.status) where.orderStatus = params.status;
 		if (params.userId) where.userId = Number(params.userId);
 		if (params.search) {
-			where.OR = [{ orderNumber: { contains: params.search } }, { user: { email: { contains: params.search } } }, { user: { name: { contains: params.search } } }];
+			where.OR = [
+				{ orderNumber: { contains: params.search } },
+				{ user: { email: { contains: params.search } } },
+				{ user: { name: { contains: params.search } } },
+			];
 		}
 		if (params.dateFrom || params.dateTo) {
 			where.createdAt = {
@@ -489,7 +584,10 @@ class OrderService {
 		}
 
 		const { page, limit, skip } = parsePagination(params);
-		const [orders, total] = await Promise.all([prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }), prisma.order.count({ where })]);
+		const [orders, total] = await Promise.all([
+			prisma.order.findMany({ where, include: orderListInclude, orderBy: { createdAt: "desc" }, skip, take: limit }),
+			prisma.order.count({ where }),
+		]);
 
 		return {
 			data: orders,
@@ -530,7 +628,11 @@ class OrderService {
 			// có đối soát/chuyển khoản tiền COD đó về cho shop hay chưa là công nợ nội bộ giữa
 			// Shop <-> GHN (theo chu kỳ đối soát riêng), KHÔNG liên quan tới trạng thái thanh toán
 			// hiển thị cho khách trên đơn này.
-			if (mappedStatus === OrderStatus.delivered && order.payment?.paymentMethod === PaymentMethod.cod && order.payment.paymentStatus !== PaymentStatus.completed) {
+			if (
+				mappedStatus === OrderStatus.delivered &&
+				order.payment?.paymentMethod === PaymentMethod.cod &&
+				order.payment.paymentStatus !== PaymentStatus.completed
+			) {
 				await prisma.payment.update({
 					where: { orderId: order.id },
 					data: { paymentStatus: PaymentStatus.completed, paidAt: new Date() },
@@ -628,7 +730,9 @@ class OrderService {
 				throw new Error("BadRequest: Một số sản phẩm trong giỏ hàng đã ngừng kinh doanh, vui lòng cập nhật giỏ hàng.");
 			}
 			if (item.quantity > item.productSku.stockQuantity) {
-				throw new Error(`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`);
+				throw new Error(
+					`BadRequest: Sản phẩm "${item.productSku.sku}" chỉ còn ${item.productSku.stockQuantity} trong kho.`,
+				);
 			}
 		}
 
@@ -643,7 +747,12 @@ class OrderService {
 	 * trên. Trả về `items` có hình dạng giống hệt cart.items (thiếu field `id` của cart item vì
 	 * không thuộc giỏ hàng nào) để processCheckout() dùng chung logic với checkout() từ giỏ hàng.
 	 */
-	private async loadValidatedBuyNowItem(userId: number, shippingAddressId: number, productSkuId: number, quantity: number) {
+	private async loadValidatedBuyNowItem(
+		userId: number,
+		shippingAddressId: number,
+		productSkuId: number,
+		quantity: number,
+	) {
 		const address = await this.loadOwnedShippingAddress(userId, shippingAddressId);
 
 		const productSku = await prisma.productSku.findUnique({
@@ -728,6 +837,10 @@ class OrderService {
 							where: { id: item.productSkuId },
 							data: { stockQuantity: { increment: item.quantity } },
 						});
+						// Trả lại đúng các đơn vị vật lý (serial) đã gán cho dòng đơn hàng này về in_stock —
+						// đối xứng với allocateSerializedUnitsForOrderItem() lúc checkout, cùng transaction
+						// với bước cộng lại stockQuantity ở trên để không bao giờ lệch nhau.
+						await releaseSerializedUnitsForOrderItem(tx, item.id);
 					}
 				}
 
@@ -765,7 +878,12 @@ class OrderService {
 		});
 
 		if (updatedOrder.userId) {
-			await notificationService.notifyOrderStatusChanged(updatedOrder.userId, updatedOrder.id, updatedOrder.orderNumber, nextStatus);
+			await notificationService.notifyOrderStatusChanged(
+				updatedOrder.userId,
+				updatedOrder.id,
+				updatedOrder.orderNumber,
+				nextStatus,
+			);
 		}
 
 		return updatedOrder;
@@ -800,11 +918,17 @@ class OrderService {
 		if (!order || order.ghnOrderCode) return; // idempotent
 
 		if (!order.shippingAddress) {
-			throw new Error(`Config: Đơn hàng #${order.orderNumber} không còn địa chỉ giao hàng hợp lệ, không thể tạo vận đơn.`);
+			throw new Error(
+				`Config: Đơn hàng #${order.orderNumber} không còn địa chỉ giao hàng hợp lệ, không thể tạo vận đơn.`,
+			);
 		}
-		const items = order.items.filter((item): item is typeof item & { productSku: NonNullable<typeof item.productSku> } => item.productSku !== null);
+		const items = order.items.filter(
+			(item): item is typeof item & { productSku: NonNullable<typeof item.productSku> } => item.productSku !== null,
+		);
 		if (items.length !== order.items.length) {
-			throw new Error(`Config: Đơn hàng #${order.orderNumber} có sản phẩm đã bị xóa khỏi hệ thống, không thể tự tạo vận đơn.`);
+			throw new Error(
+				`Config: Đơn hàng #${order.orderNumber} có sản phẩm đã bị xóa khỏi hệ thống, không thể tự tạo vận đơn.`,
+			);
 		}
 
 		const cartPackage = computeCartPackage(items);

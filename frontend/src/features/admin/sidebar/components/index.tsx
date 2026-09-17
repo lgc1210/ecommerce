@@ -11,6 +11,7 @@ import {
 	DashboardIcon,
 	MailIcon,
 	ShieldIcon,
+	ShieldCheckIcon,
 	StarIcon,
 	TagIcon,
 	TruckIcon,
@@ -71,6 +72,12 @@ const navGroups: NavGroup[] = [
 				icon: TagIcon,
 				permission: permissions.catalog.read,
 			},
+			{
+				to: paths.admin.warrantyPolicy,
+				label: "Chính sách bảo hành",
+				icon: ShieldCheckIcon,
+				permission: permissions.warrantyPolicy.manage,
+			},
 		],
 	},
 	{
@@ -116,6 +123,12 @@ const navGroups: NavGroup[] = [
 				label: "Đánh giá",
 				icon: StarIcon,
 				permission: permissions.review.update,
+			},
+			{
+				to: paths.admin.warrantyClaim,
+				label: "Yêu cầu bảo hành",
+				icon: ShieldCheckIcon,
+				permission: permissions.warrantyClaim.manage,
 			},
 			{
 				to: paths.admin.notification,

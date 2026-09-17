@@ -7,6 +7,7 @@ export const NOTIFICATION_TYPE = Object.freeze({
 	stock: "stock",
 	review: "review",
 	contact: "contact",
+	warranty: "warranty",
 	promotion: "promotion",
 	system: "system",
 } as const);
@@ -23,6 +24,7 @@ export const NOTIFICATION_TYPE_ICON: Record<NotificationType, typeof BellIcon> =
 	promotion: TagIcon,
 	stock: TruckIcon,
 	review: StarIcon,
+	warranty: TruckIcon,
 	system: BellIcon,
 	contact: MailIcon,
 };
@@ -32,6 +34,7 @@ export const NOTIFICATION_TYPE_LABEL: Record<NotificationType, string> = {
 	payment: "Thanh toán",
 	promotion: "Khuyến mãi",
 	stock: "Tồn kho",
+	warranty: "Bảo hành",
 	review: "Đánh giá",
 	system: "Hệ thống",
 	contact: "Liên hệ",

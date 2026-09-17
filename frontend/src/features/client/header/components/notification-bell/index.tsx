@@ -1,8 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { BellIcon } from "../../../../../components/icons";
+import { BellIcon, CheckIcon } from "../../../../../components/icons";
 import paths from "../../../../../configs/constants/paths";
 import { useAuth } from "../../../../auth/hooks/useAuth";
-import { useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../notification/hooks";
+import {
+	useMarkAllNotificationsAsRead,
+	useMarkNotificationAsRead,
+	useMyNotificationsQuery,
+} from "../../../notification/hooks";
 import { resolveNotificationLink, timeAgo } from "../../../notification/utils";
 import type { Notification } from "../../../notification/types";
 import HoverPreview from "../../../../../shared/components/hover-preview";
@@ -20,6 +24,7 @@ const NotificationBell = () => {
 		{ refetchInterval: 30_000 },
 	);
 	const markAsReadMutation = useMarkNotificationAsRead();
+	const markAllAsReadMutation = useMarkAllNotificationsAsRead();
 
 	const unreadCount = listData?.unreadCount ?? 0;
 	const notifications = listData?.data ?? [];
@@ -57,7 +62,18 @@ const NotificationBell = () => {
 			}>
 			<div className='flex items-center justify-between border-b border-border px-4 py-2.5'>
 				<span className='text-sm font-semibold text-ink'>Thông báo gần đây</span>
-				{unreadCount > 0 && <span className='text-xs text-muted'>{unreadCount} chưa đọc</span>}
+				<span className='flex items-center gap-2'>
+					{unreadCount > 0 && (
+						<>
+							<CheckIcon
+								className='size-5 p-0.5 rounded-full hover:bg-black/5'
+								aria-label='Đánh đấu tất cả đã đọc'
+								onClick={() => markAllAsReadMutation.mutate()}
+							/>
+							<span className='text-xs text-muted'>{unreadCount} chưa đọc</span>
+						</>
+					)}
+				</span>
 			</div>
 
 			<div className='max-h-96 overflow-y-auto'>
