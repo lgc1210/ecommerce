@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import AdminTitle from "../../../components/admin-title";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
@@ -33,6 +34,28 @@ const AdminWarrantyClaimPage = () => {
 
 	const claims = data?.data ?? [];
 	const pagination = data?.pagination;
+
+	// Tự động mở modal chi tiết nếu vào trang này TỪ 1 THÔNG BÁO (bấm ở chuông admin) và bộ lọc
+	// "search" (backend search theo claimNumber HOẶC tên/email khách, xem warranty-claim.service.ts)
+	// chỉ ra ĐÚNG 1 kết quả — vì backend luôn tạo actionUrl bằng claimNumber (unique) nên trường
+	// hợp còn lại (0 hoặc >1 kết quả) không nên tự mở gì cả. CHỈ áp dụng khi đến từ notification
+	// (location.state.fromNotification), KHÔNG áp dụng khi admin tự gõ tìm kiếm thủ công — nếu
+	// không, mỗi lần search ra đúng 1 dòng modal sẽ tự bật lên, gây bất ngờ khó chịu ngoài ý muốn.
+	// Xem notification-bell (admin) -> handleItemClick, và pages/admin/order/index.tsx (cùng pattern).
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+	const notificationClaim = fromNotification && claims.length === 1 ? claims[0] : null;
+
+	const activeClaimId = viewingClaimId ?? notificationClaim?.id ?? null;
+
+	const handleCloseModal = () => {
+		setViewingClaimId(null);
+		if (fromNotification) {
+			navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+		}
+	};
 
 	return (
 		<div className='space-y-6'>
@@ -118,9 +141,7 @@ const AdminWarrantyClaimPage = () => {
 
 			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
 
-			{viewingClaimId !== null && (
-				<WarrantyClaimDetailModal claimId={viewingClaimId} onClose={() => setViewingClaimId(null)} />
-			)}
+			{activeClaimId !== null && <WarrantyClaimDetailModal claimId={activeClaimId} onClose={handleCloseModal} />}
 		</div>
 	);
 };

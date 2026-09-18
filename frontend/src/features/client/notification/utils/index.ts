@@ -12,12 +12,14 @@ export const timeAgo = (value: string) => {
 };
 
 const ORDER_ACTION_URL_PATTERN = /^\/orders\/(\d+)$/;
+const WARRANTY_CLAIM_ACTION_URL_PATTERN = /^\/warranty-claims\/(\d+)$/;
 
 /**
- * `actionUrl` backend trả về (vd "/orders/123") là 1 đường dẫn "khái niệm", KHÔNG phải route
- * thật trên frontend — trang tài khoản chỉ có đúng 1 route "/account", các tab (kể cả chi tiết
- * đơn hàng) được quản lý bằng state cục bộ trong OrdersTab (xem selectedOrderId), không phải
- * bằng URL. Nếu Link thẳng tới actionUrl như 1 URL thật sẽ vào thẳng route không tồn tại (404).
+ * `actionUrl` backend trả về (vd "/orders/123", "/warranty-claims/456") là 1 đường dẫn "khái
+ * niệm", KHÔNG phải route thật trên frontend — trang tài khoản chỉ có đúng 1 route "/account",
+ * các tab (kể cả chi tiết đơn hàng/claim bảo hành) được quản lý bằng state cục bộ trong
+ * OrdersTab/WarrantyTab (xem selectedOrderId, initialSelectedClaimId), không phải bằng URL. Nếu
+ * Link thẳng tới actionUrl như 1 URL thật sẽ vào thẳng route không tồn tại (404).
  *
  * Hàm này dịch actionUrl thành đích điều hướng thật (route + state) mà router hiểu được, dùng
  * lại đúng cơ chế location.state đã có sẵn để chuyển tab (xem account.tsx, notification-bell.tsx
@@ -31,6 +33,11 @@ export const resolveNotificationLink = (actionUrl: string): { to: string; state?
 	const orderMatch = actionUrl.match(ORDER_ACTION_URL_PATTERN);
 	if (orderMatch) {
 		return { to: paths.client.account, state: { tab: "orders", orderId: Number(orderMatch[1]) } };
+	}
+
+	const warrantyClaimMatch = actionUrl.match(WARRANTY_CLAIM_ACTION_URL_PATTERN);
+	if (warrantyClaimMatch) {
+		return { to: paths.client.account, state: { tab: "warranty", claimId: Number(warrantyClaimMatch[1]) } };
 	}
 
 	// Không khớp mẫu nào đã biết -> coi là route thật, điều hướng thẳng (an toàn cho các loại actionUrl chưa gặp).

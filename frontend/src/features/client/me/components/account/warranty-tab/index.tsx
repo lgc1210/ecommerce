@@ -14,6 +14,11 @@ import type { WarrantableOrderItem } from "../../../../warranty/types";
 const FALLBACK_IMAGE = "https://placehold.co/200x200/f3ede4/1c1815?font=montserrat&text=San+pham";
 const PAGE_SIZE = 10;
 
+interface WarrantyTabProps {
+	/** Claim cần mở sẵn chi tiết ngay khi tab này mount (vd từ link "Xem chi tiết" của 1 thông báo). */
+	initialSelectedClaimId?: number | null;
+}
+
 /**
  * Tab "Bảo hành" trong trang tài khoản, gồm 2 phần — mirror cấu trúc ReviewsTab:
  * 1. Sản phẩm đủ điều kiện bảo hành — order_item đã giao, còn trong hạn, có gán WarrantyPolicy
@@ -21,7 +26,7 @@ const PAGE_SIZE = 10;
  * 2. Yêu cầu bảo hành của tôi — claim đã gửi, xem chi tiết/hủy được khi còn "pending"
  *    (GET /warranty-claims/me).
  */
-const WarrantyTab = () => {
+const WarrantyTab = ({ initialSelectedClaimId = null }: WarrantyTabProps) => {
 	const [searchParams] = useSearchParams();
 	const page = Number(searchParams.get("page")) || 1;
 	const limit = Number(searchParams.get("limit")) || PAGE_SIZE;
@@ -30,7 +35,20 @@ const WarrantyTab = () => {
 	const { data: myClaimsData, isLoading: isLoadingMyClaims } = useMyWarrantyClaimsQuery({ page, limit });
 
 	const [claimingItem, setClaimingItem] = useState<WarrantableOrderItem | null>(null);
-	const [viewingClaimId, setViewingClaimId] = useState<number | null>(null);
+	const [viewingClaimId, setViewingClaimId] = useState<number | null>(initialSelectedClaimId);
+	const [syncedClaimId, setSyncedClaimId] = useState(initialSelectedClaimId);
+
+	// Đồng bộ lại khi initialSelectedClaimId đổi trong lúc WarrantyTab ĐANG mount sẵn (không tự
+	// remount) — vd đang xem chi tiết claim A, bấm 1 thông báo khác trỏ tới claim B từ dropdown
+	// chuông (tab vẫn là "warranty", không đổi, nên không có lượt mount mới nào để useState init
+	// lại tự chạy). So sánh trực tiếp trong thân component, không dùng useEffect (cùng lý do như
+	// account.tsx/order-tab).
+	if (initialSelectedClaimId !== syncedClaimId) {
+		setSyncedClaimId(initialSelectedClaimId);
+		if (initialSelectedClaimId !== null) {
+			setViewingClaimId(initialSelectedClaimId);
+		}
+	}
 
 	if (isLoadingWarrantable || isLoadingMyClaims) return <WarrantyTabSkeleton />;
 

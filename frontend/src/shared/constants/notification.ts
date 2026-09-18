@@ -1,4 +1,13 @@
-import { BellIcon, BoxIcon, CreditCardIcon, MailIcon, StarIcon, TagIcon, TruckIcon } from "../../components/icons";
+import {
+	BellIcon,
+	BoxIcon,
+	CreditCardIcon,
+	MailIcon,
+	ShieldCheckIcon,
+	StarIcon,
+	TagIcon,
+	TruckIcon,
+} from "../../components/icons";
 import type { NotificationType } from "../../features/client/notification/types";
 
 export const NOTIFICATION_TYPE = Object.freeze({
@@ -24,7 +33,7 @@ export const NOTIFICATION_TYPE_ICON: Record<NotificationType, typeof BellIcon> =
 	promotion: TagIcon,
 	stock: TruckIcon,
 	review: StarIcon,
-	warranty: TruckIcon,
+	warranty: ShieldCheckIcon,
 	system: BellIcon,
 	contact: MailIcon,
 };

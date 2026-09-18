@@ -66,6 +66,8 @@ interface AccountPageLocationState {
 	tab?: Tab;
 	/** Đơn hàng cần mở sẵn chi tiết khi vào tab "orders" (vd từ link "Xem chi tiết" của 1 thông báo). */
 	orderId?: number;
+	/** Claim bảo hành cần mở sẵn chi tiết khi vào tab "warranty" (từ actionUrl "/warranty-claims/:id" — xem resolveNotificationLink). */
+	claimId?: number;
 }
 
 const AccountPage = () => {
@@ -91,11 +93,12 @@ const AccountPage = () => {
 
 	const [tab, setTab] = useState<Tab>(state?.tab ?? TABS[0].name);
 	const [initialOrderId, setInitialOrderId] = useState<number | null>(state?.orderId ?? null);
+	const [initialClaimId, setInitialClaimId] = useState<number | null>(state?.claimId ?? null);
 	const [syncedLocationKey, setSyncedLocationKey] = useState(location.key);
 
 	// AccountPage KHÔNG re-mount khi điều hướng "/account" -> "/account" (cùng route, chỉ đổi
 	// state) — vd bấm "Xem chi tiết" ngay từ trong tab "notifications" (đã ở sẵn trang này), hay
-	// bấm "Xem tất cả" ở dropdown chuông trong lúc đang ở 1 tab khác. Đồng bộ lại tab/orderId
+	// bấm "Xem tất cả" ở dropdown chuông trong lúc đang ở 1 tab khác. Đồng bộ lại tab/orderId/claimId
 	// ngay trong lúc render (không dùng useEffect — gọi setState trong effect để "phản chiếu"
 	// theo prop/location gây thêm 1 nhịp render thừa; so sánh location.key trực tiếp trong thân
 	// component là cách React khuyến nghị cho việc "điều chỉnh state theo prop thay đổi").
@@ -104,6 +107,7 @@ const AccountPage = () => {
 		if (state?.tab) {
 			setTab(state.tab);
 			setInitialOrderId(state.orderId ?? null);
+			setInitialClaimId(state.claimId ?? null);
 		}
 	}
 
@@ -118,6 +122,7 @@ const AccountPage = () => {
 	const handleTabChange = (nextTab: Tab) => {
 		setTab(nextTab);
 		setInitialOrderId(null);
+		setInitialClaimId(null);
 		navigate(location.pathname, { replace: true, state: { tab: nextTab } });
 	};
 
@@ -138,7 +143,7 @@ const AccountPage = () => {
 				{tab === "addresses" && <AddressesTab />}
 				{tab === "orders" && <OrdersTab initialSelectedOrderId={initialOrderId} />}
 				{tab === "reviews" && canManageReviews && <ReviewsTab />}
-				{tab === "warranty" && canManageWarrantyClaims && <WarrantyTab />}
+				{tab === "warranty" && canManageWarrantyClaims && <WarrantyTab initialSelectedClaimId={initialClaimId} />}
 				{tab === "contacts" && <MyContactsTab />}
 				{tab === "notifications" && <NotificationsTab />}
 			</div>

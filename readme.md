@@ -84,7 +84,7 @@ backend/src/
     ├── notifications/          # Thông báo in-app (tự bắn khi đơn hàng/thanh toán đổi trạng thái, shop phản hồi review... + admin broadcast hàng loạt) — hiện vẫn qua polling, chưa đẩy qua Socket.IO
     ├── dashboard/              # Thống kê tổng quan cho admin
     ├── uploads/                # Upload ảnh sản phẩm
-    └── warranty/               # Bảo hành sản phẩm — CHƯA triển khai: model DB (`WarrantyPolicy`) đã có trong schema, nhưng route/controller/service vẫn là file rỗng
+    └── warranty/               # Bảo hành sản phẩm — chính sách bảo hành theo sản phẩm (CRUD), khách gửi/hủy yêu cầu bảo hành, staff duyệt/từ chối/xử lý theo state machine (pending → approved/rejected/cancelled → in_repair → completed/rejected), tồn kho serial cho SKU cần track IMEI/serial (`ProductUnit`, đồng bộ với `product_sku.stock_quantity`)
 ```
 
 Mỗi feature theo cùng một khuôn mẫu: `*.routes.ts` (định tuyến + khai báo quyền), `*.controller.ts`, `*.service.ts` (nghiệp vụ + Prisma), `*.validation.ts` (Zod schema), `*.utils.ts`, và `*.seed.ts` (dữ liệu mẫu khi khởi động).
@@ -101,6 +101,7 @@ Các nhóm bảng chính (xem `backend/prisma/schema.prisma`):
 3. **Giỏ hàng**: `carts`, `cart_items`.
 4. **Đơn hàng & thanh toán**: `coupons`, `orders` (lưu cả mã vận đơn + trạng thái vận chuyển GHN, và `delivered_at` — mốc thời gian chuyển sang "delivered", dùng để tính hạn 30 ngày được phép đánh giá), `order_items` (chụp lại giá & biến thể tại thời điểm mua), `payments` (state machine: `pending → completed/failed → refunded`), `checkout_idempotency_keys` (gate chống double-submit riêng cho luồng "Mua ngay" — xem 2.5).
 5. **Tương tác khách hàng**: `reviews` (đánh giá theo mô hình **verified purchase** — gắn với `order_item` cụ thể, chỉ viết được trong 30 ngày kể từ `orders.delivered_at`, sửa tối đa 1 lần), `review_replies` (phản hồi chính thức của shop, tối đa 1/review), `review_moderation_logs` (lịch sử ẩn/hiện review vi phạm — không sửa nội dung gốc), `otps` (xác thực đăng ký / đặt lại mật khẩu / đổi SĐT), `contacts`.
+6. **Bảo hành**: `warranty_policies` (gói bảo hành — thời hạn, bên chịu trách nhiệm, giai đoạn đổi mới 1-đổi-1 tùy chọn, gán vào `products.warranty_policy_id`), `product_units` (chỉ có dữ liệu nếu `product_sku.track_serial = true` — mỗi dòng là 1 đơn vị vật lý/serial cụ thể, gán vào đúng 1 `order_item` khi bán ra), `warranty_claims` (yêu cầu bảo hành, snapshot lại thời hạn tại thời điểm gửi để không bị ảnh hưởng nếu policy gốc bị sửa/xoá sau này), `warranty_claim_status_logs` (lịch sử đổi trạng thái claim).
 
 Sơ đồ ERD Database
 ![Ảnh sơ đồ ERD Database](docs/images/project-structure/ERD.png)
@@ -109,7 +110,7 @@ Sơ đồ ERD Database
 
 - Đăng nhập trả về **access token** (ngắn hạn) + **refresh token** (cookie `httpOnly`), ký bằng 2 secret khác nhau.
 - Middleware `authenticateJWT` xác thực access token; `requirePermission("<resource>:<action>")` kiểm tra quyền theo mô hình `resource:action` (vd: `catalog:write`, `order:read`).
-- 3 role mặc định khi seed: **admin** (toàn quyền, tính động theo mọi permission hiện có), **manager** (vận hành: catalog, đơn hàng, kho, coupon, thanh toán, dashboard, `conversation:manage` — shared inbox chat hỗ trợ...), **customer** (giỏ hàng, đặt hàng, đánh giá, liên hệ, `conversation:create` — chat hỗ trợ của chính mình).
+- 3 role mặc định khi seed: **admin** (toàn quyền, tính động theo mọi permission hiện có), **manager** (vận hành: catalog, đơn hàng, kho, coupon, thanh toán, dashboard, `conversation:manage` — shared inbox chat hỗ trợ, `warranty_policy:manage`/`warranty_claim:manage` — quản lý chính sách bảo hành và xử lý yêu cầu bảo hành...), **customer** (giỏ hàng, đặt hàng, đánh giá, liên hệ, `conversation:create` — chat hỗ trợ của chính mình, `warranty_claim:create` — gửi/xem/hủy yêu cầu bảo hành của chính mình).
 - RBAC có thể tùy biến qua API `/api/rbac` (tạo role/permission mới, gán/thu hồi quyền) — dữ liệu seed chỉ chạy khi bảng đang trống, không ghi đè phân quyền admin đã chỉnh tay.
 
 ### 2.5. Danh sách API chính (tiền tố `/api`)
@@ -121,7 +122,7 @@ Sơ đồ ERD Database
 | Users             | `/users/me`, `/users/me/addresses`, `/users` (admin)                                                                                                                                                                                                                      | Self-service + Admin                                                                                                                                        |
 | Addresses (admin) | `/addresses`, `/addresses/user/:userId`                                                                                                                                                                                                                                   | Quản trị địa chỉ mọi user                                                                                                                                   |
 | Categories        | `/categories`, `/categories/featured`, `/categories/slug/:slug`, `/categories/id/:id` (admin)                                                                                                                                                                             | Public đọc, admin ghi                                                                                                                                       |
-| Products          | `/products`, `/products/featured`, `/products/slug/:slug`, `/products/admin`, `/products/id/:id/skus`, `.../images`                                                                                                                                                       | Public đọc, admin quản lý SKU/ảnh                                                                                                                           |
+| Products          | `/products`, `/products/featured`, `/products/slug/:slug`, `/products/admin`, `/products/id/:id/skus`, `.../images`, `.../skus/:skuId/stock`, `.../skus/:skuId/receive-stock`                                                                                             | Public đọc, admin quản lý SKU/ảnh/tồn kho; `receive-stock` chỉ dùng cho SKU có `trackSerial=true` (nhập kho kèm danh sách serial)                           |
 | Cart              | `/cart`, `/cart/items`                                                                                                                                                                                                                                                    | Yêu cầu đăng nhập                                                                                                                                           |
 | Coupons           | `/coupons/request-welcome`, `/coupons/validate`, `/coupons` (admin CRUD)                                                                                                                                                                                                  |                                                                                                                                                             |
 | Reviews           | `/reviews/product/:productId`, `/reviews/reviewable-items`, `/reviews/me`, `/reviews` (tạo/sửa/xóa của chính khách), `/reviews/admin`, `/reviews/admin/:id/hide`, `/unhide`, `/reviews/admin/:id/reply`                                                                   | Đánh giá theo mô hình verified-purchase (xem 2.3)                                                                                                           |
@@ -132,7 +133,9 @@ Sơ đồ ERD Database
 | Orders            | `/orders` (checkout), `/orders/shipping-fee`, `/orders/buy-now`, `/orders/buy-now/shipping-fee`, `/orders/me`, `/orders/admin`, `/orders/webhooks/ghn`                                                                                                                    | "Mua ngay" đặt hàng thẳng 1 SKU, không qua giỏ hàng; webhook GHN không cần auth                                                                             |
 | Payments          | `/payments/me/:orderId`, `/payments/me/:orderId/method`, `/payments/me/:orderId/pay`, `/payments/vnpay/return`, `/payments/vnpay/ipn`, `/payments/zalopay/callback`, `/payments/admin`                                                                                    | Return/IPN không cần auth (gateway gọi trực tiếp); `PATCH .../method` đổi phương thức thanh toán (chỉ khi đơn còn "pending" và chưa thanh toán "completed") |
 | Dashboard         | `/dashboard/overview`, `/revenue`, `/top-products`, `/recent-orders`, `/low-stock`                                                                                                                                                                                        | Admin                                                                                                                                                       |
-| Uploads           | `/uploads/product-image`                                                                                                                                                                                                                                                  | Admin, multipart/form-data                                                                                                                                  |
+| Uploads           | `/uploads/product-image`, `/uploads/warranty-claim-image`                                                                                                                                                                                                                 | Admin (ảnh sản phẩm) / khách (`warranty_claim:create`, ảnh minh chứng lỗi khi gửi claim) — cả 2 đều multipart/form-data                                     |
+| Warranty Policy   | `/warranty-policies`, `/warranty-policies/id/:id`                                                                                                                                                                                                                         | Admin (`warranty_policy:manage`) — CRUD chính sách bảo hành để gán cho sản phẩm                                                                             |
+| Warranty Claim    | `/warranty-claims/warrantable-items`, `/warranty-claims`, `/warranty-claims/me`, `/warranty-claims/me/id/:id`, `.../cancel`, `/warranty-claims/admin`, `/warranty-claims/admin/id/:id`, `.../status`                                                                      | Khách gửi/xem/hủy claim của chính mình (`warranty_claim:create`); admin duyệt/từ chối/xử lý (`warranty_claim:manage`)                                       |
 | GHN               | `/external/ghn/provinces`, `/districts`, `/wards`                                                                                                                                                                                                                         | Proxy tra cứu địa chỉ hành chính cho GHN                                                                                                                    |
 
 **"Mua ngay" (buy-now)**: bấm nút "Mua ngay" ở trang chi tiết sản phẩm sẽ đặt hàng thẳng đúng 1 SKU + số lượng đã chọn, **không đụng tới giỏ hàng** hiện có của khách (khác với checkout thường — luôn đọc/xoá từ giỏ hàng thật). Cả 2 luồng dùng chung 1 lõi xử lý trong `OrderService` (validate tồn kho trong transaction, áp coupon, trừ kho, tạo vận đơn GHN ngay nếu COD) để tránh lệch logic. Vì không có giỏ hàng để làm "gate" chống double-submit như checkout thường (xoá cart item bên trong transaction), luồng mua ngay dùng riêng bảng `checkout_idempotency_keys`: frontend tự sinh 1 UUID mỗi lần bấm "Đặt hàng", backend insert giá trị này làm dòng đầu tiên trong transaction — trùng khoá (double click, hoặc client tự động retry do mất mạng) sẽ bị chặn ngay lập tức, rollback toàn bộ.
@@ -208,8 +211,8 @@ frontend/src/
 └── features/
     ├── auth/               # Zustand store, useAuth hook, service gọi /api/auth, route loader
     ├── external/location/    # Gọi API GHN (tỉnh/huyện/xã) cho form địa chỉ
-    ├── client/              # home, shop, product, cart, order, payment, review, contact, conversation (chat widget), notification, about, me (tài khoản), warranty (rỗng — chưa triển khai)
-    └── admin/               # dashboard, product, category, coupon, order, review, payment, user, rbac, contact, conversation (shared inbox), notification, header, sidebar
+    ├── client/              # home, shop, product, cart, order, payment, review, contact, conversation (chat widget), notification, about, me (tài khoản), warranty (xem sản phẩm đủ điều kiện, gửi/xem/hủy yêu cầu bảo hành — tab "Bảo hành" trong trang tài khoản)
+    └── admin/               # dashboard, product, category, coupon, order, review, payment, user, rbac, contact, conversation (shared inbox), notification, header, sidebar, warranty-policy (CRUD chính sách bảo hành), warranty-claim (danh sách/lọc/xử lý yêu cầu bảo hành)
 ```
 
 Mỗi feature con thường có: `components/`, `hooks/`, `services/` (gọi API), `types/`, `utils/`, đúng khuôn mẫu với backend để hai bên "nói cùng ngôn ngữ".
@@ -226,6 +229,7 @@ Các trang: **Trang chủ, Cửa hàng (Shop), Chi tiết sản phẩm, Giỏ h�
 - Trang chi tiết sản phẩm có nút "Mua ngay" (chỉ hiện khi đã đăng nhập) đưa thẳng khách sang trang **Mua ngay** — thanh toán ngay với đúng 1 sản phẩm/SKU vừa chọn, không cần thêm vào giỏ hàng và không ảnh hưởng tới giỏ hàng hiện có; tái dùng lại các khối UI của trang Thanh toán (địa chỉ, phương thức vận chuyển/thanh toán, mã giảm giá) nhưng gọi API `/orders/buy-now` riêng.
 - Tab "Đơn hàng" trong trang tài khoản: xem chi tiết + theo dõi trạng thái từng đơn, hủy đơn khi còn "pending", thử thanh toán lại (đơn online đang "pending"/"failed") hoặc **đổi phương thức thanh toán** (COD ⇄ online, hoặc giữa các cổng online với nhau) ngay tại đây khi đơn còn "pending" và chưa thanh toán xong. Đơn đã hủy không cho thanh toán lại nữa — thay vào đó có nút **"Đặt lại"** tự thêm lại các sản phẩm còn khả dụng vào giỏ hàng rồi đưa khách sang trang giỏ hàng để đặt đơn mới.
 - Trang chi tiết sản phẩm có tab "Đánh giá" (điểm trung bình, phân bổ theo sao, lọc/sắp xếp, phản hồi của shop); tab "Đánh giá của tôi" trong trang tài khoản cho phép viết đánh giá cho sản phẩm đã mua (đơn đã giao, còn trong hạn 30 ngày) và sửa (tối đa 1 lần)/xóa đánh giá đã viết.
+- Tab "Bảo hành" trong trang tài khoản: hiện các sản phẩm đã mua, đã giao, còn trong hạn bảo hành kèm nút gửi yêu cầu (đính kèm ảnh minh chứng lỗi, chọn đúng serial nếu SKU có track theo IMEI/serial); xem danh sách + chi tiết yêu cầu đã gửi (kèm lịch sử xử lý), tự hủy được khi yêu cầu còn "chờ xử lý".
 - Nội dung tĩnh của Trang chủ / Giới thiệu / Liên hệ / banner Cửa hàng được lấy từ **Strapi CMS** (không hard-code trong code frontend), cho phép chỉnh nội dung marketing mà không cần deploy lại.
 - **Chat hỗ trợ (realtime)**: widget chat nổi ở góc màn hình (chỉ hiện khi đã đăng nhập), tự tạo/lấy lại hội thoại "open" hiện có của khách khi mở lên; nhận tin nhắn mới tức thời qua Socket.IO kèm badge báo tin chưa đọc khi đang thu gọn widget (xem 2.9 và 3.5).
 
@@ -274,9 +278,12 @@ Trang quản lý thông tin cá nhân
 Trang quản lý liên hệ của tôi
 ![Ảnh giao diện quản lý liên hệ của tôi](docs/images/client/me-contacts.png)
 
+Trang quản lý bảo hành của tôi
+![Ảnh giao diện quản lý bảo hành của tôi](docs/images/client/warranty-claim.png)
+
 ### 3.4. Giao diện Admin
 
-Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Đánh giá sản phẩm** (kiểm duyệt ẩn/hiện kèm lý do, phản hồi chính thức), **Thanh toán**, **Liên hệ**, **Chat hỗ trợ** (`/admin/conversation`, quyền `conversation:manage`) — shared inbox realtime: danh sách mọi hội thoại, lọc theo trạng thái/đã-nhận-xử-lý, nhận xử lý, đổi trạng thái, trả lời trực tiếp, **Thông báo** (gửi hàng loạt).
+Layout riêng (`/admin`) với sidebar tối màu có thể thu gọn, mọi route đều được bảo vệ bằng `requirePermissionLoader` khớp với hệ permission của backend. Các trang quản trị: **Dashboard** (số liệu tổng quan, doanh thu, top sản phẩm, đơn gần đây, sản phẩm sắp hết hàng), **Sản phẩm** (kèm trang chi tiết quản lý SKU/ảnh), **Danh mục**, **Người dùng**, **Vai trò & phân quyền (RBAC)** — có ma trận quyền, **Mã giảm giá**, **Đơn hàng**, **Đánh giá sản phẩm** (kiểm duyệt ẩn/hiện kèm lý do, phản hồi chính thức), **Thanh toán**, **Liên hệ**, **Chat hỗ trợ** (`/admin/conversation`, quyền `conversation:manage`) — shared inbox realtime: danh sách mọi hội thoại, lọc theo trạng thái/đã-nhận-xử-lý, nhận xử lý, đổi trạng thái, trả lời trực tiếp, **Thông báo** (gửi hàng loạt), **Chính sách bảo hành** (`/admin/warranty-policies`, quyền `warranty_policy:manage`) — CRUD gói bảo hành, **Yêu cầu bảo hành** (`/admin/warranty-claims`, quyền `warranty_claim:manage`) — danh sách/lọc theo trạng thái/tìm theo mã claim hoặc khách hàng, modal chi tiết kèm timeline xử lý và form chuyển trạng thái (duyệt/từ chối/đang sửa/hoàn tất, bắt buộc chọn cách giải quyết khi hoàn tất và lý do khi từ chối).
 
 Trang dashboard admin
 ![Ảnh giao diện Dashboard Admin](docs/images/admin/dashboard.png)
@@ -316,7 +323,13 @@ Trang quản lý liên hệ
 ![Ảnh giao diện quản lý liên hệ](docs/images/admin/contacts.png)
 
 Trang quản lý chat
-![Ảnh giao diện quản lý liên hệ](docs/images/admin/chat.png)
+![Ảnh giao diện quản lý tin nhắn](docs/images/admin/chat.png)
+
+Trang quản lý chính sách bảo hành
+![Ảnh giao diện quản lý chính sách bảo hành](docs/images/admin/warranty-policies.png)
+
+Trang quản lý yêu cầu bảo hành
+![Ảnh giao diện quản lý yêu cầu bảo hành](docs/images/admin/warranty-claims.png)
 
 ### 3.5. Hệ thống thông báo (Notification)
 
@@ -324,7 +337,8 @@ Trang quản lý chat
 
 - Icon chuông ở header: dropdown xem nhanh 5 thông báo gần nhất, badge số chưa đọc. Poll `GET /notifications` mỗi 30s (backend chưa có kênh real-time) để tự cập nhật không cần F5. Chỉ hiện khi đã đăng nhập.
 - Tab "Quản lý thông báo" trong trang tài khoản: danh sách đầy đủ có phân trang, đánh dấu đã đọc (từng cái/tất cả), xóa (từng cái/toàn bộ thông báo đã đọc — có xác nhận trước khi xóa hàng loạt).
-- Click 1 thông báo (loại đơn hàng/thanh toán) điều hướng thẳng tới đúng đơn hàng đó trong tab "Đơn hàng"; thông báo "shop đã phản hồi đánh giá" điều hướng thẳng tới trang chi tiết sản phẩm, tự chuyển sang tab "Đánh giá" và cuộn/highlight đúng review đó — kể cả khi đang đứng sẵn ở trang chi tiết sản phẩm đó (tab khác) hoặc bấm lại đúng thông báo đã bấm trước đó.
+- Click 1 thông báo (loại đơn hàng/thanh toán) điều hướng thẳng tới đúng đơn hàng đó trong tab "Đơn hàng"; thông báo "shop đã phản hồi đánh giá" điều hướng thẳng tới trang chi tiết sản phẩm, tự chuyển sang tab "Đánh giá" và cuộn/highlight đúng review đó — kể cả khi đang đứng sẵn ở trang chi tiết sản phẩm đó (tab khác) hoặc bấm lại đúng thông báo đã bấm trước đó; thông báo "cập nhật yêu cầu bảo hành" điều hướng thẳng tới tab "Bảo hành", tự mở modal chi tiết đúng claim đó.
+- Phía admin: chuông thông báo có thêm loại "yêu cầu bảo hành mới" — click điều hướng tới `/admin/warranty-claims`, tự lọc theo mã claim (unique) và tự mở modal chi tiết nếu chỉ ra đúng 1 kết quả, cùng cơ chế `location.state.fromNotification` đã dùng cho đơn hàng/liên hệ/đánh giá.
 
 **Domain Admin** (`features/admin/notification/`, `pages/admin/notification/`):
 
@@ -435,5 +449,5 @@ Dùng `better-sqlite3` làm database mặc định (phù hợp dev cục bộ); 
 - **Thanh toán**: Tích hợp thêm các cổng thanh toán online phổ biến khác như MoMo, PayPal, Stripe.
 - **Trải nghiệm người dùng**: Tiếp tục tinh chỉnh UI/UX cho cả giao diện Client và Admin.
 - **Thông báo real-time**: Hiện thông báo mới cập nhật qua polling (30s) — nâng cấp lên WebSocket để đẩy tức thời (hạ tầng Socket.IO đã có sẵn nhờ tính năng chat, xem 2.9), và bổ sung thêm kênh gửi email/push (đã có sẵn interface `NotificationChannel`, chỉ cần thêm implementation mới).
-- **Bảo hành sản phẩm**: Bổ sung tính năng quản lý bảo hành sản phẩm — model DB (`WarrantyPolicy`) đã có sẵn trong schema, còn thiếu toàn bộ route/controller/service/UI.
+- **Bảo hành — tự động hoá luồng "đổi máy mới"**: khi staff chọn `resolutionType: "replaced"` lúc hoàn tất 1 claim, hệ thống mới dừng ở mức ghi nhận lựa chọn — chưa tự động xuất 1 `ProductUnit` mới từ kho để giao cho khách hay đánh dấu máy cũ `defective`, admin đang phải xử lý phần kho thủ công cho trường hợp này.
 - **AI**: Nghiên cứu và tích hợp AI vào các luồng nghiệp vụ của dự án (gợi ý sản phẩm, chatbot hỗ trợ...).

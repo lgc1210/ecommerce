@@ -236,7 +236,10 @@ export function buildAdminNewWarrantyClaimContent(
 		type: "warranty",
 		title: "Yêu cầu bảo hành mới",
 		message: `Khách hàng vừa gửi yêu cầu bảo hành ${claimNumber} cho sản phẩm "${productName}".`,
-		actionUrl: `/admin/warranty-claims/${claimId}`,
+		// Trang admin (pages/admin/warranty-claim/index.tsx) không có route chi tiết riêng theo id —
+		// giống hệt cách order/contact/review làm: tìm theo mã claim UNIQUE qua query "search", trang
+		// đích tự mở modal chi tiết nếu lọc ra đúng 1 kết quả (xem notification-bell admin -> state.fromNotification).
+		actionUrl: `/admin/warranty-claims?search=${claimNumber}`,
 		referenceId: String(claimId),
 	};
 }
@@ -253,7 +256,10 @@ export function buildWarrantyClaimStatusChangedNotification(
 		type: "warranty",
 		title: "Cập nhật yêu cầu bảo hành",
 		message: `Yêu cầu bảo hành ${claimNumber} của bạn ${statusText}.`,
-		actionUrl: `/account/warranty-claims/${claimId}`,
+		// Đường dẫn "khái niệm" (không phải route thật) — trang tài khoản chỉ có 1 route "/account",
+		// frontend tự dịch actionUrl này sang {tab: "warranty", claimId} qua resolveNotificationLink()
+		// (features/client/notification/utils), đúng cơ chế đã dùng cho "/orders/:id".
+		actionUrl: `/warranty-claims/${claimId}`,
 		referenceId: String(claimId),
 	};
 }
