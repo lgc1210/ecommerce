@@ -1,16 +1,16 @@
 [build.environment]
-  VITE_API_BASE_URL = "https://retail-ecommerce-production.up.railway.app/api"
-  VITE_SOCKET_URL = "https://retail-ecommerce-production.up.railway.app"
+  VITE_API_BASE_URL = "https://ecommerce-production-a4b1.up.railway.app/api"
+  VITE_SOCKET_URL = "https://ecommerce-production-a4b1.up.railway.app"
 
 [[redirects]]
   from = "/api/*"
-  to = "https://retail-ecommerce-production.up.railway.app/api/:splat"
+  to = "https://ecommerce-production-a4b1.up.railway.app/api/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/uploads/*"
-  to = "https://retail-ecommerce-production.up.railway.app/uploads/:splat"
+  to = "https://ecommerce-production-a4b1.up.railway.app/uploads/:splat"
   status = 200
   force = true
 
