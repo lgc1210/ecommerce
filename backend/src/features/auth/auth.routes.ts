@@ -1,7 +1,29 @@
 import { Router } from "express";
-import { register, verifyOtp, resendOtp, login, googleLogin, refreshToken, logout, forgotPassword, resetPassword, getMe, facebookLogin } from "./auth.controller.js";
+import {
+	register,
+	verifyOtp,
+	resendOtp,
+	login,
+	googleLogin,
+	refreshToken,
+	logout,
+	forgotPassword,
+	resetPassword,
+	getMe,
+	facebookLogin,
+	getSocketToken,
+} from "./auth.controller.js";
 import { validate } from "../../middlewares/validate.js";
-import { RegisterSchema, LoginSchema, GoogleLoginSchema, VerifyOtpSchema, ResendOtpSchema, ForgotPasswordSchema, ResetPasswordSchema, FacebookLoginSchema } from "./auth.validation.js";
+import {
+	RegisterSchema,
+	LoginSchema,
+	GoogleLoginSchema,
+	VerifyOtpSchema,
+	ResendOtpSchema,
+	ForgotPasswordSchema,
+	ResetPasswordSchema,
+	FacebookLoginSchema,
+} from "./auth.validation.js";
 import { authenticateJWT } from "../../middlewares/authenticate.js";
 
 const router = Router();
@@ -24,5 +46,6 @@ router.post("/reset-password", validate(ResetPasswordSchema), resetPassword);
 // Protected routes
 // ==========================================
 router.get("/me", authenticateJWT, getMe);
+router.get("/socket-token", authenticateJWT, getSocketToken);
 
 export default router;

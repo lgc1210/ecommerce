@@ -10,10 +10,16 @@ import type { TokenPayload } from "../../middlewares/authenticate.js";
 // Refresh token: long-lived, only used to mint new access tokens; its raw JWT string
 // is also persisted in the `refresh_tokens` table so it can be revoked (logout,
 // password reset, "log out of all devices") even before its natural JWT expiry.
-export const ACCESS_TOKEN_EXPIRES_IN: NonNullable<SignOptions["expiresIn"]> = "15m";
+export const ACCESS_TOKEN_EXPIRES_IN: NonNullable<SignOptions["expiresIn"]> =
+	"15m";
 export const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000;
 
-export const REFRESH_TOKEN_EXPIRES_IN: NonNullable<SignOptions["expiresIn"]> = "7d";
+export const SOCKET_TOKEN_EXPIRES_IN: NonNullable<SignOptions["expiresIn"]> =
+	"2m";
+
+export const REFRESH_TOKEN_EXPIRES_IN: NonNullable<SignOptions["expiresIn"]> =
+	"7d";
+
 export const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ==========================================
@@ -39,11 +45,21 @@ export function getOtpExpiryDate(): Date {
 // JWT helpers
 // ==========================================
 export function signAccessToken(payload: TokenPayload): string {
-	return jwt.sign(payload, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN });
+	return jwt.sign(payload, env.JWT_SECRET, {
+		expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+	});
+}
+
+export function signSocketToken(payload: TokenPayload): string {
+	return jwt.sign(payload, env.JWT_SECRET, {
+		expiresIn: SOCKET_TOKEN_EXPIRES_IN,
+	});
 }
 
 export function signRefreshToken(payload: TokenPayload): string {
-	return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });
+	return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
+		expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+	});
 }
 
 export function verifyRefreshToken(token: string): TokenPayload {
@@ -81,9 +97,9 @@ export function getRefreshTokenCookieOptions(): CookieOptions {
 //   liên kết danh tính người dùng giữa các hệ thống khác nhau (correlation/fingerprinting).
 //   Backend vẫn lưu providerId trong DB để phục vụ việc liên kết tài khoản (linking) khi
 //   đăng nhập Google, chỉ là không cần thiết phải trả nó ra ngoài cho bất kỳ client nào.
-export function sanitizeUser<T extends { passwordHash?: string | null; providerId?: string | null }>(
-	user: T,
-): Omit<T, "passwordHash" | "providerId"> {
+export function sanitizeUser<
+	T extends { passwordHash?: string | null; providerId?: string | null },
+>(user: T): Omit<T, "passwordHash" | "providerId"> {
 	const { passwordHash, providerId, ...safeUser } = user;
 	return safeUser;
 }

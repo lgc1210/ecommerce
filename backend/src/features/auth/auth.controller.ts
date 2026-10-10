@@ -1,16 +1,25 @@
 import type { Response, NextFunction } from "express";
 import type { Request } from "express";
 import authService from "./auth.service.js";
-import { getAccessTokenCookieOptions, getRefreshTokenCookieOptions } from "./auth.utils.js";
+import {
+	getAccessTokenCookieOptions,
+	getRefreshTokenCookieOptions,
+	signSocketToken,
+} from "./auth.utils.js";
 import { TOKENS } from "./auth.constant.js";
 import { handleServiceError } from "../../shared/service-error-handler.js";
 
-export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const register = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { name, email, phone, password } = req.body;
 		const user = await authService.register({ name, email, phone, password });
 		res.status(201).json({
-			message: "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực tài khoản.",
+			message:
+				"Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP xác thực tài khoản.",
 			data: user,
 		});
 	} catch (error) {
@@ -18,13 +27,18 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 	}
 };
 
-export const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const verifyOtp = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { email, otpCode } = req.body;
 		const user = await authService.verifyRegistrationOtp({ email, otpCode });
 
 		res.status(200).json({
-			message: "Xác thực tài khoản thành công. Bạn có thể đăng nhập ngay bây giờ.",
+			message:
+				"Xác thực tài khoản thành công. Bạn có thể đăng nhập ngay bây giờ.",
 			data: user,
 		});
 	} catch (error) {
@@ -32,24 +46,39 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
 	}
 };
 
-export const resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const resendOtp = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { email, type } = req.body;
 		await authService.resendOtp({ email, type });
 
-		res.status(200).json({ message: "Mã OTP mới đã được gửi tới email của bạn." });
+		res
+			.status(200)
+			.json({ message: "Mã OTP mới đã được gửi tới email của bạn." });
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}
 };
 
-export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const login = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { email, password, cartItems } = req.body;
-		const { user, accessToken, refreshToken, cart, skippedItems } = await authService.login({ email, password, cartItems });
+		const { user, accessToken, refreshToken, cart, skippedItems } =
+			await authService.login({ email, password, cartItems });
 
 		res.cookie(TOKENS.accessToken, accessToken, getAccessTokenCookieOptions());
-		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
+		res.cookie(
+			TOKENS.refreshToken,
+			refreshToken,
+			getRefreshTokenCookieOptions(),
+		);
 
 		res.status(200).json({
 			message: "Đăng nhập thành công.",
@@ -62,13 +91,31 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 	}
 };
 
-export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const googleLogin = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { accessToken, cartItems } = req.body;
-		const { user, accessToken: newAccessToken, refreshToken, cart, skippedItems } = await authService.loginWithGoogle({ accessToken, cartItems });
+		const {
+			user,
+			accessToken: newAccessToken,
+			refreshToken,
+			cart,
+			skippedItems,
+		} = await authService.loginWithGoogle({ accessToken, cartItems });
 
-		res.cookie(TOKENS.accessToken, newAccessToken, getAccessTokenCookieOptions());
-		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
+		res.cookie(
+			TOKENS.accessToken,
+			newAccessToken,
+			getAccessTokenCookieOptions(),
+		);
+		res.cookie(
+			TOKENS.refreshToken,
+			refreshToken,
+			getRefreshTokenCookieOptions(),
+		);
 
 		res.status(200).json({
 			message: "Đăng nhập thành công.",
@@ -81,13 +128,31 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 	}
 };
 
-export const facebookLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const facebookLogin = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { accessToken, cartItems } = req.body;
-		const { user, accessToken: newAccessToken, refreshToken, cart, skippedItems } = await authService.loginWithFacebook({ accessToken, cartItems });
+		const {
+			user,
+			accessToken: newAccessToken,
+			refreshToken,
+			cart,
+			skippedItems,
+		} = await authService.loginWithFacebook({ accessToken, cartItems });
 
-		res.cookie(TOKENS.accessToken, newAccessToken, getAccessTokenCookieOptions());
-		res.cookie(TOKENS.refreshToken, refreshToken, getRefreshTokenCookieOptions());
+		res.cookie(
+			TOKENS.accessToken,
+			newAccessToken,
+			getAccessTokenCookieOptions(),
+		);
+		res.cookie(
+			TOKENS.refreshToken,
+			refreshToken,
+			getRefreshTokenCookieOptions(),
+		);
 
 		res.status(200).json({
 			message: "Đăng nhập thành công.",
@@ -100,18 +165,29 @@ export const facebookLogin = async (req: Request, res: Response, next: NextFunct
 	}
 };
 
-export const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const refreshToken = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const rawRefreshToken = req.cookies?.refreshToken;
 		if (!rawRefreshToken) {
-			res.status(401).json({ error: "Không tìm thấy refresh token, vui lòng đăng nhập lại." });
+			res.status(401).json({
+				error: "Không tìm thấy refresh token, vui lòng đăng nhập lại.",
+			});
 			return;
 		}
 
-		const { accessToken, refreshToken: newRefreshToken } = await authService.refreshAccessToken(rawRefreshToken);
+		const { accessToken, refreshToken: newRefreshToken } =
+			await authService.refreshAccessToken(rawRefreshToken);
 
 		res.cookie(TOKENS.accessToken, accessToken, getAccessTokenCookieOptions());
-		res.cookie(TOKENS.refreshToken, newRefreshToken, getRefreshTokenCookieOptions());
+		res.cookie(
+			TOKENS.refreshToken,
+			newRefreshToken,
+			getRefreshTokenCookieOptions(),
+		);
 
 		res.status(200).json({ message: "Làm mới token thành công." });
 	} catch (error) {
@@ -122,7 +198,11 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
 	}
 };
 
-export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const logout = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const rawRefreshToken = req.cookies?.refreshToken;
 		await authService.logout(rawRefreshToken);
@@ -136,32 +216,47 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
 	}
 };
 
-export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const forgotPassword = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { email } = req.body;
 		await authService.forgotPassword({ email });
 
 		// Luôn trả về message chung chung dù email có tồn tại hay không (chống user enumeration)
 		res.status(200).json({
-			message: "Nếu email tồn tại trong hệ thống, mã OTP đặt lại mật khẩu đã được gửi tới email đó.",
+			message:
+				"Nếu email tồn tại trong hệ thống, mã OTP đặt lại mật khẩu đã được gửi tới email đó.",
 		});
 	} catch (error) {
 		next(error);
 	}
 };
 
-export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const resetPassword = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		const { email, otpCode, newPassword } = req.body;
 		await authService.resetPassword({ email, otpCode, newPassword });
 
-		res.status(200).json({ message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." });
+		res.status(200).json({
+			message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.",
+		});
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}
 };
 
-export const getMe = async (req: any, res: Response, next: NextFunction): Promise<void> => {
+export const getMe = async (
+	req: any,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
 	try {
 		if (!req.user) {
 			res.status(401).json({ error: "Chưa đăng nhập." });
@@ -173,4 +268,17 @@ export const getMe = async (req: any, res: Response, next: NextFunction): Promis
 	} catch (error) {
 		handleServiceError(error, res, next);
 	}
+};
+
+export const getSocketToken = (req: any, res: Response): void => {
+	if (!req.user) {
+		res.status(401).json({ error: "Chưa đăng nhập." });
+		return;
+	}
+
+	const { id, email, roleId } = req.user;
+	res.set("Cache-Control", "no-store");
+	res
+		.status(200)
+		.json({ data: { token: signSocketToken({ id, email, roleId }) } });
 };

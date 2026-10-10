@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import authService from "../features/auth/services";
 
 /**
  * Socket.IO được mount ở root của backend, không nằm dưới "/api". Production có thể dùng
@@ -33,8 +34,12 @@ export const getSocket = (): Socket => {
 		socket = io(resolveSocketUrl(), {
 			withCredentials: true,
 			autoConnect: false,
-			// Let Socket.IO start with polling and upgrade when the Railway proxy supports it.
-			// Forcing websocket can create a reconnect loop when the proxy closes upgrades.
+			auth: (cb) => {
+				authService
+					.getSocketToken()
+					.then((res) => cb({ token: res.data?.data?.token }))
+					.catch(() => cb({}));
+			},
 		});
 	}
 	return socket;

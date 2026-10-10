@@ -18,23 +18,30 @@ export interface SocketUser extends TokenPayload {}
  * `middlewares/authenticate.ts`), verify thủ công. Kết nối bị từ chối ngay tại đây nếu thiếu/token
  * không hợp lệ — client sẽ nhận sự kiện "connect_error".
  */
-const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void): void => {
+const socketAuthMiddleware = (
+	socket: Socket,
+	next: (err?: Error) => void,
+): void => {
 	try {
-		const cookieHeader = socket.handshake.headers.cookie;
-		if (!cookieHeader) {
-			next(new Error("Unauthorized"));
-			return;
+		const authToken = socket.handshake.auth?.token;
+		let token: string | undefined =
+			typeof authToken === "string" && authToken ? authToken : undefined;
+
+		if (!token) {
+			const cookieHeader = socket.handshake.headers.cookie;
+			token = cookieHeader ? parseCookie(cookieHeader).accessToken : undefined;
 		}
 
-		const cookies = parseCookie(cookieHeader);
-		const token = cookies.accessToken;
 		if (!token) {
 			next(new Error("Unauthorized"));
 			return;
 		}
 
-		const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as unknown as SocketUser;
-		socket.data.user = decoded; // Lưu thông tin user vào socket.data để dùng trong các event handler
+		const decoded = jwt.verify(
+			token,
+			process.env.JWT_SECRET as string,
+		) as unknown as SocketUser;
+		socket.data.user = decoded;
 		next();
 	} catch (error) {
 		next(new Error("Unauthorized"));
@@ -81,6 +88,8 @@ export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
 		console.error("[socket] Lỗi kết nối Socket.IO:", err.message);
 	});
 
-	console.log("[socket] Socket.IO đã khởi tạo, đang lắng nghe kết nối realtime.");
+	console.log(
+		"[socket] Socket.IO đã khởi tạo, đang lắng nghe kết nối realtime.",
+	);
 	return io;
 };
