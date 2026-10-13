@@ -1,12 +1,15 @@
 import { useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import BreadCrumb from "../../../components/breadcrumb";
-import Button from "../../../components/button";
+import { LinkButton } from "../../../components/button";
 import { CheckIcon, ClockIcon, XIcon } from "../../../components/icons";
 import paths from "../../../configs/constants/paths";
 import { useOwnPaymentQuery } from "../../../features/client/payment/hooks";
 import { formatCurrency } from "../../../utils/currency";
-import { ONLINE_GATEWAY_METHODS, PAYMENT_STATUS } from "../../../shared/constants/payment";
+import {
+	ONLINE_GATEWAY_METHODS,
+	PAYMENT_STATUS,
+} from "../../../shared/constants/payment";
 import { PAYMENT_METHOD_LABEL } from "../../../features/admin/payment/utils";
 
 /**
@@ -36,7 +39,10 @@ function resolveOrderIdFromQuery(searchParams: URLSearchParams): number | null {
 
 const PaymentResultPage = () => {
 	const [searchParams] = useSearchParams();
-	const orderId = useMemo(() => resolveOrderIdFromQuery(searchParams), [searchParams]);
+	const orderId = useMemo(
+		() => resolveOrderIdFromQuery(searchParams),
+		[searchParams],
+	);
 
 	const { data: payment, isLoading, isError } = useOwnPaymentQuery(orderId);
 
@@ -123,8 +129,13 @@ const PaymentResultPage = () => {
 
 	return (
 		<>
-			<BreadCrumb title='Kết quả thanh toán' description='Xem kết quả giao dịch thanh toán online' />
-			<div className='mx-auto max-w-xl px-4 py-16 sm:px-6 lg:px-8'>{renderContent()}</div>
+			<BreadCrumb
+				title='Kết quả thanh toán'
+				description='Xem kết quả giao dịch thanh toán online'
+			/>
+			<div className='mx-auto max-w-xl px-4 py-16 sm:px-6 lg:px-8'>
+				{renderContent()}
+			</div>
 		</>
 	);
 };
@@ -139,10 +150,21 @@ interface ResultCardProps {
 	};
 }
 
-const TONE_STYLES: Record<ResultCardProps["tone"], { icon: typeof CheckIcon; wrapClass: string; iconClass: string }> = {
-	success: { icon: CheckIcon, wrapClass: "bg-primary-light", iconClass: "text-primary-dark" },
+const TONE_STYLES: Record<
+	ResultCardProps["tone"],
+	{ icon: typeof CheckIcon; wrapClass: string; iconClass: string }
+> = {
+	success: {
+		icon: CheckIcon,
+		wrapClass: "bg-primary-light",
+		iconClass: "text-primary-dark",
+	},
 	failed: { icon: XIcon, wrapClass: "bg-red-50", iconClass: "text-red-600" },
-	pending: { icon: ClockIcon, wrapClass: "bg-amber-50", iconClass: "text-amber-600" },
+	pending: {
+		icon: ClockIcon,
+		wrapClass: "bg-amber-50",
+		iconClass: "text-amber-600",
+	},
 };
 
 const ResultCard = ({ tone, title, description, payment }: ResultCardProps) => {
@@ -150,7 +172,8 @@ const ResultCard = ({ tone, title, description, payment }: ResultCardProps) => {
 
 	return (
 		<div className='rounded-3xl border border-border bg-white p-8 text-center shadow-sm'>
-			<div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${wrapClass}`}>
+			<div
+				className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${wrapClass}`}>
 				<Icon className={`h-8 w-8 ${iconClass}`} />
 			</div>
 			<h1 className='mt-5 text-xl font-bold text-ink'>{title}</h1>
@@ -160,28 +183,37 @@ const ResultCard = ({ tone, title, description, payment }: ResultCardProps) => {
 				<div className='mt-6 space-y-1.5 rounded-2xl bg-surface p-4 text-left text-sm'>
 					<div className='flex justify-between'>
 						<span className='text-muted'>Mã đơn hàng</span>
-						<span className='font-semibold text-ink'>{payment.order.orderNumber}</span>
+						<span className='font-semibold text-ink'>
+							{payment.order.orderNumber}
+						</span>
 					</div>
 					<div className='flex justify-between'>
 						<span className='text-muted'>Phương thức</span>
-						<span className='text-ink'>{PAYMENT_METHOD_LABEL[payment.paymentMethod]}</span>
+						<span className='text-ink'>
+							{PAYMENT_METHOD_LABEL[payment.paymentMethod]}
+						</span>
 					</div>
 					<div className='flex justify-between'>
 						<span className='text-muted'>Số tiền</span>
-						<span className='font-semibold text-ink'>{formatCurrency(Number(payment.order.totalAmount))}</span>
+						<span className='font-semibold text-ink'>
+							{formatCurrency(Number(payment.order.totalAmount))}
+						</span>
 					</div>
 				</div>
 			)}
 
 			<div className='mt-8 flex flex-wrap items-center justify-center gap-3'>
-				<Link to={paths.client.account} state={{ tab: "orders" }} className='w-full!'>
-					<Button variant='outline' className='w-full! cursor-pointer!'>
-						Xem đơn hàng của tôi
-					</Button>
-				</Link>
-				<Link to={paths.client.shop} className='w-full!'>
-					<Button className='w-full! cursor-pointer!'>Tiếp tục mua sắm</Button>
-				</Link>
+				<LinkButton
+					to={paths.client.account}
+					state={{ tab: "orders" }}
+					fullWidth
+					variant='outline'
+					viewTransition>
+					Xem đơn hàng của tôi
+				</LinkButton>
+				<LinkButton to={paths.client.shop} fullWidth viewTransition>
+					Tiếp tục mua sắm
+				</LinkButton>
 			</div>
 		</div>
 	);

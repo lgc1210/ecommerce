@@ -1,8 +1,13 @@
 import { useState, type SubmitEvent } from "react";
 import BreadCrumb from "../../../components/breadcrumb";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import FormControl from "../../../components/form-control";
-import { HeadsetIcon, MailIcon, MapPinIcon, PhoneIcon } from "../../../components/icons";
+import {
+	HeadsetIcon,
+	MailIcon,
+	MapPinIcon,
+	PhoneIcon,
+} from "../../../components/icons";
 import { useSendContact } from "../../../features/client/contact/hooks/useContact";
 import type { ContactPayload } from "../../../features/client/contact/types";
 import EmbeddedMap from "../../../features/client/contact/components/embedded-map";
@@ -79,9 +84,11 @@ const ContactPage = () => {
 		return Object.keys(nextErrors).length === 0;
 	};
 
-	const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-		setForm((prev) => ({ ...prev, [field]: e.target.value }));
-	};
+	const handleChange =
+		(field: keyof typeof form) =>
+		(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+			setForm((prev) => ({ ...prev, [field]: e.target.value }));
+		};
 
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -104,12 +111,17 @@ const ContactPage = () => {
 
 	return (
 		<div>
-			<BreadCrumb title='Liên hệ' description='Có câu hỏi hoặc cần hỗ trợ? Đội ngũ Ecommerce luôn sẵn sàng.' />
+			<BreadCrumb
+				title='Liên hệ'
+				description='Có câu hỏi hoặc cần hỗ trợ? Đội ngũ Ecommerce luôn sẵn sàng.'
+			/>
 
 			<div className='mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8'>
 				<div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-4'>
 					{contactInfo.map(({ icon: Icon, title, lines }) => (
-						<div key={title} className='rounded-2xl border border-border bg-surface p-6'>
+						<div
+							key={title}
+							className='rounded-2xl border border-border bg-surface p-6'>
 							<span className='flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary-dark'>
 								<Icon className='h-5 w-5' />
 							</span>
@@ -129,15 +141,45 @@ const ContactPage = () => {
 					</div>
 
 					<div>
-						<h2 className='text-2xl font-extrabold tracking-tight text-ink'>Gửi tin nhắn cho chúng tôi</h2>
-						<p className='mt-2 text-sm text-muted'>Điền thông tin bên dưới, đội ngũ Ecommerce sẽ liên hệ lại trong thời gian sớm nhất.</p>
+						<h2 className='text-2xl font-extrabold tracking-tight text-ink'>
+							Gửi tin nhắn cho chúng tôi
+						</h2>
+						<p className='mt-2 text-sm text-muted'>
+							Điền thông tin bên dưới, đội ngũ Ecommerce sẽ liên hệ lại trong
+							thời gian sớm nhất.
+						</p>
 
 						<form onSubmit={handleSubmit} className='mt-6 space-y-4'>
 							<div className='grid gap-4 sm:grid-cols-2'>
-								<FormControl variant='surface' name='name' value={form.name} onChange={handleChange("name")} placeholder='Họ và tên' maxLength={100} error={errors.name} />
-								<FormControl variant='surface' type='email' name='email' value={form.email} onChange={handleChange("email")} placeholder='Email' maxLength={255} error={errors.email} />
+								<FormControl
+									variant='surface'
+									name='name'
+									value={form.name}
+									onChange={handleChange("name")}
+									placeholder='Họ và tên'
+									maxLength={100}
+									error={errors.name}
+								/>
+								<FormControl
+									variant='surface'
+									type='email'
+									name='email'
+									value={form.email}
+									onChange={handleChange("email")}
+									placeholder='Email'
+									maxLength={255}
+									error={errors.email}
+								/>
 							</div>
-							<FormControl variant='surface' name='subject' value={form.subject} onChange={handleChange("subject")} placeholder='Chủ đề' maxLength={255} error={errors.subject} />
+							<FormControl
+								variant='surface'
+								name='subject'
+								value={form.subject}
+								onChange={handleChange("subject")}
+								placeholder='Chủ đề'
+								maxLength={255}
+								error={errors.subject}
+							/>
 							<FormControl
 								as='textarea'
 								variant='surface'

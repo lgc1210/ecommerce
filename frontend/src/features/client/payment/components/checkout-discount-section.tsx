@@ -1,6 +1,6 @@
 import { useState } from "react";
 import FormControl from "../../../../components/form-control";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { CouponIcon, CloseIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 import { useValidateCouponMutation } from "../../coupon/hooks";
@@ -18,7 +18,12 @@ interface CheckoutDiscountSectionProps {
  * trang thanh toán — mã chỉ thực sự được dùng khi gửi kèm `couponCode` lúc đặt hàng (POST /orders),
  * backend sẽ tự kiểm tra lại toàn bộ điều kiện 1 lần nữa tại thời điểm đó.
  */
-const CheckoutDiscountSection = ({ orderSubtotal, appliedCoupon, onApply, onRemove }: CheckoutDiscountSectionProps) => {
+const CheckoutDiscountSection = ({
+	orderSubtotal,
+	appliedCoupon,
+	onApply,
+	onRemove,
+}: CheckoutDiscountSectionProps) => {
 	const [code, setCode] = useState("");
 	const validateCoupon = useValidateCouponMutation();
 
@@ -46,7 +51,9 @@ const CheckoutDiscountSection = ({ orderSubtotal, appliedCoupon, onApply, onRemo
 				<div className='flex items-center justify-between rounded-2xl bg-cream-soft p-4'>
 					<div>
 						<p className='font-semibold text-ink'>{appliedCoupon.code}</p>
-						<p className='mt-1 text-sm text-green-600'>Giảm {formatCurrency(appliedCoupon.discountAmount)}</p>
+						<p className='mt-1 text-sm text-green-600'>
+							Giảm {formatCurrency(appliedCoupon.discountAmount)}
+						</p>
 					</div>
 					<button
 						type='button'

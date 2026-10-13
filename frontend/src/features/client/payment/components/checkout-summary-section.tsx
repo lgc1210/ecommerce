@@ -1,4 +1,4 @@
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { formatCurrency } from "../../../../utils/currency";
 
 interface CheckoutSummarySectionProps {
@@ -12,7 +12,15 @@ interface CheckoutSummarySectionProps {
 }
 
 /** Tóm tắt đơn hàng (tạm tính / phí vận chuyển / giảm giá / tổng cộng) + nút đặt hàng. */
-const CheckoutSummarySection = ({ subtotal, shippingFee, discount, total, onPlaceOrder, isPlacingOrder = false, disabled = false }: CheckoutSummarySectionProps) => {
+const CheckoutSummarySection = ({
+	subtotal,
+	shippingFee,
+	discount,
+	total,
+	onPlaceOrder,
+	isPlacingOrder = false,
+	disabled = false,
+}: CheckoutSummarySectionProps) => {
 	return (
 		<section className='rounded-3xl border border-border bg-white p-6'>
 			<h2 className='mb-5 text-lg font-bold text-ink'>Tóm tắt đơn hàng</h2>
@@ -36,10 +44,18 @@ const CheckoutSummarySection = ({ subtotal, shippingFee, discount, total, onPlac
 
 			<div className='flex items-center justify-between'>
 				<span className='font-semibold text-ink'>Tổng cộng</span>
-				<span className='text-2xl font-extrabold text-primary'>{formatCurrency(total)}</span>
+				<span className='text-2xl font-extrabold text-primary'>
+					{formatCurrency(total)}
+				</span>
 			</div>
 
-			<Button type='button' fullWidth size='lg' className='mt-6' onClick={onPlaceOrder} disabled={disabled || isPlacingOrder}>
+			<Button
+				type='button'
+				fullWidth
+				size='lg'
+				className='mt-6'
+				onClick={onPlaceOrder}
+				disabled={disabled || isPlacingOrder}>
 				{isPlacingOrder ? "Đang đặt hàng..." : "Đặt hàng"}
 			</Button>
 		</section>

@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import { ArrowUpIcon } from "../../components/icons";
 
 const BackToTop = () => {

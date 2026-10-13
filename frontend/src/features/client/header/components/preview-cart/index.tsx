@@ -5,6 +5,7 @@ import { CartIcon } from "../../../../../components/icons";
 import { useCart } from "../../../cart/hooks";
 import { formatCurrency } from "../../../../../utils/currency";
 import { CartPreviewCountSkeleton, CartPreviewListSkeleton } from "./skeleton";
+import { LinkButton } from "../../../../../components/button";
 
 const PreviewCart = () => {
 	const { totalQuantity, items, isLoading } = useCart();
@@ -39,7 +40,9 @@ const PreviewCart = () => {
 			{isLoading ? (
 				<CartPreviewListSkeleton />
 			) : items.length === 0 ? (
-				<div className='px-4 py-8 text-center text-sm text-muted'>Giỏ hàng của bạn đang trống.</div>
+				<div className='px-4 py-8 text-center text-sm text-muted'>
+					Giỏ hàng của bạn đang trống.
+				</div>
 			) : (
 				<>
 					<div className='max-h-80 overflow-y-auto p-2'>
@@ -49,15 +52,25 @@ const PreviewCart = () => {
 								to={paths.client.productDetail(item.productSlug)}
 								className='flex gap-3 rounded-lg p-2 hover:bg-cream-soft'
 								viewTransition>
-								<img src={item.image} alt={item.productName} className='h-14 w-14 shrink-0 rounded-md object-cover' />
+								<img
+									src={item.image}
+									alt={item.productName}
+									className='h-14 w-14 shrink-0 rounded-md object-cover'
+								/>
 								<div className='min-w-0 flex-1'>
-									<p className='truncate text-sm font-semibold text-ink'>{item.productName}</p>
+									<p className='truncate text-sm font-semibold text-ink'>
+										{item.productName}
+									</p>
 									<p className='mt-0.5 truncate text-xs text-muted'>
 										{Object.values(item.variationDetails ?? {}).join(" · ")}
 									</p>
 									<div className='mt-1 flex items-center justify-between gap-2'>
-										<span className='text-sm font-bold text-primary-dark'>{formatCurrency(item.price)}</span>
-										<span className='text-xs text-muted'>× {item.quantity}</span>
+										<span className='text-sm font-bold text-primary-dark'>
+											{formatCurrency(item.price)}
+										</span>
+										<span className='text-xs text-muted'>
+											× {item.quantity}
+										</span>
 									</div>
 								</div>
 							</Link>
@@ -65,12 +78,9 @@ const PreviewCart = () => {
 					</div>
 
 					<div className='border-t border-border p-3'>
-						<Link
-							to={paths.client.cart}
-							className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark'
-							viewTransition>
+						<LinkButton to={paths.client.cart} viewTransition fullWidth>
 							Xem giỏ hàng
-						</Link>
+						</LinkButton>
 					</div>
 				</>
 			)}

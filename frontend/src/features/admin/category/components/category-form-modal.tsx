@@ -3,8 +3,12 @@ import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
 import FormSelect from "../../../../components/form-select";
 import FormCheckbox from "../../../../components/form-checkbox";
-import Button from "../../../../components/button";
-import type { Category, CreateCategoryPayload, UpdateCategoryPayload } from "../types";
+import { Button } from "../../../../components/button";
+import type {
+	Category,
+	CreateCategoryPayload,
+	UpdateCategoryPayload,
+} from "../types";
 import type { FlatCategoryOption } from "../utils";
 
 interface CategoryFormModalProps {
@@ -33,7 +37,9 @@ const CategoryFormModal = ({
 	const [name, setName] = useState(category?.name ?? "");
 	const [slug, setSlug] = useState(category?.slug ?? "");
 	const [description, setDescription] = useState(category?.description ?? "");
-	const [parentId, setParentId] = useState<number | "">(category?.parentId ?? initialParentId ?? "");
+	const [parentId, setParentId] = useState<number | "">(
+		category?.parentId ?? initialParentId ?? "",
+	);
 	const [isFeatured, setIsFeatured] = useState(category?.isFeatured ?? false);
 
 	const isValid = name.trim().length >= 2;
@@ -47,7 +53,9 @@ const CategoryFormModal = ({
 			// slug bỏ trống -> không gửi field này, để backend tự sinh từ "name" (slugify + auto-suffix nếu trùng).
 			...(slug.trim() ? { slug: slug.trim() } : {}),
 			// description rỗng vẫn cần gửi "" khi sửa để xóa mô tả cũ đi; khi tạo mới thì bỏ hẳn field nếu rỗng.
-			...(isEditing || description.trim() ? { description: description.trim() } : {}),
+			...(isEditing || description.trim()
+				? { description: description.trim() }
+				: {}),
 			parentId: parentId === "" ? null : Number(parentId),
 			isFeatured,
 		};
@@ -56,7 +64,9 @@ const CategoryFormModal = ({
 	};
 
 	return (
-		<ModalShell title={isEditing ? "Sửa danh mục" : "Thêm danh mục"} onClose={onClose}>
+		<ModalShell
+			title={isEditing ? "Sửa danh mục" : "Thêm danh mục"}
+			onClose={onClose}>
 			<form onSubmit={handleSubmit} className='space-y-4'>
 				<FormControl
 					label='Tên danh mục'
@@ -86,9 +96,14 @@ const CategoryFormModal = ({
 					label='Danh mục cha'
 					fullWidth
 					value={parentId}
-					onChange={(e) => setParentId(e.target.value === "" ? "" : Number(e.target.value))}
+					onChange={(e) =>
+						setParentId(e.target.value === "" ? "" : Number(e.target.value))
+					}
 					placeholder='— Không có (danh mục gốc) —'
-					options={parentOptions.map((option) => ({ value: option.id, label: option.label }))}
+					options={parentOptions.map((option) => ({
+						value: option.id,
+						label: option.label,
+					}))}
 				/>
 				<FormCheckbox
 					label='Đánh dấu là danh mục nổi bật (hiển thị ở trang chủ)'
@@ -101,7 +116,11 @@ const CategoryFormModal = ({
 						Hủy
 					</Button>
 					<Button type='submit' size='sm' disabled={!isValid || isSubmitting}>
-						{isSubmitting ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Tạo danh mục"}
+						{isSubmitting
+							? "Đang lưu..."
+							: isEditing
+								? "Lưu thay đổi"
+								: "Tạo danh mục"}
 					</Button>
 				</div>
 			</form>

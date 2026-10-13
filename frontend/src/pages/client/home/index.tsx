@@ -26,8 +26,16 @@ const HomePage = () => {
 	return (
 		<div className='flex min-h-screen flex-col bg-cream'>
 			<main className='flex-1'>
-				{isLoading || !page ? <HeroSectionSkeleton /> : <HeroSection heroSection={page.hero_section} />}
-				{isLoading || !page ? <TrustBadgesSectionSkeleton /> : <TrustBadgesSection valueItems={page.value_item} />}
+				{isLoading || !page ? (
+					<HeroSectionSkeleton />
+				) : (
+					<HeroSection heroSection={page.hero_section} />
+				)}
+				{isLoading || !page ? (
+					<TrustBadgesSectionSkeleton />
+				) : (
+					<TrustBadgesSection valueItems={page.value_item} />
+				)}
 				<FeaturedCategoriesSection />
 				<LatestProductsSection />
 				<FeaturedProductsCarouselSection />

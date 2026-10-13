@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDownIcon, ChevronRightIcon } from "../../../../../components/icons";
+import {
+	ChevronDownIcon,
+	ChevronRightIcon,
+} from "../../../../../components/icons";
 import paths from "../../../../../configs/constants/paths";
-import Button from "../../../../../components/button";
+import { Button } from "../../../../../components/button";
 import { useCategoryTreeQuery } from "../../../category/hooks";
 import type { PublicCategoryTreeNode } from "../../../product/types";
 
@@ -13,10 +16,18 @@ interface CategoryTreeMenuProps {
 
 /** Danh sách danh mục dạng cây (có thể mở/thu gọn danh mục con) dùng để điều hướng nhanh sang
  *  trang Cửa hàng đã lọc sẵn theo danh mục — tái sử dụng ở dropdown desktop và overlay tìm kiếm mobile. */
-export const CategoryTreeMenu = ({ categories, onSelect }: CategoryTreeMenuProps) => (
+export const CategoryTreeMenu = ({
+	categories,
+	onSelect,
+}: CategoryTreeMenuProps) => (
 	<ul className='space-y-0.5'>
 		{categories.map((node) => (
-			<CategoryTreeMenuNode key={node.id} node={node} depth={0} onSelect={onSelect} />
+			<CategoryTreeMenuNode
+				key={node.id}
+				node={node}
+				depth={0}
+				onSelect={onSelect}
+			/>
 		))}
 	</ul>
 );
@@ -27,19 +38,27 @@ interface CategoryTreeMenuNodeProps {
 	onSelect: (categoryId: number) => void;
 }
 
-const CategoryTreeMenuNode = ({ node, depth, onSelect }: CategoryTreeMenuNodeProps) => {
+const CategoryTreeMenuNode = ({
+	node,
+	depth,
+	onSelect,
+}: CategoryTreeMenuNodeProps) => {
 	const hasChildren = node.subcategories.length > 0;
 	const [expanded, setExpanded] = useState(false);
 
 	return (
 		<li>
-			<div className='flex items-center gap-1' style={{ paddingLeft: depth * 14 }}>
+			<div
+				className='flex items-center gap-1'
+				style={{ paddingLeft: depth * 14 }}>
 				<button
 					type='button'
 					onClick={() => onSelect(node.id)}
 					className='flex flex-1 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-ink hover:bg-cream-soft hover:not-disabled:cursor-pointer'>
 					<span className='truncate'>{node.name}</span>
-					<span className='shrink-0 text-xs text-muted'>{node._count.products}</span>
+					<span className='shrink-0 text-xs text-muted'>
+						{node._count.products}
+					</span>
 				</button>
 
 				{hasChildren && (
@@ -49,9 +68,13 @@ const CategoryTreeMenuNode = ({ node, depth, onSelect }: CategoryTreeMenuNodePro
 						variant='ghost'
 						onClick={() => setExpanded((prev) => !prev)}
 						aria-expanded={expanded}
-						aria-label={expanded ? `Thu gọn ${node.name}` : `Mở rộng ${node.name}`}
+						aria-label={
+							expanded ? `Thu gọn ${node.name}` : `Mở rộng ${node.name}`
+						}
 						className='size-7! shrink-0 rounded-lg p-0!'>
-						<ChevronRightIcon className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-90" : ""}`} />
+						<ChevronRightIcon
+							className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-90" : ""}`}
+						/>
 					</Button>
 				)}
 			</div>
@@ -59,7 +82,12 @@ const CategoryTreeMenuNode = ({ node, depth, onSelect }: CategoryTreeMenuNodePro
 			{hasChildren && expanded && (
 				<ul>
 					{node.subcategories.map((child) => (
-						<CategoryTreeMenuNode key={child.id} node={child} depth={depth + 1} onSelect={onSelect} />
+						<CategoryTreeMenuNode
+							key={child.id}
+							node={child}
+							depth={depth + 1}
+							onSelect={onSelect}
+						/>
 					))}
 				</ul>
 			)}
@@ -91,7 +119,11 @@ const CategoryFilter = () => {
 	useEffect(() => {
 		if (!open) return;
 		const handleClickOutside = (event: MouseEvent) => {
-			if (containerRef.current && !containerRef.current.contains(event.target as Node)) setOpen(false);
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(event.target as Node)
+			)
+				setOpen(false);
 		};
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -111,7 +143,9 @@ const CategoryFilter = () => {
 				aria-expanded={open}
 				className={`flex items-center gap-1 text-sm font-semibold transition-colors cursor-default! ${open ? "text-primary-dark" : "text-ink/80 hover:text-primary-dark"}`}>
 				Danh mục
-				<ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+				<ChevronDownIcon
+					className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+				/>
 			</button>
 
 			{open && (
@@ -121,7 +155,9 @@ const CategoryFilter = () => {
 					) : categories && categories.length > 0 ? (
 						<CategoryTreeMenu categories={categories} onSelect={goToCategory} />
 					) : (
-						<p className='px-3 py-4 text-center text-sm text-muted'>Chưa có danh mục nào.</p>
+						<p className='px-3 py-4 text-center text-sm text-muted'>
+							Chưa có danh mục nào.
+						</p>
 					)}
 				</div>
 			)}

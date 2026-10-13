@@ -1,7 +1,7 @@
 import { useState, type SubmitEvent } from "react";
 import FormControl from "../../../../components/form-control";
 import type { CreatePermissionPayload } from "../types";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import ModalShell from "../../../../components/modal-shell";
 
 interface CreatePermissionModalProps {
@@ -10,7 +10,11 @@ interface CreatePermissionModalProps {
 	isSubmitting: boolean;
 }
 
-const CreatePermissionModal = ({ onClose, onSubmit, isSubmitting }: CreatePermissionModalProps) => {
+const CreatePermissionModal = ({
+	onClose,
+	onSubmit,
+	isSubmitting,
+}: CreatePermissionModalProps) => {
 	const [resource, setResource] = useState("");
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
@@ -18,7 +22,11 @@ const CreatePermissionModal = ({ onClose, onSubmit, isSubmitting }: CreatePermis
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!resource.trim() || !name.trim()) return;
-		onSubmit({ resource: resource.trim(), name: name.trim(), description: description.trim() || undefined });
+		onSubmit({
+			resource: resource.trim(),
+			name: name.trim(),
+			description: description.trim() || undefined,
+		});
 	};
 
 	return (
@@ -51,7 +59,10 @@ const CreatePermissionModal = ({ onClose, onSubmit, isSubmitting }: CreatePermis
 					<Button type='button' variant='outline' size='sm' onClick={onClose}>
 						Hủy
 					</Button>
-					<Button type='submit' size='sm' disabled={isSubmitting || !resource.trim() || !name.trim()}>
+					<Button
+						type='submit'
+						size='sm'
+						disabled={isSubmitting || !resource.trim() || !name.trim()}>
 						{isSubmitting ? "Đang tạo..." : "Tạo permission"}
 					</Button>
 				</div>

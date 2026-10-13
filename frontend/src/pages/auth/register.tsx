@@ -1,11 +1,15 @@
 import { useState, type SubmitEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import FormControl from "../../components/form-control";
 import FormCheckbox from "../../components/form-checkbox";
 import AuthLayout from "../../layouts/auth";
 import paths from "../../configs/constants/paths";
-import { useRegister, useGoogleAuthLogin, useFacebookAuthLogin } from "../../features/auth/hooks/useAuth";
+import {
+	useRegister,
+	useGoogleAuthLogin,
+	useFacebookAuthLogin,
+} from "../../features/auth/hooks/useAuth";
 import type { AuthUser } from "../../features/auth/types";
 import { getDefaultPathForRole } from "../../utils/path";
 
@@ -51,7 +55,8 @@ const RegisterPage = () => {
 			nextErrors.password = `Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`;
 		}
 		if (!agreeTerms) {
-			nextErrors.agreeTerms = "Bạn cần đồng ý với điều khoản dịch vụ để tiếp tục.";
+			nextErrors.agreeTerms =
+				"Bạn cần đồng ý với điều khoản dịch vụ để tiếp tục.";
 		}
 
 		setErrors(nextErrors);
@@ -63,7 +68,12 @@ const RegisterPage = () => {
 		if (!validate()) return;
 
 		registerMutation.mutate(
-			{ name: fullName.trim(), email: email.trim(), phone: phone.trim(), password },
+			{
+				name: fullName.trim(),
+				email: email.trim(),
+				phone: phone.trim(),
+				password,
+			},
 			{
 				onSuccess: () => {
 					// Tài khoản vừa tạo cần xác thực OTP gửi qua email trước khi đăng nhập được.
@@ -147,7 +157,11 @@ const RegisterPage = () => {
 				value={password}
 				onChange={(e) => setPassword(e.target.value)}
 				error={errors.password}
-				hint={!errors.password ? `Tối thiểu ${MIN_PASSWORD_LENGTH} ký tự.` : undefined}
+				hint={
+					!errors.password
+						? `Tối thiểu ${MIN_PASSWORD_LENGTH} ký tự.`
+						: undefined
+				}
 				disabled={registerMutation.isPending}
 			/>
 

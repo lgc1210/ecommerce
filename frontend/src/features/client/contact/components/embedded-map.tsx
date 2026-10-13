@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 
 const EmbeddedMap = () => {
 	const STORE_ADDRESS = "245 Phú Định, Phường Phú Định, Hồ Chí Minh";
@@ -15,8 +15,12 @@ const EmbeddedMap = () => {
 
 	return (
 		<div className='w-full max-w-2xl mx-auto px-4 py-3 font-sans'>
-			<h3 className='text-2xl font-semibold text-slate-800 mb-2'>Vị trí cửa hàng</h3>
-			<p className='text-sm text-slate-500 mb-5 flex items-center gap-1'>{STORE_ADDRESS}</p>
+			<h3 className='text-2xl font-semibold text-slate-800 mb-2'>
+				Vị trí cửa hàng
+			</h3>
+			<p className='text-sm text-slate-500 mb-5 flex items-center gap-1'>
+				{STORE_ADDRESS}
+			</p>
 
 			{/* ĐÃ SỬA CHUẨN: Đổi h-100 thành h-[400px] để khung có chiều cao hiển thị bản đồ */}
 			<div className='relative w-full h-100 rounded-xl overflow-hidden shadow-md border border-slate-200'>
@@ -32,7 +36,12 @@ const EmbeddedMap = () => {
 
 			{/* Nút bấm chỉ đường thông minh */}
 			<div className='mt-4 flex justify-center'>
-				<Button type='button' size='sm' variant='outline' className='rounded-lg!' onClick={handleOpenMap}>
+				<Button
+					type='button'
+					size='sm'
+					variant='outline'
+					className='rounded-lg!'
+					onClick={handleOpenMap}>
 					Xem bằng Google Maps
 				</Button>
 			</div>

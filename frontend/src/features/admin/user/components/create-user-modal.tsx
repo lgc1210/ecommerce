@@ -10,7 +10,7 @@ import type { CreateUserPayload } from "../types";
 import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
 import FormSelect from "../../../../components/form-select";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 
 interface CreateUserModalProps {
 	roles: { id: number; name: string }[];
@@ -19,7 +19,12 @@ interface CreateUserModalProps {
 	isSubmitting: boolean;
 }
 
-const CreateUserModal = ({ roles, onClose, onSubmit, isSubmitting }: CreateUserModalProps) => {
+const CreateUserModal = ({
+	roles,
+	onClose,
+	onSubmit,
+	isSubmitting,
+}: CreateUserModalProps) => {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [phone, setPhone] = useState("");
@@ -30,14 +35,30 @@ const CreateUserModal = ({ roles, onClose, onSubmit, isSubmitting }: CreateUserM
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isValid) return;
-		onSubmit({ name: name.trim(), email: email.trim(), phone: phone.trim(), roleId: Number(roleId) });
+		onSubmit({
+			name: name.trim(),
+			email: email.trim(),
+			phone: phone.trim(),
+			roleId: Number(roleId),
+		});
 	};
 
 	return (
 		<ModalShell title='Tạo tài khoản mới' onClose={onClose}>
 			<form onSubmit={handleSubmit} className='space-y-4'>
-				<FormControl label='Họ và tên' required value={name} onChange={(e) => setName(e.target.value)} />
-				<FormControl label='Email' type='email' required value={email} onChange={(e) => setEmail(e.target.value)} />
+				<FormControl
+					label='Họ và tên'
+					required
+					value={name}
+					onChange={(e) => setName(e.target.value)}
+				/>
+				<FormControl
+					label='Email'
+					type='email'
+					required
+					value={email}
+					onChange={(e) => setEmail(e.target.value)}
+				/>
 				<FormControl
 					label='Số điện thoại'
 					required

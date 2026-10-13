@@ -2,9 +2,13 @@ import { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import paths from "../../../../configs/constants/paths";
 import Overlay from "../../../../components/overlay";
-import { CloseIcon, MenuIcon, SettingsIcon } from "../../../../components/icons";
+import {
+	CloseIcon,
+	MenuIcon,
+	SettingsIcon,
+} from "../../../../components/icons";
 import UserMenu from "../../../../components/user-menu";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import NotificationBell from "./notification-bell";
 import PreviewCart from "./preview-cart";
 import Search from "./search";
@@ -39,17 +43,27 @@ const Header = () => {
 				/>
 
 				{/* Logo */}
-				<Link to={paths.client.home} className='flex shrink-0 items-center gap-2' viewTransition>
+				<Link
+					to={paths.client.home}
+					className='flex shrink-0 items-center gap-2'
+					viewTransition>
 					<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>
 						E
 					</span>
-					<span className='text-xl font-extrabold tracking-tight text-ink hidden sm:block'>Commerce</span>
+					<span className='text-xl font-extrabold tracking-tight text-ink hidden sm:block'>
+						Commerce
+					</span>
 				</Link>
 
 				{/* Desktop nav — "Danh mục" gộp chung hàng nav (không phải nút riêng) để tiết kiệm không gian */}
 				<nav className='hidden items-center justify-center gap-7 lg:flex'>
 					{navItems.map((item) => (
-						<NavLink key={item.to} to={item.to} end={item.end} className={linkClass} viewTransition>
+						<NavLink
+							key={item.to}
+							to={item.to}
+							end={item.end}
+							className={linkClass}
+							viewTransition>
 							{item.label}
 						</NavLink>
 					))}
@@ -78,11 +92,15 @@ const Header = () => {
 			<div
 				className={`fixed inset-y-0 left-0 z-50! w-72 transform bg-surface transition-transform duration-500 ease-out lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
 				<div className='flex h-16 items-center justify-between border-b border-border px-5'>
-					<Link to={paths.client.home} className='flex shrink-0 items-center gap-2'>
+					<Link
+						to={paths.client.home}
+						className='flex shrink-0 items-center gap-2'>
 						<span className='flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-base font-extrabold text-white'>
 							E
 						</span>
-						<span className='text-xl font-extrabold tracking-tight text-ink'>Commerce</span>
+						<span className='text-xl font-extrabold tracking-tight text-ink'>
+							Commerce
+						</span>
 					</Link>{" "}
 					<button
 						type='button'

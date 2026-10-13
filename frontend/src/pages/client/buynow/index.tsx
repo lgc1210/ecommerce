@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../components/breadcrumb";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import paths from "../../../configs/constants/paths";
 import { CartIcon } from "../../../components/icons";
 import { useCreatePaymentUrlMutation } from "../../../features/client/payment/hooks";
-import { usePreviewBuyNowShippingFeeQuery, useBuyNowMutation } from "../../../features/client/order/hooks";
+import {
+	usePreviewBuyNowShippingFeeQuery,
+	useBuyNowMutation,
+} from "../../../features/client/order/hooks";
 import type { BuyNowSnapshot } from "../../../features/client/order/types";
 import type { ValidateCouponResult } from "../../../features/client/coupon/types";
 import type { CartLineView } from "../../../features/client/cart/types";
@@ -16,7 +19,11 @@ import CheckoutDeliveryMethodSection from "../../../features/client/payment/comp
 import CheckoutPaymentMethodSection from "../../../features/client/payment/components/checkout-payment-method-section";
 import CheckoutDiscountSection from "../../../features/client/payment/components/checkout-discount-section";
 import CheckoutSummarySection from "../../../features/client/payment/components/checkout-summary-section";
-import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD, type PaymentMethod } from "../../../shared/constants/payment";
+import {
+	ONLINE_GATEWAY_METHODS,
+	PAYMENT_METHOD,
+	type PaymentMethod,
+} from "../../../shared/constants/payment";
 
 /**
  * Trang thanh toán cho luồng "Mua ngay" (bấm ở trang chi tiết sản phẩm) — đặt hàng thẳng ĐÚNG 1
@@ -39,9 +46,14 @@ const BuyNowPage = () => {
 	const location = useLocation();
 	const snapshot = (location.state as BuyNowSnapshot | null) ?? null;
 
-	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHOD.cod);
-	const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-	const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResult | null>(null);
+	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+		PAYMENT_METHOD.cod,
+	);
+	const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+		null,
+	);
+	const [appliedCoupon, setAppliedCoupon] =
+		useState<ValidateCouponResult | null>(null);
 
 	// Sinh 1 LẦN DUY NHẤT cho cả vòng đời trang (kể cả khi khách đổi địa chỉ/phương thức thanh toán
 	// nhiều lần trước khi bấm đặt hàng) — giữ nguyên giá trị này qua các lần bấm "Đặt hàng"/retry do
@@ -49,7 +61,11 @@ const BuyNowPage = () => {
 	// quay lại (component unmount/mount lại) sẽ sinh key mới — đúng vì đó là 1 lượt mua mới.
 	const [idempotencyKey] = useState(() => crypto.randomUUID());
 
-	const shippingFeeQuery = usePreviewBuyNowShippingFeeQuery(snapshot?.productSkuId ?? null, snapshot?.quantity ?? 1, selectedAddressId);
+	const shippingFeeQuery = usePreviewBuyNowShippingFeeQuery(
+		snapshot?.productSkuId ?? null,
+		snapshot?.quantity ?? 1,
+		selectedAddressId,
+	);
 	const shippingFee = shippingFeeQuery.data?.shippingFee ?? null;
 
 	const buyNow = useBuyNowMutation();
@@ -58,11 +74,18 @@ const BuyNowPage = () => {
 	if (!snapshot) {
 		return (
 			<div>
-				<BreadCrumb title='Mua ngay' description='Xác nhận đơn hàng và hoàn tất thanh toán' />
+				<BreadCrumb
+					title='Mua ngay'
+					description='Xác nhận đơn hàng và hoàn tất thanh toán'
+				/>
 				<div className='mx-auto max-w-7xl px-4 py-24 text-center sm:px-6 lg:px-8'>
 					<CartIcon className='mx-auto h-12 w-12 text-muted' />
-					<h1 className='mt-4 text-2xl font-bold text-ink'>Không có sản phẩm nào để thanh toán</h1>
-					<p className='mt-2 text-muted'>Vui lòng quay lại trang sản phẩm và bấm "Mua ngay" để tiếp tục.</p>
+					<h1 className='mt-4 text-2xl font-bold text-ink'>
+						Không có sản phẩm nào để thanh toán
+					</h1>
+					<p className='mt-2 text-muted'>
+						Vui lòng quay lại trang sản phẩm và bấm "Mua ngay" để tiếp tục.
+					</p>
 					<Link to={paths.client.shop}>
 						<Button className='mt-6'>Tiếp tục mua sắm</Button>
 					</Link>
@@ -96,11 +119,19 @@ const BuyNowPage = () => {
 			return;
 		}
 		if (!item.inStock) {
-			toast.error("Sản phẩm này đã hết hàng hoặc ngừng kinh doanh, vui lòng quay lại trang sản phẩm để kiểm tra.");
+			toast.error(
+				"Sản phẩm này đã hết hàng hoặc ngừng kinh doanh, vui lòng quay lại trang sản phẩm để kiểm tra.",
+			);
 			return;
 		}
-		if (shippingFeeQuery.isLoading || shippingFeeQuery.isError || shippingFee === null) {
-			toast.error("Chưa tính được phí vận chuyển cho địa chỉ này, vui lòng thử lại hoặc đổi địa chỉ khác.");
+		if (
+			shippingFeeQuery.isLoading ||
+			shippingFeeQuery.isError ||
+			shippingFee === null
+		) {
+			toast.error(
+				"Chưa tính được phí vận chuyển cho địa chỉ này, vui lòng thử lại hoặc đổi địa chỉ khác.",
+			);
 			return;
 		}
 		const payload = {
@@ -133,8 +164,14 @@ const BuyNowPage = () => {
 	};
 
 	const handlePaymentMethodChange = (value: string) => {
-		if (value === PAYMENT_METHOD.momo || value === PAYMENT_METHOD.stripe || value === PAYMENT_METHOD.paypal) {
-			toast.info("Tính năng đang được phát triển, vui lồng chọn phương thức thanh toán khác.");
+		if (
+			value === PAYMENT_METHOD.momo ||
+			value === PAYMENT_METHOD.stripe ||
+			value === PAYMENT_METHOD.paypal
+		) {
+			toast.info(
+				"Tính năng đang được phát triển, vui lồng chọn phương thức thanh toán khác.",
+			);
 			return;
 		}
 		setPaymentMethod(value as PaymentMethod);
@@ -142,20 +179,40 @@ const BuyNowPage = () => {
 
 	return (
 		<>
-			<BreadCrumb title='Thanh toán' description='Xác nhận đơn hàng và hoàn tất thanh toán' />
+			<BreadCrumb
+				title='Thanh toán'
+				description='Xác nhận đơn hàng và hoàn tất thanh toán'
+			/>
 			<div className='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
 				<div className='grid gap-8 lg:grid-cols-12'>
 					{/* LEFT */}
 					<div className='space-y-6 lg:col-span-8'>
-						<CheckoutAddressSection selectedAddressId={selectedAddressId} onSelectAddress={(address) => setSelectedAddressId(address.id)} />
+						<CheckoutAddressSection
+							selectedAddressId={selectedAddressId}
+							onSelectAddress={(address) => setSelectedAddressId(address.id)}
+						/>
 						<CheckoutProductSection items={[item]} />
-						<CheckoutDeliveryMethodSection shippingFee={shippingFee} isLoading={selectedAddressId !== null && shippingFeeQuery.isLoading} isError={shippingFeeQuery.isError} />
-						<CheckoutPaymentMethodSection value={paymentMethod} onChange={handlePaymentMethodChange} />
+						<CheckoutDeliveryMethodSection
+							shippingFee={shippingFee}
+							isLoading={
+								selectedAddressId !== null && shippingFeeQuery.isLoading
+							}
+							isError={shippingFeeQuery.isError}
+						/>
+						<CheckoutPaymentMethodSection
+							value={paymentMethod}
+							onChange={handlePaymentMethodChange}
+						/>
 					</div>
 					{/* RIGHT */}
 					<div className='lg:col-span-4'>
 						<div className='sticky top-24 space-y-6'>
-							<CheckoutDiscountSection orderSubtotal={subtotal} appliedCoupon={appliedCoupon} onApply={setAppliedCoupon} onRemove={() => setAppliedCoupon(null)} />
+							<CheckoutDiscountSection
+								orderSubtotal={subtotal}
+								appliedCoupon={appliedCoupon}
+								onApply={setAppliedCoupon}
+								onRemove={() => setAppliedCoupon(null)}
+							/>
 							<CheckoutSummarySection
 								subtotal={subtotal}
 								shippingFee={shippingFee ?? 0}

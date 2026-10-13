@@ -1,5 +1,5 @@
 import { useState, type SubmitEvent } from "react";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import FormControl from "../../../../components/form-control";
 import type { CreateRolePayload, Permission } from "../types";
 import FormCheckbox from "../../../../components/form-checkbox";
@@ -12,10 +12,17 @@ interface CreateRoleModalProps {
 	isSubmitting: boolean;
 }
 
-const CreateRoleModal = ({ permissionsByResource, onClose, onSubmit, isSubmitting }: CreateRoleModalProps) => {
+const CreateRoleModal = ({
+	permissionsByResource,
+	onClose,
+	onSubmit,
+	isSubmitting,
+}: CreateRoleModalProps) => {
 	const [name, setName] = useState("");
 	const [description, setDescription] = useState("");
-	const [selectedPermissionIds, setSelectedPermissionIds] = useState<Set<number>>(new Set());
+	const [selectedPermissionIds, setSelectedPermissionIds] = useState<
+		Set<number>
+	>(new Set());
 
 	const togglePermission = (permissionId: number) => {
 		setSelectedPermissionIds((prev) => {
@@ -32,7 +39,10 @@ const CreateRoleModal = ({ permissionsByResource, onClose, onSubmit, isSubmittin
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!name.trim()) return;
-		onSubmit({ name: name.trim(), description: description.trim() || undefined }, [...selectedPermissionIds]);
+		onSubmit(
+			{ name: name.trim(), description: description.trim() || undefined },
+			[...selectedPermissionIds],
+		);
 	};
 
 	return (
@@ -56,16 +66,23 @@ const CreateRoleModal = ({ permissionsByResource, onClose, onSubmit, isSubmittin
 
 				<div>
 					<p className='mb-1.5 text-sm font-medium text-ink'>
-						Permission <span className='font-normal text-muted'>(tùy chọn — có thể gán/thu hồi lại sau)</span>
+						Permission{" "}
+						<span className='font-normal text-muted'>
+							(tùy chọn — có thể gán/thu hồi lại sau)
+						</span>
 					</p>
 
 					{permissionsByResource.length === 0 ? (
-						<p className='text-sm text-muted'>Hệ thống chưa có permission nào.</p>
+						<p className='text-sm text-muted'>
+							Hệ thống chưa có permission nào.
+						</p>
 					) : (
 						<div className='max-h-64 space-y-4 overflow-y-auto rounded-xl border border-border p-3'>
 							{permissionsByResource.map(([resource, resourcePermissions]) => (
 								<div key={resource}>
-									<p className='mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted'>{resource}</p>
+									<p className='mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted'>
+										{resource}
+									</p>
 									<div className='grid grid-cols-2 gap-1.5'>
 										{resourcePermissions.map((permission) => (
 											<FormCheckbox
@@ -86,7 +103,9 @@ const CreateRoleModal = ({ permissionsByResource, onClose, onSubmit, isSubmittin
 					)}
 
 					{selectedPermissionIds.size > 0 && (
-						<p className='mt-1.5 text-xs text-muted'>Đã chọn {selectedPermissionIds.size} permission.</p>
+						<p className='mt-1.5 text-xs text-muted'>
+							Đã chọn {selectedPermissionIds.size} permission.
+						</p>
 					)}
 				</div>
 
@@ -94,7 +113,10 @@ const CreateRoleModal = ({ permissionsByResource, onClose, onSubmit, isSubmittin
 					<Button type='button' variant='outline' size='sm' onClick={onClose}>
 						Hủy
 					</Button>
-					<Button type='submit' size='sm' disabled={isSubmitting || !name.trim()}>
+					<Button
+						type='submit'
+						size='sm'
+						disabled={isSubmitting || !name.trim()}>
 						{isSubmitting ? "Đang tạo..." : "Tạo role"}
 					</Button>
 				</div>

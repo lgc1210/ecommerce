@@ -3,9 +3,17 @@ import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
 import FormSelect from "../../../../components/form-select";
 import FormCheckbox from "../../../../components/form-checkbox";
-import Button from "../../../../components/button";
-import type { AdminWarrantyPolicy, CreateWarrantyPolicyPayload, UpdateWarrantyPolicyPayload } from "../types";
-import { DURATION_UNIT_LABEL, WARRANTY_PROVIDER_TYPE_LABEL, toApproxDays } from "../utils";
+import { Button } from "../../../../components/button";
+import type {
+	AdminWarrantyPolicy,
+	CreateWarrantyPolicyPayload,
+	UpdateWarrantyPolicyPayload,
+} from "../types";
+import {
+	DURATION_UNIT_LABEL,
+	WARRANTY_PROVIDER_TYPE_LABEL,
+	toApproxDays,
+} from "../utils";
 import {
 	DURATION_UNIT,
 	WARRANTY_PROVIDER_TYPE,
@@ -16,7 +24,9 @@ import {
 interface WarrantyPolicyFormModalProps {
 	policy?: AdminWarrantyPolicy;
 	onClose: () => void;
-	onSubmit: (payload: CreateWarrantyPolicyPayload | UpdateWarrantyPolicyPayload) => void;
+	onSubmit: (
+		payload: CreateWarrantyPolicyPayload | UpdateWarrantyPolicyPayload,
+	) => void;
 	isSubmitting: boolean;
 }
 
@@ -33,18 +43,31 @@ type Errors = {
  * Checkbox "Có đổi mới 1-đổi-1" bật/tắt cặp field exchangePeriodValue/exchangePeriodUnit — khớp
  * ràng buộc "cùng có hoặc cùng không có giá trị" ở backend (warranty.validation.ts).
  */
-const WarrantyPolicyFormModal = ({ policy, onClose, onSubmit, isSubmitting }: WarrantyPolicyFormModalProps) => {
+const WarrantyPolicyFormModal = ({
+	policy,
+	onClose,
+	onSubmit,
+	isSubmitting,
+}: WarrantyPolicyFormModalProps) => {
 	const isEditing = Boolean(policy);
 
 	const [name, setName] = useState(policy?.name ?? "");
-	const [durationValue, setDurationValue] = useState(policy ? String(policy.durationValue) : "12");
-	const [durationUnit, setDurationUnit] = useState<DurationUnit>(policy?.durationUnit ?? DURATION_UNIT.month);
+	const [durationValue, setDurationValue] = useState(
+		policy ? String(policy.durationValue) : "12",
+	);
+	const [durationUnit, setDurationUnit] = useState<DurationUnit>(
+		policy?.durationUnit ?? DURATION_UNIT.month,
+	);
 	const [warrantyType, setWarrantyType] = useState<WarrantyProviderType>(
 		policy?.warrantyType ?? WARRANTY_PROVIDER_TYPE.manufacturer,
 	);
-	const [hasExchangePeriod, setHasExchangePeriod] = useState(policy?.exchangePeriodValue != null);
+	const [hasExchangePeriod, setHasExchangePeriod] = useState(
+		policy?.exchangePeriodValue != null,
+	);
 	const [exchangePeriodValue, setExchangePeriodValue] = useState(
-		policy?.exchangePeriodValue != null ? String(policy.exchangePeriodValue) : "7",
+		policy?.exchangePeriodValue != null
+			? String(policy.exchangePeriodValue)
+			: "7",
 	);
 	const [exchangePeriodUnit, setExchangePeriodUnit] = useState<DurationUnit>(
 		policy?.exchangePeriodUnit ?? DURATION_UNIT.day,
@@ -70,9 +93,11 @@ const WarrantyPolicyFormModal = ({ policy, onClose, onSubmit, isSubmitting }: Wa
 				nextErrors.exchangePeriodValue = "Thời gian đổi mới phải lớn hơn 0.";
 			} else if (
 				durationValueNumber > 0 &&
-				toApproxDays(exchangePeriodValueNumber, exchangePeriodUnit) > toApproxDays(durationValueNumber, durationUnit)
+				toApproxDays(exchangePeriodValueNumber, exchangePeriodUnit) >
+					toApproxDays(durationValueNumber, durationUnit)
 			) {
-				nextErrors.exchangePeriodValue = "Thời gian đổi mới không được dài hơn tổng thời hạn bảo hành.";
+				nextErrors.exchangePeriodValue =
+					"Thời gian đổi mới không được dài hơn tổng thời hạn bảo hành.";
 			}
 		}
 
@@ -89,7 +114,9 @@ const WarrantyPolicyFormModal = ({ policy, onClose, onSubmit, isSubmitting }: Wa
 			durationValue: Number(durationValue),
 			durationUnit,
 			warrantyType,
-			exchangePeriodValue: hasExchangePeriod ? Number(exchangePeriodValue) : null,
+			exchangePeriodValue: hasExchangePeriod
+				? Number(exchangePeriodValue)
+				: null,
 			exchangePeriodUnit: hasExchangePeriod ? exchangePeriodUnit : null,
 			description: description.trim() || undefined,
 		};
@@ -125,15 +152,21 @@ const WarrantyPolicyFormModal = ({ policy, onClose, onSubmit, isSubmitting }: Wa
 						fullWidth
 						value={durationUnit}
 						onChange={(e) => setDurationUnit(e.target.value as DurationUnit)}
-						options={Object.entries(DURATION_UNIT_LABEL).map(([value, label]) => ({ value, label }))}
+						options={Object.entries(DURATION_UNIT_LABEL).map(
+							([value, label]) => ({ value, label }),
+						)}
 						wrapperClassName='sm:col-span-1'
 					/>
 					<FormSelect
 						label='Bên chịu trách nhiệm'
 						fullWidth
 						value={warrantyType}
-						onChange={(e) => setWarrantyType(e.target.value as WarrantyProviderType)}
-						options={Object.entries(WARRANTY_PROVIDER_TYPE_LABEL).map(([value, label]) => ({ value, label }))}
+						onChange={(e) =>
+							setWarrantyType(e.target.value as WarrantyProviderType)
+						}
+						options={Object.entries(WARRANTY_PROVIDER_TYPE_LABEL).map(
+							([value, label]) => ({ value, label }),
+						)}
 						wrapperClassName='sm:col-span-1'
 					/>
 				</div>
@@ -158,8 +191,12 @@ const WarrantyPolicyFormModal = ({ policy, onClose, onSubmit, isSubmitting }: Wa
 								label='Đơn vị'
 								fullWidth
 								value={exchangePeriodUnit}
-								onChange={(e) => setExchangePeriodUnit(e.target.value as DurationUnit)}
-								options={Object.entries(DURATION_UNIT_LABEL).map(([value, label]) => ({ value, label }))}
+								onChange={(e) =>
+									setExchangePeriodUnit(e.target.value as DurationUnit)
+								}
+								options={Object.entries(DURATION_UNIT_LABEL).map(
+									([value, label]) => ({ value, label }),
+								)}
 							/>
 						</div>
 					)}
@@ -179,7 +216,11 @@ const WarrantyPolicyFormModal = ({ policy, onClose, onSubmit, isSubmitting }: Wa
 						Hủy
 					</Button>
 					<Button type='submit' size='sm' disabled={isSubmitting}>
-						{isSubmitting ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Tạo chính sách"}
+						{isSubmitting
+							? "Đang lưu..."
+							: isEditing
+								? "Lưu thay đổi"
+								: "Tạo chính sách"}
 					</Button>
 				</div>
 			</form>

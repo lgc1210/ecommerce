@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useMessagesQuery, useSendMessageMutation, useConversationRoom } from "../../message/hooks";
+import {
+	useMessagesQuery,
+	useSendMessageMutation,
+	useConversationRoom,
+} from "../../message/hooks";
 import { formatMessageTime } from "../../message/utils";
 import { useAuth } from "../../../auth/hooks/useAuth";
 import { CloseIcon, SendIcon } from "../../../../components/icons";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import type { ConversationStatus } from "../types";
 import { CONVERSATION_STATUS_LABEL } from "../constants";
 import FormControl from "../../../../components/form-control";
@@ -15,7 +19,12 @@ interface ChatPanelProps {
 	onStartNew: () => void;
 }
 
-const ChatPanel = ({ conversationId, status, onClose, onStartNew }: ChatPanelProps) => {
+const ChatPanel = ({
+	conversationId,
+	status,
+	onClose,
+	onStartNew,
+}: ChatPanelProps) => {
 	const { user } = useAuth();
 	const {
 		data: messages = [],
@@ -82,20 +91,33 @@ const ChatPanel = ({ conversationId, status, onClose, onStartNew }: ChatPanelPro
 					</div>
 				)}
 
-				{isLoading && <p className='text-center text-sm text-muted'>Đang tải...</p>}
+				{isLoading && (
+					<p className='text-center text-sm text-muted'>Đang tải...</p>
+				)}
 				{!isLoading && orderedMessages.length === 0 && (
-					<p className='text-center text-sm text-muted'>Gửi tin nhắn để bắt đầu trò chuyện với shop nhé.</p>
+					<p className='text-center text-sm text-muted'>
+						Gửi tin nhắn để bắt đầu trò chuyện với shop nhé.
+					</p>
 				)}
 
 				{orderedMessages.map((message) => {
 					const isOwn = message.senderId === user?.id;
 					return (
-						<div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+						<div
+							key={message.id}
+							className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
 							<div
 								className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${isOwn ? "bg-primary text-white" : "bg-cream-soft text-ink"}`}>
-								{!isOwn && <p className='mb-0.5 text-xs font-semibold text-primary-dark'>{message.sender.name}</p>}
-								<p className='whitespace-pre-wrap wrap-break-words'>{message.content}</p>
-								<p className={`mt-1 text-right text-[10px] ${isOwn ? "text-white/70" : "text-muted"}`}>
+								{!isOwn && (
+									<p className='mb-0.5 text-xs font-semibold text-primary-dark'>
+										{message.sender.name}
+									</p>
+								)}
+								<p className='whitespace-pre-wrap wrap-break-words'>
+									{message.content}
+								</p>
+								<p
+									className={`mt-1 text-right text-[10px] ${isOwn ? "text-white/70" : "text-muted"}`}>
 									{formatMessageTime(message.createdAt)}
 								</p>
 							</div>
@@ -135,9 +157,15 @@ const ChatPanel = ({ conversationId, status, onClose, onStartNew }: ChatPanelPro
 			) : (
 				<div className='space-y-2 border-t border-border p-3 text-center'>
 					<p className='text-xs text-muted'>
-						Cuộc trò chuyện này đã {CONVERSATION_STATUS_LABEL[status]?.toLowerCase()} — không thể nhắn thêm.
+						Cuộc trò chuyện này đã{" "}
+						{CONVERSATION_STATUS_LABEL[status]?.toLowerCase()} — không thể nhắn
+						thêm.
 					</p>
-					<Button type='button' size='sm' className='w-full' onClick={onStartNew}>
+					<Button
+						type='button'
+						size='sm'
+						className='w-full'
+						onClick={onStartNew}>
 						Bắt đầu cuộc trò chuyện mới
 					</Button>
 				</div>

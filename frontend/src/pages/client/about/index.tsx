@@ -2,18 +2,26 @@ import type { SVGProps } from "react";
 import { Link } from "react-router-dom";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import BreadCrumb from "../../../components/breadcrumb";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import paths from "../../../configs/constants/paths";
-import { HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../../components/icons";
+import {
+	HeadsetIcon,
+	ShieldCheckIcon,
+	TruckIcon,
+} from "../../../components/icons";
 import { useAboutPageQuery } from "../../../features/client/about/hooks";
 import { getStrapiMediaUrl } from "../../../utils/strapi";
 import AboutPageSkeleton from "./skeleton";
 
-const DEFAULT_BANNER_URL = "https://placehold.co/700x560/f3ede4/1c1815?font=montserrat&text=Ecommerce+Story";
+const DEFAULT_BANNER_URL =
+	"https://placehold.co/700x560/f3ede4/1c1815?font=montserrat&text=Ecommerce+Story";
 
 // icon_name cấu hình trên Strapi (vd "shield", "truck", "headset") -> component icon tương ứng ở frontend.
 // Icon nào chưa map thì fallback về ShieldCheckIcon thay vì crash trang.
-const VALUE_ICON_MAP: Record<string, (props: SVGProps<SVGSVGElement>) => React.JSX.Element> = {
+const VALUE_ICON_MAP: Record<
+	string,
+	(props: SVGProps<SVGSVGElement>) => React.JSX.Element
+> = {
 	shield: ShieldCheckIcon,
 	truck: TruckIcon,
 	headset: HeadsetIcon,
@@ -37,12 +45,22 @@ const AboutPage = () => {
 		);
 	}
 
-	const { breadcrumb, stats_section, cta_section, story_section, value_section } = page;
-	const bannerUrl = getStrapiMediaUrl(story_section.banner?.url) ?? DEFAULT_BANNER_URL;
+	const {
+		breadcrumb,
+		stats_section,
+		cta_section,
+		story_section,
+		value_section,
+	} = page;
+	const bannerUrl =
+		getStrapiMediaUrl(story_section.banner?.url) ?? DEFAULT_BANNER_URL;
 
 	return (
 		<div>
-			<BreadCrumb title={breadcrumb.title} description={breadcrumb.description} />
+			<BreadCrumb
+				title={breadcrumb.title}
+				description={breadcrumb.description}
+			/>
 
 			{/* Story */}
 			<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
@@ -55,8 +73,12 @@ const AboutPage = () => {
 						/>
 					</div>
 					<div>
-						<span className='text-xs font-bold uppercase tracking-wider text-primary-dark'>{story_section.badge}</span>
-						<h2 className='mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>{story_section.title}</h2>
+						<span className='text-xs font-bold uppercase tracking-wider text-primary-dark'>
+							{story_section.badge}
+						</span>
+						<h2 className='mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>
+							{story_section.title}
+						</h2>
 						<div className='mt-5 space-y-4 leading-relaxed text-muted'>
 							<BlocksRenderer
 								content={story_section.content}
@@ -66,7 +88,9 @@ const AboutPage = () => {
 							/>
 						</div>
 						<Link to={paths.client.shop} viewTransition>
-							<Button className='mt-6 cursor-pointer!'>{story_section.btn_text}</Button>
+							<Button className='mt-6 cursor-pointer!'>
+								{story_section.btn_text}
+							</Button>
 						</Link>
 					</div>
 				</div>
@@ -77,7 +101,9 @@ const AboutPage = () => {
 				<div className='mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-14 text-center sm:px-6 lg:grid-cols-4 lg:px-8'>
 					{stats_section.map((stat) => (
 						<div key={stat.id}>
-							<p className='text-3xl font-extrabold text-primary sm:text-4xl'>{stat.value}</p>
+							<p className='text-3xl font-extrabold text-primary sm:text-4xl'>
+								{stat.value}
+							</p>
 							<p className='mt-2 text-sm text-cream/60'>{stat.label}</p>
 						</div>
 					))}
@@ -87,19 +113,27 @@ const AboutPage = () => {
 			{/* Values */}
 			<section className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
 				<div className='text-center'>
-					<h2 className='text-2xl font-extrabold tracking-tight text-ink sm:text-3xl'>{value_section.title}</h2>
-					<p className='mx-auto mt-2 max-w-md text-sm text-muted'>{value_section.description}</p>
+					<h2 className='text-2xl font-extrabold tracking-tight text-ink sm:text-3xl'>
+						{value_section.title}
+					</h2>
+					<p className='mx-auto mt-2 max-w-md text-sm text-muted'>
+						{value_section.description}
+					</p>
 				</div>
 				<div className='mt-10 grid gap-6 sm:grid-cols-3'>
 					{value_section.items.map((item) => {
 						const Icon = VALUE_ICON_MAP[item.icon_name] ?? ShieldCheckIcon;
 						return (
-							<div key={item.id} className='rounded-2xl border border-border bg-surface p-7 text-center'>
+							<div
+								key={item.id}
+								className='rounded-2xl border border-border bg-surface p-7 text-center'>
 								<span className='mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-primary-dark'>
 									<Icon className='h-7 w-7' />
 								</span>
 								<h3 className='mt-5 font-bold text-ink'>{item.title}</h3>
-								<p className='mt-2 text-sm leading-relaxed text-muted'>{item.description}</p>
+								<p className='mt-2 text-sm leading-relaxed text-muted'>
+									{item.description}
+								</p>
 							</div>
 						);
 					})}
@@ -109,8 +143,12 @@ const AboutPage = () => {
 			{/* CTA */}
 			<section className='border-t border-border bg-primary'>
 				<div className='mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-14 text-center sm:px-6 lg:px-8'>
-					<h2 className='text-2xl font-extrabold tracking-tight text-white sm:text-3xl'>{cta_section.title}</h2>
-					<p className='max-w-md text-sm text-white/80'>{cta_section.description}</p>
+					<h2 className='text-2xl font-extrabold tracking-tight text-white sm:text-3xl'>
+						{cta_section.title}
+					</h2>
+					<p className='max-w-md text-sm text-white/80'>
+						{cta_section.description}
+					</p>
 					<Link to={paths.client.shop} viewTransition>
 						<Button variant='dark' className='cursor-pointer!'>
 							{cta_section.btn_text}

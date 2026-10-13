@@ -1,4 +1,4 @@
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import { MinusIcon, PlusIcon } from "../../components/icons";
 
 interface QuantityStepperProps {
@@ -11,12 +11,21 @@ interface QuantityStepperProps {
 	btnSize?: "sm" | "md" | "lg";
 }
 
-const QuantityStepper = ({ value, onChange, min = 1, max = Number.MAX_SAFE_INTEGER, disabled = false, className = "", btnSize = "md" }: QuantityStepperProps) => {
+const QuantityStepper = ({
+	value,
+	onChange,
+	min = 1,
+	max = Number.MAX_SAFE_INTEGER,
+	disabled = false,
+	className = "",
+	btnSize = "md",
+}: QuantityStepperProps) => {
 	const cannotDecrease = disabled || value <= min;
 	const cannotIncrease = disabled || value >= max;
 
 	return (
-		<div className={`flex items-center rounded-full border border-border ${className}`}>
+		<div
+			className={`flex items-center rounded-full border border-border ${className}`}>
 			<Button
 				type='button'
 				size={btnSize}
@@ -28,7 +37,9 @@ const QuantityStepper = ({ value, onChange, min = 1, max = Number.MAX_SAFE_INTEG
 				icon={<MinusIcon className='h-3.5 w-3.5' />}
 			/>
 
-			<span className='w-8 text-center text-sm font-semibold text-ink'>{value}</span>
+			<span className='w-8 text-center text-sm font-semibold text-ink'>
+				{value}
+			</span>
 
 			<Button
 				type='button'

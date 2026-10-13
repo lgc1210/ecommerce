@@ -11,7 +11,7 @@ import type { ListProductsParams } from "../../../features/client/product/types"
 import ProductCard from "../../../features/client/product/components/product-card";
 import CategoryFilterTree from "../../../features/client/product/components/category-filter-tree";
 import FormControl from "../../../components/form-control";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import FormSelect from "../../../components/form-select";
 import { productSort } from "../../../features/client/product/constants";
 import { useCategoryTreeQuery } from "../../../features/client/category/hooks";
@@ -22,7 +22,10 @@ const MAX_PRICE = 5000000;
 
 // Các giá trị này được backend hỗ trợ (xem ListProductsQuerySchema ở product.validation.ts). Giá dùng
 // để sắp xếp là giá thấp nhất giữa các SKU của sản phẩm (khớp giá "từ" hiển thị ở ProductCard).
-const sortOptions: { value: NonNullable<ListProductsParams["sort"]>; label: string }[] = [
+const sortOptions: {
+	value: NonNullable<ListProductsParams["sort"]>;
+	label: string;
+}[] = [
 	{ value: productSort.newest, label: "Mới nhất" },
 	{ value: productSort.name_asc, label: "Tên: A đến Z" },
 	{ value: productSort.name_desc, label: "Tên: Z đến A" },
@@ -35,11 +38,25 @@ const ShopPage = () => {
 
 	// Gom logic page/limit/search + filter riêng qua URL params, dùng chung với domain admin
 	// (xem useListQueryParams) thay vì tự quản searchParams thủ công.
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } = useListQueryParams({ defaultLimit: PAGE_SIZE });
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({ defaultLimit: PAGE_SIZE });
 
 	const categoryId = parseNumberParam(searchParams, "categoryId");
 	const maxPrice = parseNumberParam(searchParams, "maxPrice") ?? MAX_PRICE;
-	const sort = parseEnumParam<NonNullable<ListProductsParams["sort"]>>(searchParams, "sort") ?? "newest";
+	const sort =
+		parseEnumParam<NonNullable<ListProductsParams["sort"]>>(
+			searchParams,
+			"sort",
+		) ?? "newest";
 
 	// Thanh kéo khoảng giá: bind trực tiếp vào state cục bộ để kéo mượt (không giật khi URL/API
 	// chưa kịp cập nhật). Lưu ý: input[type=range] trong React bắn onChange trên MỖI bước kéo
@@ -67,7 +84,8 @@ const ShopPage = () => {
 		setFilter("maxPrice", value < MAX_PRICE ? String(value) : undefined);
 	};
 
-	const { data: categoryTree, isLoading: isCategoriesLoading } = useCategoryTreeQuery();
+	const { data: categoryTree, isLoading: isCategoriesLoading } =
+		useCategoryTreeQuery();
 	const categories = categoryTree ?? [];
 
 	const { data, isLoading, isFetching } = useProductsQuery({
@@ -91,14 +109,29 @@ const ShopPage = () => {
 			<div>
 				<h3 className='font-bold text-ink'>Tìm kiếm</h3>
 				<div className='mt-4'>
-					<FormControl type='text' variant='surface' value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder='Tên sản phẩm...' className='rounded-full! h-10!' />
+					<FormControl
+						type='text'
+						variant='surface'
+						value={searchInput}
+						onChange={(e) => setSearchInput(e.target.value)}
+						placeholder='Tên sản phẩm...'
+						className='rounded-full! h-10!'
+					/>
 				</div>
 			</div>
 
 			<div>
 				<h3 className='font-bold text-ink'>Danh mục</h3>
 				<div className='mt-4'>
-					{isCategoriesLoading ? <ShopCategoryFilterSkeleton /> : <CategoryFilterTree categories={categories} selectedCategoryId={categoryId} onToggleCategory={toggleCategory} />}
+					{isCategoriesLoading ? (
+						<ShopCategoryFilterSkeleton />
+					) : (
+						<CategoryFilterTree
+							categories={categories}
+							selectedCategoryId={categoryId}
+							onToggleCategory={toggleCategory}
+						/>
+					)}
 				</div>
 			</div>
 
@@ -117,12 +150,18 @@ const ShopPage = () => {
 				/>
 				<div className='mt-2 flex justify-between text-xs text-muted'>
 					<span>0₫</span>
-					<span className='font-semibold text-ink'>{formatCurrency(rangeInput)}</span>
+					<span className='font-semibold text-ink'>
+						{formatCurrency(rangeInput)}
+					</span>
 				</div>
 			</div>
 
 			{hasActiveFilters(["categoryId", "maxPrice", "sort"]) && (
-				<Button type='button' variant='outline' onClick={clearFilters} className='w-full'>
+				<Button
+					type='button'
+					variant='outline'
+					onClick={clearFilters}
+					className='w-full'>
 					Xoá bộ lọc
 				</Button>
 			)}
@@ -131,7 +170,10 @@ const ShopPage = () => {
 
 	return (
 		<div>
-			<BreadCrumb title='Cửa hàng' description='Khám phá toàn bộ sản phẩm của cửa hàng.' />
+			<BreadCrumb
+				title='Cửa hàng'
+				description='Khám phá toàn bộ sản phẩm của cửa hàng.'
+			/>
 
 			<div className='mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8'>
 				<div className='grid gap-10 lg:grid-cols-[240px_1fr]'>
@@ -141,7 +183,11 @@ const ShopPage = () => {
 					<div>
 						{/* Toolbar */}
 						<div className='flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4'>
-							<Button type='button' onClick={() => setFiltersOpen(true)} icon={<FilterIcon className='h-4 w-4' />} className='lg:hidden block'>
+							<Button
+								type='button'
+								onClick={() => setFiltersOpen(true)}
+								icon={<FilterIcon className='h-4 w-4' />}
+								className='lg:hidden block'>
 								Bộ lọc
 							</Button>
 							<p className='text-sm text-muted'>
@@ -149,11 +195,19 @@ const ShopPage = () => {
 									"Đang tải..."
 								) : (
 									<>
-										Hiển thị <span className='font-semibold text-ink'>{products.length}</span> / {pagination?.total ?? 0} sản phẩm
+										Hiển thị{" "}
+										<span className='font-semibold text-ink'>
+											{products.length}
+										</span>{" "}
+										/ {pagination?.total ?? 0} sản phẩm
 									</>
 								)}
 							</p>
-							<FormSelect value={sort} options={sortOptions} onChange={(e) => setFilter("sort", e.target.value)} />
+							<FormSelect
+								value={sort}
+								options={sortOptions}
+								onChange={(e) => setFilter("sort", e.target.value)}
+							/>
 						</div>
 
 						{isLoading ? (
@@ -161,27 +215,45 @@ const ShopPage = () => {
 						) : products.length > 0 ? (
 							<div className='mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3'>
 								{products.map((product) => (
-									<ProductCard key={product.slug} product={toProductCardItem(product)} />
+									<ProductCard
+										key={product.slug}
+										product={toProductCardItem(product)}
+									/>
 								))}
 							</div>
 						) : (
-							<div className='mt-16 text-center text-muted'>Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.</div>
+							<div className='mt-16 text-center text-muted'>
+								Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.
+							</div>
 						)}
 
 						<div className='mt-10'>
-							<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isFetching} />
+							<Pagination
+								total={pagination?.total ?? 0}
+								defaultLimit={PAGE_SIZE}
+								pageSizeOptions={[]}
+								isLoading={isFetching}
+							/>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Mobile filter drawer */}
-			<div onClick={() => setFiltersOpen(false)} className={`fixed inset-0 z-40 bg-ink/50 transition-opacity lg:hidden ${filtersOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} />
+			<div
+				onClick={() => setFiltersOpen(false)}
+				className={`fixed inset-0 z-40 bg-ink/50 transition-opacity lg:hidden ${filtersOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+			/>
 			<div
 				className={`fixed inset-y-0 right-0 z-50 w-80 max-w-[85vw] overflow-y-auto bg-surface p-6 transition-transform duration-200 lg:hidden ${filtersOpen ? "translate-x-0" : "translate-x-full"}`}>
 				<div className='mb-6 flex items-center justify-between'>
 					<h2 className='text-lg font-bold text-ink'>Bộ lọc</h2>
-					<Button type='button' size='sm' variant='ghost' onClick={() => setFiltersOpen(false)} className='bg-transparent! hover:text-primary-dark!'>
+					<Button
+						type='button'
+						size='sm'
+						variant='ghost'
+						onClick={() => setFiltersOpen(false)}
+						className='bg-transparent! hover:text-primary-dark!'>
 						Đóng
 					</Button>
 				</div>

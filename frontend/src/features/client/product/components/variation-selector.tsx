@@ -1,6 +1,6 @@
 import { collectAttributeValues } from "../utils";
 import type { PublicProductSku, VariationDetails } from "../types";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 
 interface VariationSelectorProps {
 	attribute: string;
@@ -14,7 +14,12 @@ interface VariationSelectorProps {
  * (với các lựa chọn khác hiện tại) sẽ bị làm mờ nhưng vẫn bấm chọn được, để khách vẫn xem được ảnh/giá
  * của tổ hợp đó dù tạm hết hàng.
  */
-const VariationSelector = ({ attribute, skus, selected, onSelect }: VariationSelectorProps) => {
+const VariationSelector = ({
+	attribute,
+	skus,
+	selected,
+	onSelect,
+}: VariationSelectorProps) => {
 	const values = collectAttributeValues(skus, attribute);
 
 	const isValueAvailable = (value: string) => {
@@ -31,14 +36,20 @@ const VariationSelector = ({ attribute, skus, selected, onSelect }: VariationSel
 	return (
 		<div>
 			<h3 className='text-sm font-semibold text-ink'>
-				{attribute}: <span className='font-normal text-muted'>{selected[attribute]}</span>
+				{attribute}:{" "}
+				<span className='font-normal text-muted'>{selected[attribute]}</span>
 			</h3>
 			<div className='mt-2 flex flex-wrap gap-2'>
 				{values.map((value) => {
 					const isActive = selected[attribute] === value;
 					const available = isValueAvailable(value);
 					return (
-						<Button type='button' variant={isActive ? "primary" : "outline"} key={value} onClick={() => onSelect(attribute, value)} className={!available ? "opacity-50!" : ""}>
+						<Button
+							type='button'
+							variant={isActive ? "primary" : "outline"}
+							key={value}
+							onClick={() => onSelect(attribute, value)}
+							className={!available ? "opacity-50!" : ""}>
 							{value}
 						</Button>
 					);

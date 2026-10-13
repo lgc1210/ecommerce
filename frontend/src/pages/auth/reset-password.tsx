@@ -1,6 +1,6 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import FormControl from "../../components/form-control";
 import AuthLayout from "../../layouts/auth";
 import paths from "../../configs/constants/paths";
@@ -85,7 +85,11 @@ const ResetPasswordPage = () => {
 				onChange={(e) => setPassword(e.target.value)}
 				placeholder='••••••••'
 				error={errors.password}
-				hint={!errors.password ? `Tối thiểu ${MIN_PASSWORD_LENGTH} ký tự.` : undefined}
+				hint={
+					!errors.password
+						? `Tối thiểu ${MIN_PASSWORD_LENGTH} ký tự.`
+						: undefined
+				}
 				disabled={submitting}
 			/>
 			<FormControl

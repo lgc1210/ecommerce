@@ -2,13 +2,18 @@ import { useState } from "react";
 import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
 import FormSelect from "../../../../components/form-select";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { MailIcon, UserIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 import { formatDate } from "../../../../utils";
 import { useUpdatePaymentStatus } from "../hooks";
 import type { AdminPayment } from "../types";
-import { getNextPaymentStatusOptions, isTerminalPaymentStatus, PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL } from "../utils";
+import {
+	getNextPaymentStatusOptions,
+	isTerminalPaymentStatus,
+	PAYMENT_METHOD_LABEL,
+	PAYMENT_STATUS_LABEL,
+} from "../utils";
 import PaymentStatusBadge from "./payment-status-badge";
 import OrderStatusBadge from "../../order/components/order-status-badge";
 import type { PaymentStatus } from "../../../../shared/constants/payment";
@@ -29,10 +34,16 @@ interface PaymentDetailContentProps {
  */
 const PaymentDetailContent = ({ payment }: PaymentDetailContentProps) => {
 	const updatePaymentStatus = useUpdatePaymentStatus();
-	const [pendingStatus, setPendingStatus] = useState<PaymentStatus>(payment.paymentStatus);
-	const [transactionIdInput, setTransactionIdInput] = useState(payment.transactionId ?? "");
+	const [pendingStatus, setPendingStatus] = useState<PaymentStatus>(
+		payment.paymentStatus,
+	);
+	const [transactionIdInput, setTransactionIdInput] = useState(
+		payment.transactionId ?? "",
+	);
 
-	const hasChanged = pendingStatus !== payment.paymentStatus || transactionIdInput !== (payment.transactionId ?? "");
+	const hasChanged =
+		pendingStatus !== payment.paymentStatus ||
+		transactionIdInput !== (payment.transactionId ?? "");
 	const statusOptions = getNextPaymentStatusOptions(payment.paymentStatus);
 
 	return (
@@ -40,8 +51,13 @@ const PaymentDetailContent = ({ payment }: PaymentDetailContentProps) => {
 			{/* Header */}
 			<div className='flex flex-wrap items-start justify-between gap-2'>
 				<div>
-					<p className='font-semibold text-ink'>Đơn {payment.order.orderNumber}</p>
-					<p className='mt-1 text-xs text-muted'>Tạo giao dịch lúc {payment.createdAt ? formatDate(payment.createdAt) : "—"}</p>
+					<p className='font-semibold text-ink'>
+						Đơn {payment.order.orderNumber}
+					</p>
+					<p className='mt-1 text-xs text-muted'>
+						Tạo giao dịch lúc{" "}
+						{payment.createdAt ? formatDate(payment.createdAt) : "—"}
+					</p>
 				</div>
 				<div className='flex flex-col items-end gap-1.5'>
 					<PaymentStatusBadge status={payment.paymentStatus} />
@@ -51,15 +67,21 @@ const PaymentDetailContent = ({ payment }: PaymentDetailContentProps) => {
 
 			{/* Khách hàng */}
 			<div className='space-y-2 rounded-xl bg-cream-soft p-4 text-sm'>
-				<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>Khách hàng</p>
+				<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>
+					Khách hàng
+				</p>
 				<div className='flex items-center gap-2 text-ink'>
 					<UserIcon className='h-4 w-4 shrink-0 text-muted' />
-					<span className='font-medium'>{payment.order.user?.name ?? "Khách vãng lai"}</span>
+					<span className='font-medium'>
+						{payment.order.user?.name ?? "Khách vãng lai"}
+					</span>
 				</div>
 				{payment.order.user && (
 					<div className='flex items-center gap-2 text-ink/80'>
 						<MailIcon className='h-4 w-4 shrink-0 text-muted' />
-						<a href={`mailto:${payment.order.user.email}`} className='hover:underline'>
+						<a
+							href={`mailto:${payment.order.user.email}`}
+							className='hover:underline'>
 							{payment.order.user.email}
 						</a>
 					</div>
@@ -70,11 +92,15 @@ const PaymentDetailContent = ({ payment }: PaymentDetailContentProps) => {
 			<div className='space-y-1.5 rounded-xl border border-border p-4 text-sm'>
 				<div className='flex justify-between text-ink/80'>
 					<span>Phương thức</span>
-					<span className='font-medium text-ink'>{PAYMENT_METHOD_LABEL[payment.paymentMethod]}</span>
+					<span className='font-medium text-ink'>
+						{PAYMENT_METHOD_LABEL[payment.paymentMethod]}
+					</span>
 				</div>
 				<div className='flex justify-between text-ink/80'>
 					<span>Số tiền</span>
-					<span className='font-medium text-ink'>{formatCurrency(Number(payment.amount))}</span>
+					<span className='font-medium text-ink'>
+						{formatCurrency(Number(payment.amount))}
+					</span>
 				</div>
 				<div className='flex justify-between text-ink/80'>
 					<span>Tổng tiền đơn hàng</span>
@@ -97,7 +123,10 @@ const PaymentDetailContent = ({ payment }: PaymentDetailContentProps) => {
 						value={pendingStatus}
 						disabled={isTerminalPaymentStatus(payment.paymentStatus)}
 						onChange={(e) => setPendingStatus(e.target.value as PaymentStatus)}
-						options={statusOptions.map((status) => ({ value: status, label: PAYMENT_STATUS_LABEL[status] }))}
+						options={statusOptions.map((status) => ({
+							value: status,
+							label: PAYMENT_STATUS_LABEL[status],
+						}))}
 					/>
 				</div>
 				<FormControl
@@ -134,8 +163,14 @@ const PaymentDetailContent = ({ payment }: PaymentDetailContentProps) => {
  */
 const PaymentDetailModal = ({ payment, onClose }: PaymentDetailModalProps) => {
 	return (
-		<ModalShell title='Chi tiết thanh toán' onClose={onClose} maxWidthClassName='max-w-xl'>
-			<PaymentDetailContent key={`${payment.id}-${payment.paymentStatus}`} payment={payment} />
+		<ModalShell
+			title='Chi tiết thanh toán'
+			onClose={onClose}
+			maxWidthClassName='max-w-xl'>
+			<PaymentDetailContent
+				key={`${payment.id}-${payment.paymentStatus}`}
+				payment={payment}
+			/>
 		</ModalShell>
 	);
 };

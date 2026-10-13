@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../components/breadcrumb";
-import Button from "../../../components/button";
+import { Button, LinkButton } from "../../../components/button";
 import paths from "../../../configs/constants/paths";
 import { formatCurrency } from "../../../utils/currency";
-import { CartIcon, ShieldCheckIcon, StarIcon, TruckIcon } from "../../../components/icons";
+import {
+	CartIcon,
+	ShieldCheckIcon,
+	StarIcon,
+	TruckIcon,
+} from "../../../components/icons";
 import VariationSelector from "../../../features/client/product/components/variation-selector";
 import { useProductBySlugQuery } from "../../../features/client/product/hooks";
 import {
@@ -65,7 +70,9 @@ const ProductDetailPage = () => {
 	// từng bấm đúng notification này 1 lần (hash đã là "#review-x" từ trước), rồi tự đổi sang tab
 	// khác, rồi bấm LẠI đúng notification đó, hash gửi tới sẽ giống hệt hash hiện tại (không đổi
 	// giá trị) nên so hash sẽ bỏ lỡ lần bấm thứ 2 này — so key mới bắt được mọi lần điều hướng.
-	const [syncedLocationKey, setSyncedLocationKey] = useState<string | undefined>(undefined);
+	const [syncedLocationKey, setSyncedLocationKey] = useState<
+		string | undefined
+	>(undefined);
 	if (product && product.slug !== syncedSlug) {
 		setSyncedSlug(product.slug);
 		setSyncedLocationKey(locationKey);
@@ -93,12 +100,14 @@ const ProductDetailPage = () => {
 
 	if (isError || !product) {
 		return (
-			<div className='mx-auto max-w-7xl px-4 py-24 text-center sm:px-6 lg:px-8'>
+			<div className='space-y-4 mx-auto max-w-7xl px-4 py-24 text-center sm:px-6 lg:px-8'>
 				<h1 className='text-2xl font-bold text-ink'>Không tìm thấy sản phẩm</h1>
-				<p className='mt-2 text-muted'>Sản phẩm bạn tìm không tồn tại hoặc đã ngừng kinh doanh.</p>
-				<Link to={paths.client.shop}>
-					<Button className='mt-6'>Quay lại cửa hàng</Button>
-				</Link>
+				<p className='text-muted'>
+					Sản phẩm bạn tìm không tồn tại hoặc đã ngừng kinh doanh.
+				</p>
+				<LinkButton to={paths.client.shop} viewTransition>
+					Quay lại cửa hàng
+				</LinkButton>
 			</div>
 		);
 	}
@@ -111,8 +120,11 @@ const ProductDetailPage = () => {
 	// tồn kho/ảnh hiển thị nhầm sang 1 tổ hợp mà khách không hề chọn, và có thể khiến khách thêm
 	// nhầm sản phẩm vào giỏ.
 	const hasSelectedAllAttributes =
-		attributes.length > 0 && attributes.every((attribute) => Boolean(selected[attribute]));
-	const selectedSku = hasSelectedAllAttributes ? findMatchingSku(product.skus, selected) : undefined;
+		attributes.length > 0 &&
+		attributes.every((attribute) => Boolean(selected[attribute]));
+	const selectedSku = hasSelectedAllAttributes
+		? findMatchingSku(product.skus, selected)
+		: undefined;
 	const images = selectedSku ? getSkuImages(selectedSku) : [];
 	const gallery = images.length > 0 ? images : [getProductThumbnail(product)];
 	const priceRange = computePriceRange(product.skus);
@@ -124,7 +136,9 @@ const ProductDetailPage = () => {
 	// nên đây là số lượng review đang hiển thị, không hẳn là tổng số review thực tế của sản phẩm.
 	const reviewCount = product.reviews.length;
 	const related = product.related;
-	const description = product.description?.replace(/\s+/g, " ").trim() || `Khám phá ${product.name} tại Ecommerce.`;
+	const description =
+		product.description?.replace(/\s+/g, " ").trim() ||
+		`Khám phá ${product.name} tại Ecommerce.`;
 	const productImage = gallery[0];
 
 	const handleSelect = (attribute: string, value: string) => {
@@ -203,7 +217,9 @@ const ProductDetailPage = () => {
 						lowPrice: priceRange.min,
 						highPrice: priceRange.max,
 						priceCurrency: "VND",
-						availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+						availability: inStock
+							? "https://schema.org/InStock"
+							: "https://schema.org/OutOfStock",
 					},
 				}}
 			/>
@@ -229,7 +245,11 @@ const ProductDetailPage = () => {
 										type='button'
 										onClick={() => setActiveImage(index)}
 										className={`aspect-square overflow-hidden rounded-xl border-2 ${activeImage === index ? "border-primary" : "border-transparent"}`}>
-										<img src={img} alt={`${product.name} ${index + 1}`} className='h-full w-full object-cover' />
+										<img
+											src={img}
+											alt={`${product.name} ${index + 1}`}
+											className='h-full w-full object-cover'
+										/>
 									</button>
 								))}
 							</div>
@@ -259,24 +279,40 @@ const ProductDetailPage = () => {
 						</h1>
 
 						<div className='mt-4 flex items-center gap-3'>
-							{Boolean(oldPrice) && <span className='text-xl text-muted line-through'>{formatCurrency(oldPrice)}</span>}
+							{Boolean(oldPrice) && (
+								<span className='text-xl text-muted line-through'>
+									{formatCurrency(oldPrice)}
+								</span>
+							)}
 							<span className='text-3xl font-bold text-primary-dark'>
 								{!selectedSku && priceRange.min !== priceRange.max && (
-									<span className='mr-1 text-lg font-semibold text-muted'>Từ</span>
+									<span className='mr-1 text-lg font-semibold text-muted'>
+										Từ
+									</span>
 								)}
 								{formatCurrency(price)}
 							</span>
 						</div>
 
-						{product.description && <p className='mt-5 leading-relaxed text-muted'>{product.description}</p>}
+						{product.description && (
+							<p className='mt-5 leading-relaxed text-muted'>
+								{product.description}
+							</p>
+						)}
 
 						{Object.keys(selected).length > 0 && (
 							<div className='mt-6 flex items-center gap-2 text-sm'>
-								<span className={`h-2 w-2 rounded-full ${inStock ? "bg-green-600" : "bg-red-500"}`} />
+								<span
+									className={`h-2 w-2 rounded-full ${inStock ? "bg-green-600" : "bg-red-500"}`}
+								/>
 								{isUnavailableCombination ? (
-									<span className='text-red-600'>Không có sẵn tổ hợp này, vui lòng chọn lựa chọn khác</span>
+									<span className='text-red-600'>
+										Không có sẵn tổ hợp này, vui lòng chọn lựa chọn khác
+									</span>
 								) : inStock ? (
-									<span className='text-ink'>Còn hàng ({selectedSku.stockQuantity})</span>
+									<span className='text-ink'>
+										Còn hàng ({selectedSku.stockQuantity})
+									</span>
 								) : (
 									<span className='text-red-600'>Tạm hết hàng</span>
 								)}
@@ -310,9 +346,13 @@ const ProductDetailPage = () => {
 									<Button
 										type='button'
 										variant='outline'
-										disabled={!inStock || isMutating || !hasSelectedAllAttributes}
+										disabled={
+											!inStock || isMutating || !hasSelectedAllAttributes
+										}
 										onClick={handleBuyNow}>
-										{hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Mua ngay"}
+										{hasSelectedAllAttributes && !inStock
+											? "Tạm hết hàng"
+											: "Mua ngay"}
 									</Button>
 								)}
 								<Button
@@ -321,7 +361,11 @@ const ProductDetailPage = () => {
 									onClick={handleAddToCart}
 									icon={<CartIcon className='h-4 w-4' />}
 									iconPosition='left'>
-									{isMutating ? "Đang thêm..." : hasSelectedAllAttributes && !inStock ? "Tạm hết hàng" : "Thêm vào giỏ"}
+									{isMutating
+										? "Đang thêm..."
+										: hasSelectedAllAttributes && !inStock
+											? "Tạm hết hàng"
+											: "Thêm vào giỏ"}
 								</Button>
 							</div>
 						</div>
@@ -351,7 +395,9 @@ const ProductDetailPage = () => {
 						))}
 					</Tabs>
 					<div className='max-w-3xl py-8 text-sm leading-relaxed text-ink/80'>
-						{activeTab === "description" && <ProductDescriptionTab description={product.description} />}
+						{activeTab === "description" && (
+							<ProductDescriptionTab description={product.description} />
+						)}
 						{activeTab === "specs" && (
 							<ProductSpecsTab
 								categoryName={product.category?.name}
@@ -360,14 +406,18 @@ const ProductDetailPage = () => {
 								isUnavailableCombination={isUnavailableCombination}
 							/>
 						)}
-						{activeTab === "reviews" && <ProductReviewsTab productId={product.id} />}
+						{activeTab === "reviews" && (
+							<ProductReviewsTab productId={product.id} />
+						)}
 					</div>
 				</div>
 
 				{/* Related products */}
 				{related.length > 0 && (
 					<div className='mt-16'>
-						<h2 className='text-2xl font-extrabold tracking-tight text-ink'>Sản phẩm liên quan</h2>
+						<h2 className='text-2xl font-extrabold tracking-tight text-ink'>
+							Sản phẩm liên quan
+						</h2>
 						<div className='mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4'>
 							{related.map((p) => (
 								<ProductCard key={p.slug} product={toProductCardItem(p)} />

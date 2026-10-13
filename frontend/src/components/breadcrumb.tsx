@@ -33,7 +33,8 @@ const BreadCrumb = ({ title, description }: BreadCrumbProps) => {
 		.reduce<Crumb[]>((acc, match) => {
 			const handle = match.handle as RouteHandle | undefined;
 			const label = handle?.crumb?.();
-			if (label && label !== "Home") acc.push({ label, path: handle?.crumbPath });
+			if (label && label !== "Home")
+				acc.push({ label, path: handle?.crumbPath });
 			return acc;
 		}, [])
 		.concat({ label: title });
@@ -41,23 +42,38 @@ const BreadCrumb = ({ title, description }: BreadCrumbProps) => {
 	return (
 		<div className='border-b border-border bg-cream-soft'>
 			<div className='mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8'>
-				<h1 className='text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>{title}</h1>
-				{description && <p className='mt-2 max-w-xl text-sm text-muted'>{description}</p>}
+				<h1 className='text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>
+					{title}
+				</h1>
+				{description && (
+					<p className='mt-2 max-w-xl text-sm text-muted'>{description}</p>
+				)}
 				<div className='mt-4 flex items-center gap-1.5 text-sm text-muted'>
-					<Link to={paths.client.home} className='font-medium hover:text-primary-dark text-nowrap' viewTransition>
+					<Link
+						to={paths.client.home}
+						className='font-medium hover:text-primary-dark text-nowrap'
+						viewTransition>
 						Trang chủ
 					</Link>
 					{crumbs.map((crumb, index) => {
 						const isLast = index === crumbs.length - 1;
 						return (
-							<span key={`${crumb.label}-${index}`} className='flex items-center gap-1.5 font-medium'>
+							<span
+								key={`${crumb.label}-${index}`}
+								className='flex items-center gap-1.5 font-medium'>
 								<ChevronRightIcon className='h-3.5 w-3.5' />
 								{!isLast && crumb.path ? (
-									<Link to={crumb.path} className='hover:text-primary-dark text-nowrap' viewTransition>
+									<Link
+										to={crumb.path}
+										className='hover:text-primary-dark text-nowrap'
+										viewTransition>
 										{crumb.label}
 									</Link>
 								) : (
-									<span className={`md:w-full sm:w-36 w-24 truncate ${isLast ? "text-ink" : ""}`}>{crumb.label}</span>
+									<span
+										className={`md:w-full sm:w-36 w-24 truncate ${isLast ? "text-ink" : ""}`}>
+										{crumb.label}
+									</span>
 								)}
 							</span>
 						);

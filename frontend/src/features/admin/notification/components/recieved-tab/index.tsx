@@ -1,13 +1,26 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { BellIcon, CheckIcon, TrashIcon } from "../../../../../components/icons";
+import {
+	BellIcon,
+	CheckIcon,
+	TrashIcon,
+} from "../../../../../components/icons";
 import Pagination from "../../../../../components/pagination";
-import Button from "../../../../../components/button";
+import { Button } from "../../../../../components/button";
 import Popup from "../../../../../components/popup";
 import { formatDate } from "../../../../../utils";
-import { useDeleteAllReadNotifications, useDeleteNotification, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useMyNotificationsQuery } from "../../../../client/notification/hooks";
+import {
+	useDeleteAllReadNotifications,
+	useDeleteNotification,
+	useMarkAllNotificationsAsRead,
+	useMarkNotificationAsRead,
+	useMyNotificationsQuery,
+} from "../../../../client/notification/hooks";
 import ReceivedTabSkeleton from "./skeleton";
-import { NOTIFICATION_TYPE_ICON, NOTIFICATION_TYPE_LABEL } from "../../../../../shared/constants/notification";
+import {
+	NOTIFICATION_TYPE_ICON,
+	NOTIFICATION_TYPE_LABEL,
+} from "../../../../../shared/constants/notification";
 
 const PAGE_SIZE = 10;
 
@@ -65,7 +78,13 @@ const ReceivedTab = () => {
 			{(unreadCount > 0 || readCount > 0) && (
 				<div className='flex flex-wrap justify-end gap-2'>
 					{unreadCount > 0 && (
-						<Button variant='outline' size='sm' icon={<CheckIcon className='h-4 w-4' />} iconPosition='left' onClick={() => markAllAsReadMutation.mutate()} disabled={markAllAsReadMutation.isPending}>
+						<Button
+							variant='outline'
+							size='sm'
+							icon={<CheckIcon className='h-4 w-4' />}
+							iconPosition='left'
+							onClick={() => markAllAsReadMutation.mutate()}
+							disabled={markAllAsReadMutation.isPending}>
 							Đánh dấu tất cả đã đọc
 						</Button>
 					)}
@@ -87,7 +106,9 @@ const ReceivedTab = () => {
 				{notifications.map((notification) => {
 					const Icon = NOTIFICATION_TYPE_ICON[notification.type];
 					return (
-						<div key={notification.id} className={`flex items-start gap-3 rounded-2xl border p-5 ${notification.isRead ? "border-border bg-surface" : "border-primary-light bg-primary-light/30"}`}>
+						<div
+							key={notification.id}
+							className={`flex items-start gap-3 rounded-2xl border p-5 ${notification.isRead ? "border-border bg-surface" : "border-primary-light bg-primary-light/30"}`}>
 							<span className='mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream-soft text-ink/70'>
 								<Icon className='h-4.5 w-4.5' />
 							</span>
@@ -95,22 +116,34 @@ const ReceivedTab = () => {
 							<div className='min-w-0 flex-1'>
 								<div className='flex flex-wrap items-start justify-between gap-2'>
 									<div>
-										<p className='font-semibold text-ink'>{notification.title}</p>
+										<p className='font-semibold text-ink'>
+											{notification.title}
+										</p>
 										<p className='mt-0.5 text-xs text-muted'>
-											{NOTIFICATION_TYPE_LABEL[notification.type]} · {formatDate(notification.createdAt)}
+											{NOTIFICATION_TYPE_LABEL[notification.type]} ·{" "}
+											{formatDate(notification.createdAt)}
 										</p>
 									</div>
-									{!notification.isRead && <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white'>Mới</span>}
+									{!notification.isRead && (
+										<span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white'>
+											Mới
+										</span>
+									)}
 								</div>
 
-								<p className='mt-2 text-sm text-ink/80'>{notification.message}</p>
+								<p className='mt-2 text-sm text-ink/80'>
+									{notification.message}
+								</p>
 
 								<div className='mt-3 flex items-center gap-4'>
 									{notification.actionUrl && (
 										<Link
 											to={notification.actionUrl}
 											state={{ fromNotification: true }}
-											onClick={() => !notification.isRead && markAsReadMutation.mutate(notification.id)}
+											onClick={() =>
+												!notification.isRead &&
+												markAsReadMutation.mutate(notification.id)
+											}
 											className='text-xs font-semibold text-primary-dark hover:underline'>
 											Xem chi tiết
 										</Link>
@@ -140,7 +173,14 @@ const ReceivedTab = () => {
 				})}
 			</div>
 
-			{data && <Pagination total={data.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoading} />}
+			{data && (
+				<Pagination
+					total={data.pagination.total}
+					defaultLimit={PAGE_SIZE}
+					pageSizeOptions={[]}
+					isLoading={isLoading}
+				/>
+			)}
 
 			{confirmingDeleteAllRead && (
 				<Popup
@@ -149,7 +189,11 @@ const ReceivedTab = () => {
 					variant='danger'
 					confirmLabel='Xóa tất cả'
 					isConfirming={deleteAllReadMutation.isPending}
-					onConfirm={() => deleteAllReadMutation.mutate(undefined, { onSuccess: () => setConfirmingDeleteAllRead(false) })}
+					onConfirm={() =>
+						deleteAllReadMutation.mutate(undefined, {
+							onSuccess: () => setConfirmingDeleteAllRead(false),
+						})
+					}
 					onClose={() => setConfirmingDeleteAllRead(false)}
 				/>
 			)}

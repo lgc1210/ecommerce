@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ModalShell from "../../../../components/modal-shell";
 import FormSelect from "../../../../components/form-select";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { MailIcon, TrashIcon, UserIcon } from "../../../../components/icons";
 import type { AdminContact, ContactStatus } from "../types";
 import { CONTACT_STATUS_LABEL, getNextContactStatusOptions } from "../utils";
@@ -24,17 +24,32 @@ const formatDate = (value: string) =>
 	});
 
 /** Modal xem chi tiết 1 liên hệ + đổi trạng thái xử lý + lối vào xóa. Không tự quản lý mở/đóng. */
-const ContactDetailModal = ({ contact, onClose, onChangeStatus, onRequestDelete, isUpdatingStatus }: ContactDetailModalProps) => {
-	const [pendingStatus, setPendingStatus] = useState<ContactStatus>(contact.status);
+const ContactDetailModal = ({
+	contact,
+	onClose,
+	onChangeStatus,
+	onRequestDelete,
+	isUpdatingStatus,
+}: ContactDetailModalProps) => {
+	const [pendingStatus, setPendingStatus] = useState<ContactStatus>(
+		contact.status,
+	);
 	const statusOptions = getNextContactStatusOptions(contact.status);
 	const hasStatusChanged = pendingStatus !== contact.status;
 
 	return (
-		<ModalShell title='Chi tiết liên hệ' onClose={onClose} maxWidthClassName='max-w-lg'>
+		<ModalShell
+			title='Chi tiết liên hệ'
+			onClose={onClose}
+			maxWidthClassName='max-w-lg'>
 			<div className='space-y-4'>
 				<div>
-					<p className='font-semibold text-ink'>{contact.subject || "(Không có chủ đề)"}</p>
-					<p className='mt-1 text-xs text-muted'>Gửi lúc {formatDate(contact.createdAt)}</p>
+					<p className='font-semibold text-ink'>
+						{contact.subject || "(Không có chủ đề)"}
+					</p>
+					<p className='mt-1 text-xs text-muted'>
+						Gửi lúc {formatDate(contact.createdAt)}
+					</p>
 				</div>
 
 				<div className='space-y-2 rounded-xl bg-cream-soft p-4 text-sm'>
@@ -47,7 +62,9 @@ const ContactDetailModal = ({ contact, onClose, onChangeStatus, onRequestDelete,
 								(tài khoản #{contact.user.id} — {contact.user.email})
 							</span>
 						) : (
-							<span className='rounded-full bg-ink/10 px-2 py-0.5 text-xs text-ink/60'>Khách vãng lai</span>
+							<span className='rounded-full bg-ink/10 px-2 py-0.5 text-xs text-ink/60'>
+								Khách vãng lai
+							</span>
 						)}
 					</div>
 					<div className='flex items-center gap-2 text-ink'>
@@ -60,7 +77,9 @@ const ContactDetailModal = ({ contact, onClose, onChangeStatus, onRequestDelete,
 
 				<div>
 					<p className='mb-1.5 text-sm font-medium text-ink'>Nội dung</p>
-					<p className='whitespace-pre-line rounded-xl border border-border bg-surface p-4 text-sm text-ink/80'>{contact.message}</p>
+					<p className='whitespace-pre-line rounded-xl border border-border bg-surface p-4 text-sm text-ink/80'>
+						{contact.message}
+					</p>
 				</div>
 
 				<div className='flex items-end gap-3'>
@@ -69,9 +88,16 @@ const ContactDetailModal = ({ contact, onClose, onChangeStatus, onRequestDelete,
 						wrapperClassName='flex-1'
 						value={pendingStatus}
 						onChange={(e) => setPendingStatus(e.target.value as ContactStatus)}
-						options={statusOptions.map((status) => ({ value: status, label: CONTACT_STATUS_LABEL[status] }))}
+						options={statusOptions.map((status) => ({
+							value: status,
+							label: CONTACT_STATUS_LABEL[status],
+						}))}
 					/>
-					<Button size='sm' type='button' disabled={!hasStatusChanged || isUpdatingStatus} onClick={() => onChangeStatus(pendingStatus)}>
+					<Button
+						size='sm'
+						type='button'
+						disabled={!hasStatusChanged || isUpdatingStatus}
+						onClick={() => onChangeStatus(pendingStatus)}>
 						{isUpdatingStatus ? "Đang lưu..." : "Lưu trạng thái"}
 					</Button>
 				</div>

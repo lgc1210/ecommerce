@@ -1,4 +1,8 @@
-import { HeadsetIcon, ShieldCheckIcon, TruckIcon } from "../../../../../components/icons";
+import {
+	HeadsetIcon,
+	ShieldCheckIcon,
+	TruckIcon,
+} from "../../../../../components/icons";
 import type { HomeValueItem } from "../../types";
 
 /** Map "icon_name" cấu hình ở Strapi (field value_item.icon_name) sang icon component tương ứng ở frontend. */

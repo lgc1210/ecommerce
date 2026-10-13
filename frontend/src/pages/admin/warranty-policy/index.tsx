@@ -1,10 +1,15 @@
 import { useState } from "react";
 import AdminTitle from "../../../components/admin-title";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import FormControl from "../../../components/form-control";
 import Popup from "../../../components/popup";
 import Pagination from "../../../components/pagination";
-import { PencilIcon, PlusIcon, SearchIcon, TrashIcon } from "../../../components/icons";
+import {
+	PencilIcon,
+	PlusIcon,
+	SearchIcon,
+	TrashIcon,
+} from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import {
 	useWarrantyPoliciesQuery,
@@ -17,7 +22,10 @@ import type {
 	CreateWarrantyPolicyPayload,
 	UpdateWarrantyPolicyPayload,
 } from "../../../features/admin/warranty-policy/types";
-import { WARRANTY_PROVIDER_TYPE_LABEL, formatDuration } from "../../../features/admin/warranty-policy/utils";
+import {
+	WARRANTY_PROVIDER_TYPE_LABEL,
+	formatDuration,
+} from "../../../features/admin/warranty-policy/utils";
 import WarrantyPolicyFormModal from "../../../features/admin/warranty-policy/components/warranty-policy-form-modal";
 
 const PAGE_SIZE = 10;
@@ -29,37 +37,59 @@ const PAGE_SIZE = 10;
  * quyền duy nhất nên trang này không cần bọc thêm <Can> cho từng nút.
  */
 const AdminWarrantyPolicyPage = () => {
-	const { page, limit, search, searchInput, setSearchInput } = useListQueryParams({ defaultLimit: PAGE_SIZE });
+	const { page, limit, search, searchInput, setSearchInput } =
+		useListQueryParams({ defaultLimit: PAGE_SIZE });
 
-	const { data, isLoading, isFetching } = useWarrantyPoliciesQuery({ page, limit, search });
+	const { data, isLoading, isFetching } = useWarrantyPoliciesQuery({
+		page,
+		limit,
+		search,
+	});
 	const createPolicy = useCreateWarrantyPolicy();
 	const updatePolicy = useUpdateWarrantyPolicy();
 	const deletePolicy = useDeleteWarrantyPolicy();
 
-	const [formState, setFormState] = useState<{ policy?: AdminWarrantyPolicy } | null>(null);
-	const [deletingPolicy, setDeletingPolicy] = useState<AdminWarrantyPolicy | null>(null);
+	const [formState, setFormState] = useState<{
+		policy?: AdminWarrantyPolicy;
+	} | null>(null);
+	const [deletingPolicy, setDeletingPolicy] =
+		useState<AdminWarrantyPolicy | null>(null);
 
 	const policies = data?.data ?? [];
 	const pagination = data?.pagination;
 
-	const handleSubmitForm = (payload: CreateWarrantyPolicyPayload | UpdateWarrantyPolicyPayload) => {
+	const handleSubmitForm = (
+		payload: CreateWarrantyPolicyPayload | UpdateWarrantyPolicyPayload,
+	) => {
 		if (formState?.policy) {
-			updatePolicy.mutate(payload as UpdateWarrantyPolicyPayload, { onSuccess: () => setFormState(null) });
+			updatePolicy.mutate(payload as UpdateWarrantyPolicyPayload, {
+				onSuccess: () => setFormState(null),
+			});
 		} else {
-			createPolicy.mutate(payload as CreateWarrantyPolicyPayload, { onSuccess: () => setFormState(null) });
+			createPolicy.mutate(payload as CreateWarrantyPolicyPayload, {
+				onSuccess: () => setFormState(null),
+			});
 		}
 	};
 
 	const handleConfirmDelete = () => {
 		if (!deletingPolicy) return;
-		deletePolicy.mutate(deletingPolicy.id, { onSuccess: () => setDeletingPolicy(null) });
+		deletePolicy.mutate(deletingPolicy.id, {
+			onSuccess: () => setDeletingPolicy(null),
+		});
 	};
 
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Chính sách bảo hành' description='Quản lý các gói bảo hành để gán cho sản phẩm.' />
-				<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setFormState({})}>
+				<AdminTitle
+					title='Chính sách bảo hành'
+					description='Quản lý các gói bảo hành để gán cho sản phẩm.'
+				/>
+				<Button
+					size='sm'
+					icon={<PlusIcon className='h-4 w-4' />}
+					onClick={() => setFormState({})}>
 					Thêm chính sách
 				</Button>
 			</div>
@@ -103,23 +133,35 @@ const AdminWarrantyPolicyPage = () => {
 							</tr>
 						) : (
 							policies.map((policy) => (
-								<tr key={policy.id} className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={policy.id}
+									className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{policy.name}</p>
 										{policy.description && (
-											<p className='mt-0.5 line-clamp-1 text-xs text-muted'>{policy.description}</p>
+											<p className='mt-0.5 line-clamp-1 text-xs text-muted'>
+												{policy.description}
+											</p>
 										)}
 									</td>
 									<td className='px-5 py-3.5 text-ink/80'>
 										{formatDuration(policy.durationValue, policy.durationUnit)}
 									</td>
 									<td className='px-5 py-3.5 text-ink/70'>
-										{policy.exchangePeriodValue != null && policy.exchangePeriodUnit
-											? formatDuration(policy.exchangePeriodValue, policy.exchangePeriodUnit)
+										{policy.exchangePeriodValue != null &&
+										policy.exchangePeriodUnit
+											? formatDuration(
+													policy.exchangePeriodValue,
+													policy.exchangePeriodUnit,
+												)
 											: "—"}
 									</td>
-									<td className='px-5 py-3.5 text-ink/70'>{WARRANTY_PROVIDER_TYPE_LABEL[policy.warrantyType]}</td>
-									<td className='px-5 py-3.5 text-ink/70'>{policy._count.products}</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{WARRANTY_PROVIDER_TYPE_LABEL[policy.warrantyType]}
+									</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{policy._count.products}
+									</td>
 									<td className='px-5 py-3.5'>
 										<div className='flex items-center justify-end gap-1.5'>
 											<button
@@ -134,7 +176,11 @@ const AdminWarrantyPolicyPage = () => {
 												disabled={policy._count.products > 0}
 												onClick={() => setDeletingPolicy(policy)}
 												className='flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted cursor-pointer'
-												title={policy._count.products > 0 ? "Đang có sản phẩm áp dụng, hãy gỡ trước khi xóa" : "Xóa"}>
+												title={
+													policy._count.products > 0
+														? "Đang có sản phẩm áp dụng, hãy gỡ trước khi xóa"
+														: "Xóa"
+												}>
 												<TrashIcon className='h-4 w-4' />
 											</button>
 										</div>
@@ -146,9 +192,15 @@ const AdminWarrantyPolicyPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
 			{formState && (
 				<WarrantyPolicyFormModal

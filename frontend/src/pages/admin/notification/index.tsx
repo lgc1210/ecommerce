@@ -2,7 +2,7 @@ import { useState, type SubmitEvent } from "react";
 import AdminTitle from "../../../components/admin-title";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import Popup from "../../../components/popup";
 import { Tabs, TabItem } from "../../../components/tabs";
 import { useBroadcastNotification } from "../../../features/admin/notification/hooks";
@@ -88,7 +88,10 @@ const AdminNotificationPage = () => {
 
 	return (
 		<div className='space-y-6'>
-			<AdminTitle title='Thông báo' description='Xem thông báo bạn nhận được, hoặc gửi thông báo tới khách hàng.' />
+			<AdminTitle
+				title='Thông báo'
+				description='Xem thông báo bạn nhận được, hoặc gửi thông báo tới khách hàng.'
+			/>
 
 			<Tabs value={tab} onChange={setTab}>
 				<TabItem value='received' icon={<BellIcon className='h-4 w-4' />}>
@@ -102,12 +105,16 @@ const AdminNotificationPage = () => {
 			{tab === "received" ? (
 				<ReceivedTab />
 			) : (
-				<form onSubmit={handleSubmit} className='max-w-2xl space-y-5 rounded-2xl border border-border bg-surface p-6'>
+				<form
+					onSubmit={handleSubmit}
+					className='max-w-2xl space-y-5 rounded-2xl border border-border bg-surface p-6'>
 					<div className='grid gap-5 sm:grid-cols-2'>
 						<FormSelect
 							label='Loại thông báo'
 							value={type}
-							onChange={(e) => setType(e.target.value as BroadcastNotificationType)}
+							onChange={(e) =>
+								setType(e.target.value as BroadcastNotificationType)
+							}
 							options={TYPE_OPTIONS}
 							fullWidth
 						/>
@@ -138,7 +145,10 @@ const AdminNotificationPage = () => {
 					/>
 
 					<div className='flex justify-end border-t border-border pt-5'>
-						<Button type='submit' icon={<BellIcon className='h-4 w-4' />} iconPosition='left'>
+						<Button
+							type='submit'
+							icon={<BellIcon className='h-4 w-4' />}
+							iconPosition='left'>
 							Gửi cho tất cả khách hàng
 						</Button>
 					</div>

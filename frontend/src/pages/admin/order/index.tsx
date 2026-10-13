@@ -6,7 +6,7 @@ import Pagination from "../../../components/pagination";
 import AdminTitle from "../../../components/admin-title";
 import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
@@ -38,10 +38,19 @@ const PAGE_SIZE = 10;
  * link chia sẻ được.
  */
 const AdminOrderPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const status = parseEnumParam<OrderStatus>(searchParams, "status");
 	// dateFrom/dateTo giữ nguyên dạng chuỗi thô (không cần parser riêng) — chỉ convert sang ISO
@@ -72,9 +81,12 @@ const AdminOrderPage = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+	const fromNotification = Boolean(
+		(location.state as { fromNotification?: boolean } | null)?.fromNotification,
+	);
 
-	const notificationOrder = fromNotification && orders.length === 1 ? orders[0] : null;
+	const notificationOrder =
+		fromNotification && orders.length === 1 ? orders[0] : null;
 
 	const newestOrder = orders.find((order) => order.id === selectedOrderId);
 
@@ -93,7 +105,10 @@ const AdminOrderPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex items-center justify-between gap-2'>
-				<AdminTitle title='Đơn hàng' description='Xem và xử lý các đơn hàng khách đã đặt.' />
+				<AdminTitle
+					title='Đơn hàng'
+					description='Xem và xử lý các đơn hàng khách đã đặt.'
+				/>
 				<ExportButton
 					resource='orders'
 					params={{
@@ -118,7 +133,10 @@ const AdminOrderPage = () => {
 					value={status ?? ""}
 					onChange={(e) => setFilter("status", e.target.value || undefined)}
 					placeholder='Tất cả trạng thái'
-					options={Object.entries(ORDER_STATUS_LABEL).map(([value, label]) => ({ value, label }))}
+					options={Object.entries(ORDER_STATUS_LABEL).map(([value, label]) => ({
+						value,
+						label,
+					}))}
 				/>
 				<FormControl
 					type='date'
@@ -175,28 +193,44 @@ const AdminOrderPage = () => {
 									onClick={() => setSelectedOrderId(order.id)}
 									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
-										<p className='font-semibold text-ink'>{order.orderNumber}</p>
-										<p className='text-xs text-muted'>{order._count.items} sản phẩm</p>
+										<p className='font-semibold text-ink'>
+											{order.orderNumber}
+										</p>
+										<p className='text-xs text-muted'>
+											{order._count.items} sản phẩm
+										</p>
 									</td>
 									<td className='px-5 py-3.5'>
-										<p className='font-medium text-ink'>{order.user?.name ?? "Khách vãng lai"}</p>
-										<p className='truncate text-xs text-muted'>{order.user?.email}</p>
+										<p className='font-medium text-ink'>
+											{order.user?.name ?? "Khách vãng lai"}
+										</p>
+										<p className='truncate text-xs text-muted'>
+											{order.user?.email}
+										</p>
 									</td>
 									<td className='px-5 py-3.5'>
 										{order.payment ? (
 											<>
-												<p className='text-ink/80'>{PAYMENT_METHOD_LABEL[order.payment.paymentMethod]}</p>
-												<PaymentStatusBadge status={order.payment.paymentStatus} />
+												<p className='text-ink/80'>
+													{PAYMENT_METHOD_LABEL[order.payment.paymentMethod]}
+												</p>
+												<PaymentStatusBadge
+													status={order.payment.paymentStatus}
+												/>
 											</>
 										) : (
 											"—"
 										)}
 									</td>
-									<td className='px-5 py-3.5 font-medium text-ink'>{formatCurrency(Number(order.totalAmount))}</td>
+									<td className='px-5 py-3.5 font-medium text-ink'>
+										{formatCurrency(Number(order.totalAmount))}
+									</td>
 									<td className='px-5 py-3.5'>
 										<OrderStatusBadge status={order.orderStatus} />
 									</td>
-									<td className='px-5 py-3.5 text-ink/70'>{formatDate(order.createdAt)}</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{formatDate(order.createdAt)}
+									</td>
 								</tr>
 							))
 						)}
@@ -204,11 +238,22 @@ const AdminOrderPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
-			{activeOrderId && <OrderDetailModal orderId={activeOrderId} onClose={handleCloseOrderModal} />}
+			{activeOrderId && (
+				<OrderDetailModal
+					orderId={activeOrderId}
+					onClose={handleCloseOrderModal}
+				/>
+			)}
 		</div>
 	);
 };

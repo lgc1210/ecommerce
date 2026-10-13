@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ShieldIcon, PlusIcon } from "../../../../components/icons";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { useCreateAddress, useMyAddressesQuery } from "../../me/hooks";
 import type { CreateAddressPayload, UserAddress } from "../../me/types";
 import AddressFormModal from "../../me/components/account/address-form";
@@ -17,7 +17,10 @@ interface CheckoutAddressSectionProps {
  * trang, cho phép đổi sang địa chỉ khác đã lưu hoặc thêm địa chỉ mới ngay tại
  * đây (dùng chung service/hook và form với trang Tài khoản).
  */
-const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: CheckoutAddressSectionProps) => {
+const CheckoutAddressSection = ({
+	selectedAddressId,
+	onSelectAddress,
+}: CheckoutAddressSectionProps) => {
 	const { data: addresses = [], isLoading } = useMyAddressesQuery();
 	const createAddress = useCreateAddress();
 
@@ -28,12 +31,14 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 	// (hoặc địa chỉ đầu tiên nếu không có mặc định) để người dùng không phải tự bấm chọn.
 	useEffect(() => {
 		if (selectedAddressId || addresses.length === 0) return;
-		const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0]!;
+		const defaultAddress =
+			addresses.find((address) => address.isDefault) ?? addresses[0]!;
 		onSelectAddress(defaultAddress);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [addresses, selectedAddressId]);
 
-	const selectedAddress = addresses.find((address) => address.id === selectedAddressId) ?? null;
+	const selectedAddress =
+		addresses.find((address) => address.id === selectedAddressId) ?? null;
 
 	const handleCreateAddress = (payload: CreateAddressPayload) => {
 		createAddress.mutate(payload, {
@@ -54,7 +59,10 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 				</div>
 
 				{addresses.length > 0 && (
-					<button type='button' onClick={() => setPickerOpen(true)} className='cursor-pointer text-sm font-semibold text-primary hover:underline'>
+					<button
+						type='button'
+						onClick={() => setPickerOpen(true)}
+						className='text-sm font-semibold text-primary hover:underline'>
 						Thay đổi
 					</button>
 				)}
@@ -64,16 +72,29 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 				<p className='text-sm text-muted'>Đang tải địa chỉ...</p>
 			) : selectedAddress ? (
 				<div className='rounded-2xl bg-cream-soft p-4'>
-					<p className='font-semibold text-ink'>{selectedAddress.recipientName}</p>
-					<p className='mt-1 text-sm text-muted'>{selectedAddress.phoneNumber}</p>
+					<p className='font-semibold text-ink'>
+						{selectedAddress.recipientName}
+					</p>
+					<p className='mt-1 text-sm text-muted'>
+						{selectedAddress.phoneNumber}
+					</p>
 					<p className='mt-2 text-sm text-muted'>
-						{selectedAddress.addressLine}, {selectedAddress.wardName}, {selectedAddress.districtName}, {selectedAddress.provinceName}
+						{selectedAddress.addressLine}, {selectedAddress.wardName},{" "}
+						{selectedAddress.districtName}, {selectedAddress.provinceName}
 					</p>
 				</div>
 			) : (
 				<div className='rounded-2xl border border-dashed border-border p-4 text-center'>
-					<p className='text-sm text-muted'>Bạn chưa có địa chỉ nhận hàng nào.</p>
-					<Button type='button' size='sm' className='mt-3' icon={<PlusIcon className='h-4 w-4' />} iconPosition='left' onClick={() => setFormOpen(true)}>
+					<p className='text-sm text-muted'>
+						Bạn chưa có địa chỉ nhận hàng nào.
+					</p>
+					<Button
+						type='button'
+						size='sm'
+						className='mt-3'
+						icon={<PlusIcon className='h-4 w-4' />}
+						iconPosition='left'
+						onClick={() => setFormOpen(true)}>
 						Thêm địa chỉ
 					</Button>
 				</div>
@@ -95,7 +116,14 @@ const CheckoutAddressSection = ({ selectedAddressId, onSelectAddress }: Checkout
 				/>
 			)}
 
-			{formOpen && <AddressFormModal initialValue={null} onClose={() => setFormOpen(false)} isSubmitting={createAddress.isPending} onSubmit={handleCreateAddress} />}
+			{formOpen && (
+				<AddressFormModal
+					initialValue={null}
+					onClose={() => setFormOpen(false)}
+					isSubmitting={createAddress.isPending}
+					onSubmit={handleCreateAddress}
+				/>
+			)}
 		</section>
 	);
 };

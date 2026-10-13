@@ -2,7 +2,7 @@ import { useState, type SubmitEvent } from "react";
 import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
 import FormCheckbox from "../../../../components/form-checkbox";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { PlusIcon, TrashIcon } from "../../../../components/icons";
 import type { ProductSku, SkuPayload, VariationDetails } from "../types";
 
@@ -32,22 +32,43 @@ const DEFAULT_DIMENSION_CM = "20";
 
 const toRows = (details: VariationDetails | undefined): VariationRow[] => {
 	const entries = Object.entries(details ?? {});
-	return entries.length > 0 ? entries.map(([key, value]) => ({ key, value: String(value) })) : [{ key: "", value: "" }];
+	return entries.length > 0
+		? entries.map(([key, value]) => ({ key, value: String(value) }))
+		: [{ key: "", value: "" }];
 };
 
-const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProps) => {
+const SkuFormModal = ({
+	sku,
+	onClose,
+	onSubmit,
+	isSubmitting,
+}: SkuFormModalProps) => {
 	const isEditing = Boolean(sku);
 
 	const [skuCode, setSkuCode] = useState(sku?.sku ?? "");
 	const [price, setPrice] = useState(sku ? String(Number(sku.price)) : "");
-	const [oldPrice, setOldPrice] = useState(sku?.oldPrice ? String(Number(sku.oldPrice)) : "");
-	const [stockQuantity, setStockQuantity] = useState(sku ? String(sku.stockQuantity) : "0");
+	const [oldPrice, setOldPrice] = useState(
+		sku?.oldPrice ? String(Number(sku.oldPrice)) : "",
+	);
+	const [stockQuantity, setStockQuantity] = useState(
+		sku ? String(sku.stockQuantity) : "0",
+	);
 	const [trackSerial, setTrackSerial] = useState(sku?.trackSerial ?? false);
-	const [rows, setRows] = useState<VariationRow[]>(toRows(sku?.variationDetails));
-	const [weightGram, setWeightGram] = useState(sku ? String(sku.weightGram) : DEFAULT_WEIGHT_GRAM);
-	const [lengthCm, setLengthCm] = useState(sku ? String(sku.lengthCm) : DEFAULT_DIMENSION_CM);
-	const [widthCm, setWidthCm] = useState(sku ? String(sku.widthCm) : DEFAULT_DIMENSION_CM);
-	const [heightCm, setHeightCm] = useState(sku ? String(sku.heightCm) : DEFAULT_DIMENSION_CM);
+	const [rows, setRows] = useState<VariationRow[]>(
+		toRows(sku?.variationDetails),
+	);
+	const [weightGram, setWeightGram] = useState(
+		sku ? String(sku.weightGram) : DEFAULT_WEIGHT_GRAM,
+	);
+	const [lengthCm, setLengthCm] = useState(
+		sku ? String(sku.lengthCm) : DEFAULT_DIMENSION_CM,
+	);
+	const [widthCm, setWidthCm] = useState(
+		sku ? String(sku.widthCm) : DEFAULT_DIMENSION_CM,
+	);
+	const [heightCm, setHeightCm] = useState(
+		sku ? String(sku.heightCm) : DEFAULT_DIMENSION_CM,
+	);
 	const [errors, setErrors] = useState<Errors>({});
 
 	const addRow = () => {
@@ -57,7 +78,9 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 		setRows((prev) => prev.filter((_, i) => i !== index));
 	};
 	const updateRow = (index: number, patch: Partial<VariationRow>) => {
-		setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+		setRows((prev) =>
+			prev.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+		);
 	};
 
 	const validate = () => {
@@ -93,7 +116,8 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 
 		const validRows = rows.filter((row) => row.key.trim() && row.value.trim());
 		if (validRows.length === 0) {
-			nextErrors.variationDetails = "Cần ít nhất 1 thuộc tính biến thể (vd: màu sắc, kích cỡ).";
+			nextErrors.variationDetails =
+				"Cần ít nhất 1 thuộc tính biến thể (vd: màu sắc, kích cỡ).";
 		}
 
 		setErrors(nextErrors);
@@ -106,7 +130,8 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 
 		const variationDetails: VariationDetails = {};
 		for (const row of rows) {
-			if (row.key.trim() && row.value.trim()) variationDetails[row.key.trim()] = row.value.trim();
+			if (row.key.trim() && row.value.trim())
+				variationDetails[row.key.trim()] = row.value.trim();
 		}
 
 		const payload = {
@@ -115,7 +140,9 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 			oldPrice: oldPrice.trim() ? Number(oldPrice) : null,
 			// Nếu trackSerial=true, không gửi stockQuantity — backend luôn tự ép về 0 lúc tạo mới,
 			// và chặn hẳn việc sửa trực tiếp lúc update (phải nhập kho theo serial thay vào đó).
-			...(trackSerial ? {} : { stockQuantity: stockQuantity.trim() ? Number(stockQuantity) : 0 }),
+			...(trackSerial
+				? {}
+				: { stockQuantity: stockQuantity.trim() ? Number(stockQuantity) : 0 }),
 			trackSerial,
 			variationDetails,
 			weightGram: Number(weightGram),
@@ -128,7 +155,10 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 	};
 
 	return (
-		<ModalShell title={isEditing ? "Sửa biến thể" : "Thêm biến thể"} onClose={onClose} maxWidthClassName='max-w-2xl'>
+		<ModalShell
+			title={isEditing ? "Sửa biến thể" : "Thêm biến thể"}
+			onClose={onClose}
+			maxWidthClassName='max-w-2xl'>
 			<form onSubmit={handleSubmit} className='space-y-4'>
 				<FormControl
 					label='Mã SKU'
@@ -186,7 +216,9 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 
 				<div>
 					<div className='mb-1.5 flex items-center justify-between'>
-						<span className='text-sm font-medium text-ink'>Thuộc tính biến thể</span>
+						<span className='text-sm font-medium text-ink'>
+							Thuộc tính biến thể
+						</span>
 						<button
 							type='button'
 							onClick={addRow}
@@ -221,12 +253,20 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 							</div>
 						))}
 					</div>
-					{errors.variationDetails && <p className='mt-1.5 text-sm text-red-500'>{errors.variationDetails}</p>}
+					{errors.variationDetails && (
+						<p className='mt-1.5 text-sm text-red-500'>
+							{errors.variationDetails}
+						</p>
+					)}
 				</div>
 
 				<div>
-					<span className='mb-1.5 block text-sm font-medium text-ink'>Khối lượng & kích thước đóng gói</span>
-					<p className='mb-2 text-xs text-muted'>Dùng để tính phí vận chuyển GHN thực tế cho biến thể này.</p>
+					<span className='mb-1.5 block text-sm font-medium text-ink'>
+						Khối lượng & kích thước đóng gói
+					</span>
+					<p className='mb-2 text-xs text-muted'>
+						Dùng để tính phí vận chuyển GHN thực tế cho biến thể này.
+					</p>
 
 					<div className='grid gap-4 sm:grid-cols-4'>
 						<FormControl
@@ -269,7 +309,11 @@ const SkuFormModal = ({ sku, onClose, onSubmit, isSubmitting }: SkuFormModalProp
 						Hủy
 					</Button>
 					<Button type='submit' size='sm' disabled={isSubmitting}>
-						{isSubmitting ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Tạo biến thể"}
+						{isSubmitting
+							? "Đang lưu..."
+							: isEditing
+								? "Lưu thay đổi"
+								: "Tạo biến thể"}
 					</Button>
 				</div>
 			</form>

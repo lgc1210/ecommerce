@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import Button from "./button";
+import { Button } from "./button";
 import { DownloadIcon } from "./icons";
 import { downloadExport } from "../utils/export-data";
 

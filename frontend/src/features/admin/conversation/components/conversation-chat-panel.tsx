@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useMessagesQuery, useSendMessageMutation, useConversationRoom } from "../../../client/message/hooks";
+import {
+	useMessagesQuery,
+	useSendMessageMutation,
+	useConversationRoom,
+} from "../../../client/message/hooks";
 import { formatMessageTime } from "../../../client/message/utils";
 import { useAuth } from "../../../auth/hooks/useAuth";
 import { SendIcon } from "../../../../components/icons";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import FormSelect from "../../../../components/form-select";
 import {
 	useAssignConversationMutation,
@@ -19,9 +23,12 @@ interface ConversationChatPanelProps {
 	conversationId: number;
 }
 
-const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) => {
+const ConversationChatPanel = ({
+	conversationId,
+}: ConversationChatPanelProps) => {
 	const { user } = useAuth();
-	const { data: conversation, isLoading: isLoadingConversation } = useConversationDetailQuery(conversationId);
+	const { data: conversation, isLoading: isLoadingConversation } =
+		useConversationDetailQuery(conversationId);
 	const {
 		data: messages = [],
 		isLoading,
@@ -42,7 +49,9 @@ const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) =
 
 	useEffect(() => {
 		if (messages.length === 0) return;
-		bottomRef.current?.scrollIntoView({ behavior: isFirstLoadRef.current ? "auto" : "smooth" });
+		bottomRef.current?.scrollIntoView({
+			behavior: isFirstLoadRef.current ? "auto" : "smooth",
+		});
 		isFirstLoadRef.current = false;
 	}, [messages.length]);
 
@@ -77,7 +86,9 @@ const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) =
 			<div className='space-y-3 border-b border-border p-4'>
 				<div className='flex items-center justify-between gap-3'>
 					<div>
-						<p className='font-semibold text-ink'>{conversation.customer.name}</p>
+						<p className='font-semibold text-ink'>
+							{conversation.customer.name}
+						</p>
 						<p className='text-xs text-muted'>{conversation.customer.email}</p>
 					</div>
 					{!conversation.assignedStaffId && (
@@ -95,7 +106,10 @@ const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) =
 					<p className='text-xs text-muted'>
 						{conversation.assignedStaffId ? (
 							<>
-								Phụ trách: <span className='font-medium text-ink'>{conversation.assignedStaff?.name}</span>
+								Phụ trách:{" "}
+								<span className='font-medium text-ink'>
+									{conversation.assignedStaff?.name}
+								</span>
 								{!isAssignedToMe && " (không phải bạn — vẫn có thể trả lời)"}
 							</>
 						) : (
@@ -108,9 +122,14 @@ const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) =
 						value={conversation.status}
 						disabled={updateStatus.isPending}
 						onChange={(e) =>
-							updateStatus.mutate({ conversationId: conversation.id, status: e.target.value as ConversationStatus })
+							updateStatus.mutate({
+								conversationId: conversation.id,
+								status: e.target.value as ConversationStatus,
+							})
 						}
-						options={(["open", "resolved", "closed"] as ConversationStatus[]).map((status) => ({
+						options={(
+							["open", "resolved", "closed"] as ConversationStatus[]
+						).map((status) => ({
 							value: status,
 							label: CONVERSATION_STATUS_LABEL[status],
 						}))}
@@ -133,22 +152,32 @@ const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) =
 					</div>
 				)}
 
-				{isLoading && <p className='text-center text-sm text-muted'>Đang tải...</p>}
+				{isLoading && (
+					<p className='text-center text-sm text-muted'>Đang tải...</p>
+				)}
 				{!isLoading && orderedMessages.length === 0 && (
-					<p className='text-center text-sm text-muted'>Chưa có tin nhắn nào.</p>
+					<p className='text-center text-sm text-muted'>
+						Chưa có tin nhắn nào.
+					</p>
 				)}
 
 				{orderedMessages.map((message) => {
 					const isOwn = message.senderId === user?.id;
 					return (
-						<div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+						<div
+							key={message.id}
+							className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
 							<div
 								className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${isOwn ? "bg-primary text-white" : "bg-cream-soft text-ink"}`}>
-								<p className={`mb-0.5 text-xs font-semibold ${isOwn ? "text-white/80" : "text-primary-dark"}`}>
+								<p
+									className={`mb-0.5 text-xs font-semibold ${isOwn ? "text-white/80" : "text-primary-dark"}`}>
 									{message.sender.name}
 								</p>
-								<p className='whitespace-pre-wrap wrap-break-words'>{message.content}</p>
-								<p className={`mt-1 text-right text-[10px] ${isOwn ? "text-white/70" : "text-muted"}`}>
+								<p className='whitespace-pre-wrap wrap-break-words'>
+									{message.content}
+								</p>
+								<p
+									className={`mt-1 text-right text-[10px] ${isOwn ? "text-white/70" : "text-muted"}`}>
 									{formatMessageTime(message.createdAt)}
 								</p>
 							</div>
@@ -187,8 +216,8 @@ const ConversationChatPanel = ({ conversationId }: ConversationChatPanelProps) =
 				</div>
 			) : (
 				<div className='border-t border-border p-3 text-center text-xs text-muted'>
-					Hội thoại đã "{CONVERSATION_STATUS_LABEL[conversation.status]}" — đổi trạng thái về "Đang mở" ở phía trên để
-					nhắn tiếp.
+					Hội thoại đã "{CONVERSATION_STATUS_LABEL[conversation.status]}" — đổi
+					trạng thái về "Đang mở" ở phía trên để nhắn tiếp.
 				</div>
 			)}
 		</div>

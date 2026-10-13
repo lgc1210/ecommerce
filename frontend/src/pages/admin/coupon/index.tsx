@@ -1,12 +1,18 @@
 import { useState } from "react";
 import AdminTitle from "../../../components/admin-title";
 import ExportButton from "../../../components/export-button";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Popup from "../../../components/popup";
 import Pagination from "../../../components/pagination";
-import { CloseIcon, PencilIcon, PlusIcon, SearchIcon, TrashIcon } from "../../../components/icons";
+import {
+	CloseIcon,
+	PencilIcon,
+	PlusIcon,
+	SearchIcon,
+	TrashIcon,
+} from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseBooleanParam, parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
@@ -16,7 +22,11 @@ import {
 	useDeleteCoupon,
 	useUpdateCoupon,
 } from "../../../features/admin/coupon/hooks";
-import type { AdminCoupon, CreateCouponPayload, UpdateCouponPayload } from "../../../features/admin/coupon/types";
+import type {
+	AdminCoupon,
+	CreateCouponPayload,
+	UpdateCouponPayload,
+} from "../../../features/admin/coupon/types";
 import { DISCOUNT_TYPE_LABEL } from "../../../features/admin/coupon/utils";
 import StatusBadge from "../../../features/admin/coupon/components/status-badge";
 import CouponFormModal from "../../../features/admin/coupon/components/coupon-form-modal";
@@ -41,47 +51,86 @@ const PAGE_SIZE = 10;
  * này không cần bọc thêm <Can> cho từng nút, vào được trang là có đủ quyền thao tác.
  */
 const AdminCouponPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const isActive = parseBooleanParam(searchParams, "isActive");
-	const discountType = parseEnumParam<DiscountType>(searchParams, "discountType");
+	const discountType = parseEnumParam<DiscountType>(
+		searchParams,
+		"discountType",
+	);
 
-	const { data, isLoading, isFetching } = useCouponsQuery({ page, limit, search, isActive, discountType });
+	const { data, isLoading, isFetching } = useCouponsQuery({
+		page,
+		limit,
+		search,
+		isActive,
+		discountType,
+	});
 	const createCoupon = useCreateCoupon();
 	const updateCoupon = useUpdateCoupon();
 	const deleteCoupon = useDeleteCoupon();
 
-	const [formState, setFormState] = useState<{ coupon?: AdminCoupon } | null>(null);
-	const [deletingCoupon, setDeletingCoupon] = useState<AdminCoupon | null>(null);
+	const [formState, setFormState] = useState<{ coupon?: AdminCoupon } | null>(
+		null,
+	);
+	const [deletingCoupon, setDeletingCoupon] = useState<AdminCoupon | null>(
+		null,
+	);
 
 	const coupons = data?.data ?? [];
 	const pagination = data?.pagination;
 
-	const handleSubmitForm = (payload: CreateCouponPayload | UpdateCouponPayload) => {
+	const handleSubmitForm = (
+		payload: CreateCouponPayload | UpdateCouponPayload,
+	) => {
 		if (formState?.coupon) {
-			updateCoupon.mutate(payload as UpdateCouponPayload, { onSuccess: () => setFormState(null) });
+			updateCoupon.mutate(payload as UpdateCouponPayload, {
+				onSuccess: () => setFormState(null),
+			});
 		} else {
-			createCoupon.mutate(payload as CreateCouponPayload, { onSuccess: () => setFormState(null) });
+			createCoupon.mutate(payload as CreateCouponPayload, {
+				onSuccess: () => setFormState(null),
+			});
 		}
 	};
 
 	const handleConfirmDelete = () => {
 		if (!deletingCoupon) return;
-		deleteCoupon.mutate(deletingCoupon.id, { onSuccess: () => setDeletingCoupon(null) });
+		deleteCoupon.mutate(deletingCoupon.id, {
+			onSuccess: () => setDeletingCoupon(null),
+		});
 	};
 
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Mã giảm giá' description='Quản lý mã giảm giá áp dụng cho đơn hàng.' />
+				<AdminTitle
+					title='Mã giảm giá'
+					description='Quản lý mã giảm giá áp dụng cho đơn hàng.'
+				/>
 				<div className='flex flex-col gap-2'>
-					<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setFormState({})}>
+					<Button
+						size='sm'
+						icon={<PlusIcon className='h-4 w-4' />}
+						onClick={() => setFormState({})}>
 						Thêm mã giảm giá
 					</Button>
-					<ExportButton resource='coupons' params={{ search, isActive, discountType }} />
+					<ExportButton
+						resource='coupons'
+						params={{ search, isActive, discountType }}
+					/>
 				</div>
 			</div>
 
@@ -105,9 +154,13 @@ const AdminCouponPage = () => {
 				/>
 				<FormSelect
 					value={discountType ?? ""}
-					onChange={(e) => setFilter("discountType", e.target.value || undefined)}
+					onChange={(e) =>
+						setFilter("discountType", e.target.value || undefined)
+					}
 					placeholder='Tất cả loại giảm giá'
-					options={Object.entries(DISCOUNT_TYPE_LABEL).map(([value, label]) => ({ value, label }))}
+					options={Object.entries(DISCOUNT_TYPE_LABEL).map(
+						([value, label]) => ({ value, label }),
+					)}
 				/>
 				{hasActiveFilters(["isActive", "discountType"]) && (
 					<button
@@ -149,15 +202,24 @@ const AdminCouponPage = () => {
 							</tr>
 						) : (
 							coupons.map((coupon) => (
-								<tr key={coupon.id} className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={coupon.id}
+									className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{coupon.code}</p>
-										<p className='text-xs text-muted'>{DISCOUNT_TYPE_LABEL[coupon.discountType]}</p>
+										<p className='text-xs text-muted'>
+											{DISCOUNT_TYPE_LABEL[coupon.discountType]}
+										</p>
 									</td>
-									<td className='px-5 py-3.5 text-ink/80'>{formatDiscount(coupon)}</td>
-									<td className='px-5 py-3.5 text-ink/70'>{formatCurrency(Number(coupon.minOrderValue))}</td>
+									<td className='px-5 py-3.5 text-ink/80'>
+										{formatDiscount(coupon)}
+									</td>
 									<td className='px-5 py-3.5 text-ink/70'>
-										{formatDate(coupon.startsAt)} — {formatDate(coupon.expiresAt)}
+										{formatCurrency(Number(coupon.minOrderValue))}
+									</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{formatDate(coupon.startsAt)} —{" "}
+										{formatDate(coupon.expiresAt)}
 									</td>
 									<td className='px-5 py-3.5 text-ink/70'>
 										{coupon.usedCount}/{coupon.usageLimit ?? "∞"}
@@ -180,7 +242,9 @@ const AdminCouponPage = () => {
 												onClick={() => setDeletingCoupon(coupon)}
 												className='flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted cursor-pointer'
 												title={
-													coupon.usedCount > 0 ? "Đã được dùng trong đơn hàng, hãy vô hiệu hóa thay vì xóa" : "Xóa"
+													coupon.usedCount > 0
+														? "Đã được dùng trong đơn hàng, hãy vô hiệu hóa thay vì xóa"
+														: "Xóa"
 												}>
 												<TrashIcon className='h-4 w-4' />
 											</button>
@@ -193,9 +257,15 @@ const AdminCouponPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
 			{formState && (
 				<CouponFormModal

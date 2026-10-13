@@ -1,12 +1,15 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import FormControl from "../../components/form-control";
 import FormOtp from "../../components/form-otp";
 import AuthLayout from "../../layouts/auth";
 import paths from "../../configs/constants/paths";
-import { useForgotPassword, useResendOtp } from "../../features/auth/hooks/useAuth";
+import {
+	useForgotPassword,
+	useResendOtp,
+} from "../../features/auth/hooks/useAuth";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -50,7 +53,9 @@ const ForgotPasswordPage = () => {
 					setStep("otp");
 					// Backend luôn trả message chung chung (chống dò email tồn tại
 					// trong hệ thống - user enumeration), nên hiển thị đúng message đó.
-					toast.success(res.data.message ?? `Mã xác thực đã được gửi đến ${email}`);
+					toast.success(
+						res.data.message ?? `Mã xác thực đã được gửi đến ${email}`,
+					);
 				},
 			},
 		);
@@ -140,9 +145,20 @@ const ForgotPasswordPage = () => {
 			footerText='Nhớ ra mật khẩu rồi?'
 			footerLinkText='Đăng nhập'
 			footerLinkTo={paths.auth.login}>
-			<FormControl label='Email' name='email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} placeholder='you@example.com' disabled={forgotPasswordMutation.isPending} />
+			<FormControl
+				label='Email'
+				name='email'
+				type='email'
+				value={email}
+				onChange={(e) => setEmail(e.target.value)}
+				placeholder='you@example.com'
+				disabled={forgotPasswordMutation.isPending}
+			/>
 
-			<Button type='submit' fullWidth disabled={forgotPasswordMutation.isPending}>
+			<Button
+				type='submit'
+				fullWidth
+				disabled={forgotPasswordMutation.isPending}>
 				{forgotPasswordMutation.isPending ? "Đang gửi..." : "Gửi mã xác thực"}
 			</Button>
 		</AuthLayout>

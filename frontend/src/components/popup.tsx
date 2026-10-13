@@ -1,4 +1,4 @@
-import Button from "./button";
+import { Button } from "./button";
 import ModalShell from "./modal-shell";
 
 interface PopupProps {
@@ -51,7 +51,13 @@ const Popup = ({
 	<ModalShell title={title} onClose={onClose} maxWidthClassName='max-w-sm'>
 		{description && <p className='text-sm text-muted'>{description}</p>}
 		<div className='mt-5 flex justify-end gap-2'>
-			<Button variant='outline' size='sm' type='button' disabled={isConfirming} className='text-xs!' onClick={onClose}>
+			<Button
+				variant='outline'
+				size='sm'
+				type='button'
+				disabled={isConfirming}
+				className='text-xs!'
+				onClick={onClose}>
 				{cancelLabel}
 			</Button>
 			<Button

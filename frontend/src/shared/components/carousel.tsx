@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronRightIcon } from "../../components/icons";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 
 interface CarouselProps<T> {
 	items: T[];
@@ -18,11 +18,16 @@ const DESKTOP_QUERY = "(min-width: 640px)";
 
 /** Số item hiển thị cùng lúc theo kích thước màn hình: 2 ở desktop (>=640px), 1 ở mobile. */
 function useItemsPerView(): number {
-	const [isDesktop, setIsDesktop] = useState(() => (typeof window !== "undefined" ? window.matchMedia(DESKTOP_QUERY).matches : false));
+	const [isDesktop, setIsDesktop] = useState(() =>
+		typeof window !== "undefined"
+			? window.matchMedia(DESKTOP_QUERY).matches
+			: false,
+	);
 
 	useEffect(() => {
 		const mediaQuery = window.matchMedia(DESKTOP_QUERY);
-		const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+		const handleChange = (event: MediaQueryListEvent) =>
+			setIsDesktop(event.matches);
 		mediaQuery.addEventListener("change", handleChange);
 		return () => mediaQuery.removeEventListener("change", handleChange);
 	}, []);
@@ -35,7 +40,13 @@ function useItemsPerView(): number {
  * theo trang), tự động chuyển sau autoPlayInterval, dừng khi hover. Dùng transform trên track thay vì
  * thư viện ngoài (project chưa có carousel lib nào - xem YAGNI).
  */
-function Carousel<T>({ items, renderItem, getKey, autoPlayInterval = 5000, className = "" }: CarouselProps<T>) {
+function Carousel<T>({
+	items,
+	renderItem,
+	getKey,
+	autoPlayInterval = 5000,
+	className = "",
+}: CarouselProps<T>) {
 	const itemsPerView = useItemsPerView();
 	// Chỉ số slide cuối cùng còn hợp lệ - để item cuối khớp đúng mép phải, không chừa khoảng trống khi
 	// hiển thị nhiều hơn 1 item/lần. slideCount = số vị trí trượt hợp lệ (0..maxIndex).
@@ -65,14 +76,24 @@ function Carousel<T>({ items, renderItem, getKey, autoPlayInterval = 5000, class
 
 	if (items.length === 0) return null;
 
-	const goTo = (index: number) => setRawIndex(((index % slideCount) + slideCount) % slideCount);
+	const goTo = (index: number) =>
+		setRawIndex(((index % slideCount) + slideCount) % slideCount);
 
 	return (
-		<div className={`relative group ${className}`} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+		<div
+			className={`relative group ${className}`}
+			onMouseEnter={() => setIsHovering(true)}
+			onMouseLeave={() => setIsHovering(false)}>
 			<div className='overflow-hidden rounded-3xl'>
-				<div className='flex -mx-2 transition-transform duration-500 ease-out' style={{ transform: `translateX(-${activeIndex * (100 / itemsPerView)}%)` }}>
+				<div
+					className='flex -mx-2 transition-transform duration-500 ease-out'
+					style={{
+						transform: `translateX(-${activeIndex * (100 / itemsPerView)}%)`,
+					}}>
 					{items.map((item, index) => (
-						<div key={getKey(item, index)} className='w-full shrink-0 px-2 sm:w-1/2'>
+						<div
+							key={getKey(item, index)}
+							className='w-full shrink-0 px-2 sm:w-1/2'>
 							{renderItem(item, index)}
 						</div>
 					))}

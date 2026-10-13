@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AdminTitle from "../../../components/admin-title";
 import ExportButton from "../../../components/export-button";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import Can from "../../../components/can";
 import FormControl from "../../../components/form-control";
 import Popup from "../../../components/popup";
@@ -21,7 +21,10 @@ import type {
 	CreateCategoryPayload,
 	UpdateCategoryPayload,
 } from "../../../features/admin/category/types";
-import { collectSubtreeIds, flattenCategoryTree } from "../../../features/admin/category/utils";
+import {
+	collectSubtreeIds,
+	flattenCategoryTree,
+} from "../../../features/admin/category/utils";
 import CategoryTreeRow from "../../../features/admin/category/components/category-tree-row";
 import CategoryFormModal from "../../../features/admin/category/components/category-form-modal";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
@@ -45,35 +48,51 @@ const AdminCategoryPage = () => {
 	const { can } = useAuth();
 	const canWrite = can(permissions.catalog.write);
 
-	const { search, searchInput, setSearchInput, clearFilters } = useListQueryParams();
+	const { search, searchInput, setSearchInput, clearFilters } =
+		useListQueryParams();
 
-	const { data: tree = [], isLoading, isFetching } = useCategoryTreeQuery(search);
+	const {
+		data: tree = [],
+		isLoading,
+		isFetching,
+	} = useCategoryTreeQuery(search);
 	const createCategory = useCreateCategory();
 	const updateCategory = useUpdateCategory();
 	const deleteCategory = useDeleteCategory();
 
 	const [formState, setFormState] = useState<FormState | null>(null);
-	const [deletingCategory, setDeletingCategory] = useState<CategoryTreeNode | null>(null);
+	const [deletingCategory, setDeletingCategory] =
+		useState<CategoryTreeNode | null>(null);
 
 	// Danh sách phẳng đầy đủ, dùng cho dropdown "Danh mục cha". Khi đang sửa, loại bỏ
 	// chính node đó + toàn bộ hậu duệ của nó để không thể tự chọn con của mình làm cha
 	// (backend cũng chặn trường hợp này, đây chỉ là UX ẩn bớt lựa chọn vô nghĩa).
 	const parentOptions =
 		formState?.mode === "edit"
-			? flattenCategoryTree(tree).filter((option) => !formState.ownSubtreeIds.has(option.id))
+			? flattenCategoryTree(tree).filter(
+					(option) => !formState.ownSubtreeIds.has(option.id),
+				)
 			: flattenCategoryTree(tree);
 
-	const handleSubmitForm = (payload: CreateCategoryPayload | UpdateCategoryPayload) => {
+	const handleSubmitForm = (
+		payload: CreateCategoryPayload | UpdateCategoryPayload,
+	) => {
 		if (formState?.mode === "edit") {
-			updateCategory.mutate(payload as UpdateCategoryPayload, { onSuccess: () => setFormState(null) });
+			updateCategory.mutate(payload as UpdateCategoryPayload, {
+				onSuccess: () => setFormState(null),
+			});
 		} else {
-			createCategory.mutate(payload as CreateCategoryPayload, { onSuccess: () => setFormState(null) });
+			createCategory.mutate(payload as CreateCategoryPayload, {
+				onSuccess: () => setFormState(null),
+			});
 		}
 	};
 
 	const handleConfirmDelete = () => {
 		if (!deletingCategory) return;
-		deleteCategory.mutate(deletingCategory.id, { onSuccess: () => setDeletingCategory(null) });
+		deleteCategory.mutate(deletingCategory.id, {
+			onSuccess: () => setDeletingCategory(null),
+		});
 	};
 
 	// Bật/tắt nhanh cờ nổi bật ngay trên bảng cây, tái dùng chung mutation với form sửa.
@@ -84,7 +103,10 @@ const AdminCategoryPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Danh mục' description='Quản lý hệ thống danh mục sản phẩm phân cấp cha - con.' />
+				<AdminTitle
+					title='Danh mục'
+					description='Quản lý hệ thống danh mục sản phẩm phân cấp cha - con.'
+				/>
 				<div className='flex flex-col gap-2'>
 					<Can permission={permissions.catalog.write}>
 						<Button
@@ -148,9 +170,15 @@ const AdminCategoryPage = () => {
 									node={node}
 									depth={0}
 									canWrite={canWrite}
-									onAddChild={(parentId) => setFormState({ mode: "create", parentId })}
+									onAddChild={(parentId) =>
+										setFormState({ mode: "create", parentId })
+									}
 									onEdit={(category) =>
-										setFormState({ mode: "edit", category, ownSubtreeIds: collectSubtreeIds(category) })
+										setFormState({
+											mode: "edit",
+											category,
+											ownSubtreeIds: collectSubtreeIds(category),
+										})
 									}
 									onDelete={setDeletingCategory}
 									onToggleFeatured={handleToggleFeatured}
@@ -161,12 +189,16 @@ const AdminCategoryPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
 			{formState && (
 				<CategoryFormModal
 					category={formState.mode === "edit" ? formState.category : undefined}
-					initialParentId={formState.mode === "create" ? formState.parentId : undefined}
+					initialParentId={
+						formState.mode === "create" ? formState.parentId : undefined
+					}
 					parentOptions={parentOptions}
 					onClose={() => setFormState(null)}
 					onSubmit={handleSubmitForm}

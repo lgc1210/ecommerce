@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdminTitle from "../../../components/admin-title";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import Popup from "../../../components/popup";
-import { PencilIcon, PlusIcon, StarIcon, TrashIcon } from "../../../components/icons";
+import {
+	PencilIcon,
+	PlusIcon,
+	StarIcon,
+	TrashIcon,
+} from "../../../components/icons";
 import paths from "../../../configs/constants/paths";
 import permissions from "../../../configs/constants/permissions";
 import { useAuth } from "../../../features/auth/hooks/useAuth";
@@ -50,7 +55,9 @@ const AdminProductDetailPage = () => {
 	const deleteSku = useDeleteSku();
 
 	const [isEditingProduct, setIsEditingProduct] = useState(false);
-	const [skuFormState, setSkuFormState] = useState<{ sku?: ProductSku } | null>(null);
+	const [skuFormState, setSkuFormState] = useState<{ sku?: ProductSku } | null>(
+		null,
+	);
 	const [deletingSku, setDeletingSku] = useState<ProductSku | null>(null);
 	const [isDeletingProduct, setIsDeletingProduct] = useState(false);
 
@@ -59,13 +66,20 @@ const AdminProductDetailPage = () => {
 	}
 
 	if (!product) {
-		return <p className='py-10 text-center text-muted'>Không tìm thấy sản phẩm.</p>;
+		return (
+			<p className='py-10 text-center text-muted'>Không tìm thấy sản phẩm.</p>
+		);
 	}
 
-	const handleUpdateProduct = (payload: CreateProductPayload | UpdateProductPayload) => {
-		updateProduct.mutate({ id: productId, ...payload } as UpdateProductPayload, {
-			onSuccess: () => setIsEditingProduct(false),
-		});
+	const handleUpdateProduct = (
+		payload: CreateProductPayload | UpdateProductPayload,
+	) => {
+		updateProduct.mutate(
+			{ id: productId, ...payload } as UpdateProductPayload,
+			{
+				onSuccess: () => setIsEditingProduct(false),
+			},
+		);
 	};
 
 	const handleSubmitSku = (payload: SkuPayload) => {
@@ -75,13 +89,19 @@ const AdminProductDetailPage = () => {
 				{ onSuccess: () => setSkuFormState(null) },
 			);
 		} else {
-			createSku.mutate({ productId, ...payload }, { onSuccess: () => setSkuFormState(null) });
+			createSku.mutate(
+				{ productId, ...payload },
+				{ onSuccess: () => setSkuFormState(null) },
+			);
 		}
 	};
 
 	const handleConfirmDeleteSku = () => {
 		if (!deletingSku) return;
-		deleteSku.mutate({ productId, skuId: deletingSku.id }, { onSuccess: () => setDeletingSku(null) });
+		deleteSku.mutate(
+			{ productId, skuId: deletingSku.id },
+			{ onSuccess: () => setDeletingSku(null) },
+		);
 	};
 
 	const handleConfirmDeleteProduct = () => {
@@ -97,9 +117,14 @@ const AdminProductDetailPage = () => {
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-start justify-between gap-3'>
 				<div>
-					<AdminTitle title={product.name} description={product.category?.name ?? "Chưa phân loại danh mục"} />
+					<AdminTitle
+						title={product.name}
+						description={product.category?.name ?? "Chưa phân loại danh mục"}
+					/>
 					<p className='mt-1 text-xs text-muted'>
-						{product.warrantyPolicy ? `Bảo hành: ${product.warrantyPolicy.name}` : "Chưa gán chính sách bảo hành"}
+						{product.warrantyPolicy
+							? `Bảo hành: ${product.warrantyPolicy.name}`
+							: "Chưa gán chính sách bảo hành"}
 					</p>
 				</div>
 				{canWriteCatalog && (
@@ -135,13 +160,19 @@ const AdminProductDetailPage = () => {
 						</span>
 					)}
 				</div>
-				{product.description && <p className='mt-3 whitespace-pre-line text-sm text-ink/80'>{product.description}</p>}
+				{product.description && (
+					<p className='mt-3 whitespace-pre-line text-sm text-ink/80'>
+						{product.description}
+					</p>
+				)}
 			</div>
 
 			{/* Biến thể (SKU) */}
 			<div className='space-y-3'>
 				<div className='flex items-center justify-between'>
-					<h2 className='text-lg font-bold text-ink'>Biến thể ({product.skus.length})</h2>
+					<h2 className='text-lg font-bold text-ink'>
+						Biến thể ({product.skus.length})
+					</h2>
 					{canWriteCatalog && (
 						<Button
 							size='sm'

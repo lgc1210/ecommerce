@@ -2,25 +2,42 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminTitle from "../../../components/admin-title";
 import ExportButton from "../../../components/export-button";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Popup from "../../../components/popup";
 import Pagination from "../../../components/pagination";
-import { BoxIcon, CloseIcon, PlusIcon, SearchIcon, TrashIcon } from "../../../components/icons";
+import {
+	BoxIcon,
+	CloseIcon,
+	PlusIcon,
+	SearchIcon,
+	TrashIcon,
+} from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
-import { parseBooleanParam, parseNumberParam, parseEnumParam } from "../../../utils/searchParams";
+import {
+	parseBooleanParam,
+	parseNumberParam,
+	parseEnumParam,
+} from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
 import paths from "../../../configs/constants/paths";
 import { useCategoryTreeQuery } from "../../../features/admin/category/hooks";
 import { flattenCategoryTree } from "../../../features/admin/category/utils";
-import { useCreateProduct, useDeleteProduct, useProductsQuery } from "../../../features/admin/product/hooks";
+import {
+	useCreateProduct,
+	useDeleteProduct,
+	useProductsQuery,
+} from "../../../features/admin/product/hooks";
 import type {
 	AdminProductListItem,
 	CreateProductPayload,
 	UpdateProductPayload,
 } from "../../../features/admin/product/types";
-import { getPriceRange, getTotalStock } from "../../../features/admin/product/utils";
+import {
+	getPriceRange,
+	getTotalStock,
+} from "../../../features/admin/product/utils";
 import StatusBadge from "../../../features/admin/product/components/status-badge";
 import ProductFormModal from "../../../features/admin/product/components/product-form-modal";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
@@ -39,14 +56,33 @@ const PAGE_SIZE = 10;
 const AdminProductPage = () => {
 	const navigate = useNavigate();
 
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({ defaultLimit: PAGE_SIZE });
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({ defaultLimit: PAGE_SIZE });
 
 	const categoryId = parseNumberParam(searchParams, "categoryId");
 	const isActive = parseBooleanParam(searchParams, "isActive");
-	const sort = parseEnumParam<"newest" | "name_asc" | "name_desc">(searchParams, "sort");
+	const sort = parseEnumParam<"newest" | "name_asc" | "name_desc">(
+		searchParams,
+		"sort",
+	);
 
-	const { data, isLoading, isFetching } = useProductsQuery({ page, limit, search, categoryId, isActive, sort });
+	const { data, isLoading, isFetching } = useProductsQuery({
+		page,
+		limit,
+		search,
+		categoryId,
+		isActive,
+		sort,
+	});
 	const { data: categoryTree = [] } = useCategoryTreeQuery();
 	const categoryOptions = flattenCategoryTree(categoryTree);
 
@@ -54,12 +90,15 @@ const AdminProductPage = () => {
 	const deleteProduct = useDeleteProduct();
 
 	const [isCreating, setIsCreating] = useState(false);
-	const [deletingProduct, setDeletingProduct] = useState<AdminProductListItem | null>(null);
+	const [deletingProduct, setDeletingProduct] =
+		useState<AdminProductListItem | null>(null);
 
 	const products = data?.data ?? [];
 	const pagination = data?.pagination;
 
-	const handleCreate = (payload: CreateProductPayload | UpdateProductPayload) => {
+	const handleCreate = (
+		payload: CreateProductPayload | UpdateProductPayload,
+	) => {
 		createProduct.mutate(payload as CreateProductPayload, {
 			onSuccess: (res) => {
 				setIsCreating(false);
@@ -70,18 +109,29 @@ const AdminProductPage = () => {
 
 	const handleConfirmDelete = () => {
 		if (!deletingProduct) return;
-		deleteProduct.mutate(deletingProduct.id, { onSuccess: () => setDeletingProduct(null) });
+		deleteProduct.mutate(deletingProduct.id, {
+			onSuccess: () => setDeletingProduct(null),
+		});
 	};
 
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Sản phẩm' description='Quản lý sản phẩm, biến thể và tồn kho.' />
+				<AdminTitle
+					title='Sản phẩm'
+					description='Quản lý sản phẩm, biến thể và tồn kho.'
+				/>
 				<div className='flex flex-col gap-2'>
-					<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setIsCreating(true)}>
+					<Button
+						size='sm'
+						icon={<PlusIcon className='h-4 w-4' />}
+						onClick={() => setIsCreating(true)}>
 						Thêm sản phẩm
 					</Button>
-					<ExportButton resource='products' params={{ search, categoryId: categoryId ?? undefined, isActive }} />
+					<ExportButton
+						resource='products'
+						params={{ search, categoryId: categoryId ?? undefined, isActive }}
+					/>
 				</div>
 			</div>
 
@@ -98,7 +148,10 @@ const AdminProductPage = () => {
 					value={searchParams.get("categoryId") ?? ""}
 					onChange={(e) => setFilter("categoryId", e.target.value || undefined)}
 					placeholder='Tất cả danh mục'
-					options={categoryOptions.map((option) => ({ value: option.id, label: option.label }))}
+					options={categoryOptions.map((option) => ({
+						value: option.id,
+						label: option.label,
+					}))}
 				/>
 				<FormSelect
 					value={searchParams.get("isActive") ?? ""}
@@ -157,24 +210,36 @@ const AdminProductPage = () => {
 								return (
 									<tr
 										key={product.id}
-										onClick={() => navigate(paths.admin.productDetail(product.id))}
+										onClick={() =>
+											navigate(paths.admin.productDetail(product.id))
+										}
 										className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 										<td className='px-5 py-3.5'>
 											<div className='flex items-center gap-3'>
 												<div className='flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-cream-soft'>
 													{product.thumbnailUrl ? (
-														<img src={product.thumbnailUrl} alt={product.name} className='h-full w-full object-cover' />
+														<img
+															src={product.thumbnailUrl}
+															alt={product.name}
+															className='h-full w-full object-cover'
+														/>
 													) : (
 														<BoxIcon className='h-5 w-5 text-muted' />
 													)}
 												</div>
 												<div className='min-w-0'>
-													<p className='truncate font-semibold text-ink'>{product.name}</p>
-													<p className='truncate text-xs text-muted'>{product.skus.length} biến thể</p>
+													<p className='truncate font-semibold text-ink'>
+														{product.name}
+													</p>
+													<p className='truncate text-xs text-muted'>
+														{product.skus.length} biến thể
+													</p>
 												</div>
 											</div>
 										</td>
-										<td className='px-5 py-3.5 text-ink/70'>{product.category?.name ?? "—"}</td>
+										<td className='px-5 py-3.5 text-ink/70'>
+											{product.category?.name ?? "—"}
+										</td>
 										<td className='px-5 py-3.5 text-ink/80'>
 											{priceRange
 												? priceRange.min === priceRange.max
@@ -182,11 +247,15 @@ const AdminProductPage = () => {
 													: `${formatCurrency(priceRange.min)} — ${formatCurrency(priceRange.max)}`
 												: "—"}
 										</td>
-										<td className='px-5 py-3.5 text-ink/70'>{getTotalStock(product.skus)}</td>
+										<td className='px-5 py-3.5 text-ink/70'>
+											{getTotalStock(product.skus)}
+										</td>
 										<td className='px-5 py-3.5'>
 											<StatusBadge isActive={product.isActive} />
 										</td>
-										<td className='px-5 py-3.5' onClick={(e) => e.stopPropagation()}>
+										<td
+											className='px-5 py-3.5'
+											onClick={(e) => e.stopPropagation()}>
 											<button
 												type='button'
 												onClick={() => setDeletingProduct(product)}
@@ -203,9 +272,15 @@ const AdminProductPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
 			{isCreating && (
 				<ProductFormModal

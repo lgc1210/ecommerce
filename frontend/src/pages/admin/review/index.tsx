@@ -8,12 +8,15 @@ import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { formatDate } from "../../../utils";
-import { useReviewsAdminQuery, useAdminDeleteReview } from "../../../features/admin/review/hooks";
+import {
+	useReviewsAdminQuery,
+	useAdminDeleteReview,
+} from "../../../features/admin/review/hooks";
 import type { AdminReview } from "../../../features/admin/review/types";
 import StarRating from "../../../features/admin/review/components/star-rating";
 import VisibilityBadge from "../../../features/admin/review/components/visibility-badge";
 import ReviewDetailModal from "../../../features/admin/review/components/review-detail-modal";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination).
@@ -24,7 +27,10 @@ const VISIBILITY_OPTIONS = [
 	{ value: "false", label: "Đã ẩn" },
 ];
 
-const RATING_OPTIONS = [5, 4, 3, 2, 1].map((star) => ({ value: String(star), label: `${star} sao` }));
+const RATING_OPTIONS = [5, 4, 3, 2, 1].map((star) => ({
+	value: String(star),
+	label: `${star} sao`,
+}));
 
 /**
  * Trang quản trị đánh giá sản phẩm. Route "/admin/review" được bảo vệ bởi
@@ -32,10 +38,19 @@ const RATING_OPTIONS = [5, 4, 3, 2, 1].map((star) => ({ value: String(star), lab
  * backend: mọi endpoint GET/PATCH/DELETE /reviews/admin/* đều yêu cầu "review:update".
  */
 const AdminReviewPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const isVisibleParam = searchParams.get("isVisible");
 	const ratingParam = searchParams.get("rating");
@@ -54,7 +69,9 @@ const AdminReviewPage = () => {
 	// MỚI NHẤT từ "reviews" (nguồn dữ liệu sống) bên dưới, để modal luôn phản ánh đúng dữ liệu hiện
 	// tại thay vì bị kẹt ở trạng thái cũ ngay sau khi mutation vừa chạy xong.
 	const [selectedReviewId, setSelectedReviewId] = useState<number | null>(null);
-	const [deletingReview, setDeletingReview] = useState<AdminReview | null>(null);
+	const [deletingReview, setDeletingReview] = useState<AdminReview | null>(
+		null,
+	);
 
 	const reviews = data?.data ?? [];
 	const pagination = data?.pagination;
@@ -81,7 +98,8 @@ const AdminReviewPage = () => {
 					resource='reviews'
 					params={{
 						search,
-						isVisible: isVisibleParam === null ? undefined : isVisibleParam === "true",
+						isVisible:
+							isVisibleParam === null ? undefined : isVisibleParam === "true",
 						rating: ratingParam ? Number(ratingParam) : undefined,
 					}}
 				/>
@@ -149,15 +167,21 @@ const AdminReviewPage = () => {
 									key={review.id}
 									onClick={() => setSelectedReviewId(review.id)}
 									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
-									<td className='max-w-70 truncate px-5 py-3.5 font-medium text-ink'>{review.product.name}</td>
-									<td className='px-5 py-3.5 text-ink/80'>{review.user?.name ?? "Người dùng đã xóa"}</td>
+									<td className='max-w-70 truncate px-5 py-3.5 font-medium text-ink'>
+										{review.product.name}
+									</td>
+									<td className='px-5 py-3.5 text-ink/80'>
+										{review.user?.name ?? "Người dùng đã xóa"}
+									</td>
 									<td className='px-5 py-3.5'>
 										<StarRating rating={review.rating} />
 									</td>
 									<td className='px-5 py-3.5'>
 										<VisibilityBadge isVisible={review.isVisible} />
 									</td>
-									<td className='px-5 py-3.5 text-ink/70'>{review.createdAt ? formatDate(review.createdAt) : "—"}</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{review.createdAt ? formatDate(review.createdAt) : "—"}
+									</td>
 								</tr>
 							))
 						)}
@@ -165,9 +189,15 @@ const AdminReviewPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
 			{selectedReview && (
 				<ReviewDetailModal

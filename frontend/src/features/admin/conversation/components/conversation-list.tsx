@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabItem } from "../../../../components/tabs";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { useConversationsAdminQuery } from "../hooks";
 import type { Conversation, ConversationStatus } from "../types";
 import { CONVERSATION_STATUS_LABEL } from "../../../client/conversation/constants";
@@ -63,10 +63,14 @@ const ConversationList = ({ selectedId, onSelect }: ConversationListProps) => {
 			</div>
 
 			<div className='flex-1 space-y-1.5 overflow-y-auto p-2'>
-				{isLoading && <p className='p-4 text-center text-sm text-muted'>Đang tải...</p>}
+				{isLoading && (
+					<p className='p-4 text-center text-sm text-muted'>Đang tải...</p>
+				)}
 
 				{!isLoading && conversations.length === 0 && (
-					<p className='p-4 text-center text-sm text-muted'>Không có hội thoại nào.</p>
+					<p className='p-4 text-center text-sm text-muted'>
+						Không có hội thoại nào.
+					</p>
 				)}
 
 				{conversations.map((conversation) => (
@@ -75,18 +79,26 @@ const ConversationList = ({ selectedId, onSelect }: ConversationListProps) => {
 						type='button'
 						onClick={() => onSelect(conversation)}
 						className={`w-full rounded-xl p-3 text-left transition-colors ${
-							selectedId === conversation.id ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-cream-soft"
+							selectedId === conversation.id
+								? "bg-primary/10 ring-1 ring-primary/30"
+								: "hover:bg-cream-soft"
 						}`}>
 						<div className='flex items-center justify-between gap-2'>
-							<p className='truncate text-sm font-semibold text-ink'>{conversation.customer.name}</p>
+							<p className='truncate text-sm font-semibold text-ink'>
+								{conversation.customer.name}
+							</p>
 							<span
 								className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass[conversation.status]}`}>
 								{CONVERSATION_STATUS_LABEL[conversation.status]}
 							</span>
 						</div>
-						<p className='mt-0.5 truncate text-xs text-muted'>{conversation.customer.email}</p>
+						<p className='mt-0.5 truncate text-xs text-muted'>
+							{conversation.customer.email}
+						</p>
 						<p className='mt-1 text-xs text-muted'>
-							{conversation.assignedStaff ? `Đang phụ trách: ${conversation.assignedStaff.name}` : "Chưa ai nhận xử lý"}
+							{conversation.assignedStaff
+								? `Đang phụ trách: ${conversation.assignedStaff.name}`
+								: "Chưa ai nhận xử lý"}
 						</p>
 					</button>
 				))}
@@ -94,7 +106,12 @@ const ConversationList = ({ selectedId, onSelect }: ConversationListProps) => {
 
 			{totalPages > 1 && (
 				<div className='flex items-center justify-between border-t border-border p-3'>
-					<Button type='button' variant='outline' size='sm' disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+					<Button
+						type='button'
+						variant='outline'
+						size='sm'
+						disabled={page === 1}
+						onClick={() => setPage((p) => p - 1)}>
 						Trước
 					</Button>
 					<span className='text-xs text-muted'>

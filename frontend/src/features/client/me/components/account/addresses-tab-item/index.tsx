@@ -1,5 +1,9 @@
-import Button from "../../../../../../components/button";
-import { PhoneIcon, StarIcon, TrashIcon } from "../../../../../../components/icons";
+import { Button } from "../../../../../../components/button";
+import {
+	PhoneIcon,
+	StarIcon,
+	TrashIcon,
+} from "../../../../../../components/icons";
 import type { UserAddress } from "../../../types";
 
 interface Props {
@@ -11,7 +15,14 @@ interface Props {
 	isDeleting: boolean;
 }
 
-const AddressesTabItem = ({ address, onEdit, onDelete, onSetDefault, isSettingDefault, isDeleting }: Props) => {
+const AddressesTabItem = ({
+	address,
+	onEdit,
+	onDelete,
+	onSetDefault,
+	isSettingDefault,
+	isDeleting,
+}: Props) => {
 	return (
 		<div className='flex flex-col relative rounded-2xl border border-border bg-surface p-4'>
 			{address.isDefault && (
@@ -27,16 +38,30 @@ const AddressesTabItem = ({ address, onEdit, onDelete, onSetDefault, isSettingDe
 				{address.phoneNumber}
 			</p>
 			<p className='mt-2 text-sm text-ink/80'>
-				{address.addressLine}, {address.wardName}, {address.districtName}, {address.provinceName}
+				{address.addressLine}, {address.wardName}, {address.districtName},{" "}
+				{address.provinceName}
 			</p>
-			<p className='mt-1 text-xs capitalize text-primary-dark'>{address.tag === "home" ? "Nhà riêng" : "Văn phòng"}</p>
+			<p className='mt-1 text-xs capitalize text-primary-dark'>
+				{address.tag === "home" ? "Nhà riêng" : "Văn phòng"}
+			</p>
 
 			<div className='flex-1 mt-4 flex items-end flex-wrap gap-2'>
-				<Button type='button' size='sm' variant='outline' onClick={() => onEdit(address)} className='text-xs'>
+				<Button
+					type='button'
+					size='sm'
+					variant='outline'
+					onClick={() => onEdit(address)}
+					className='text-xs'>
 					Sửa
 				</Button>
 				{!address.isDefault && (
-					<Button type='button' size='sm' variant='outline' disabled={isSettingDefault} onClick={() => onSetDefault(address.id)} className='text-xs'>
+					<Button
+						type='button'
+						size='sm'
+						variant='outline'
+						disabled={isSettingDefault}
+						onClick={() => onSetDefault(address.id)}
+						className='text-xs'>
 						Đặt làm mặc định
 					</Button>
 				)}

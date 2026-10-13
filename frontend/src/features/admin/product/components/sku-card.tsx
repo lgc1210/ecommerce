@@ -1,6 +1,6 @@
 import { useState } from "react";
 import FormControl from "../../../../components/form-control";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { PencilIcon, TrashIcon } from "../../../../components/icons";
 import { formatCurrency } from "../../../../utils/currency";
 import { useUpdateSkuStock } from "../hooks";
@@ -18,13 +18,22 @@ interface SkuCardProps {
 	onDelete: () => void;
 }
 
-const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, onDelete }: SkuCardProps) => {
+const SkuCard = ({
+	productId,
+	sku,
+	canWriteCatalog,
+	canUpdateInventory,
+	onEdit,
+	onDelete,
+}: SkuCardProps) => {
 	const [stockInput, setStockInput] = useState(String(sku.stockQuantity));
 	const [isReceivingStock, setIsReceivingStock] = useState(false);
 	const updateStock = useUpdateSkuStock();
 
 	const hasStockChanged =
-		Number(stockInput) !== sku.stockQuantity && stockInput.trim() !== "" && Number(stockInput) >= 0;
+		Number(stockInput) !== sku.stockQuantity &&
+		stockInput.trim() !== "" &&
+		Number(stockInput) >= 0;
 
 	const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = Number(e.target.value);
@@ -36,12 +45,16 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 			<div className='rounded-2xl border border-border bg-surface p-5'>
 				<div className='flex flex-wrap items-start justify-between gap-3'>
 					<div>
-						<p className='font-semibold text-ink'>{formatVariationDetails(sku.variationDetails)}</p>
+						<p className='font-semibold text-ink'>
+							{formatVariationDetails(sku.variationDetails)}
+						</p>
 						<p className='mt-0.5 font-mono text-xs text-muted'>{sku.sku}</p>
 						<p className='mt-1 flex items-center gap-2 text-sm text-ink/80'>
 							<span>{formatCurrency(Number(sku.price))}</span>
 							{sku.oldPrice && (
-								<span className='text-xs text-muted line-through'>{formatCurrency(Number(sku.oldPrice))}</span>
+								<span className='text-xs text-muted line-through'>
+									{formatCurrency(Number(sku.oldPrice))}
+								</span>
 							)}
 						</p>
 						<p className='mt-1 text-xs text-muted'>
@@ -79,9 +92,17 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 						{sku.trackSerial ? (
 							<div className='flex items-center justify-between gap-2 rounded-xl bg-cream-soft px-3 py-2.5'>
 								<p className='text-sm text-ink/80'>
-									Tồn kho: <span className='font-semibold text-ink'>{sku.stockQuantity}</span> (quản lý theo serial)
+									Tồn kho:{" "}
+									<span className='font-semibold text-ink'>
+										{sku.stockQuantity}
+									</span>{" "}
+									(quản lý theo serial)
 								</p>
-								<Button size='sm' variant='outline' type='button' onClick={() => setIsReceivingStock(true)}>
+								<Button
+									size='sm'
+									variant='outline'
+									type='button'
+									onClick={() => setIsReceivingStock(true)}>
 									Nhập kho theo serial
 								</Button>
 							</div>
@@ -100,7 +121,13 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 									variant='outline'
 									type='button'
 									disabled={!hasStockChanged || updateStock.isPending}
-									onClick={() => updateStock.mutate({ productId, skuId: sku.id, stockQuantity: Number(stockInput) })}>
+									onClick={() =>
+										updateStock.mutate({
+											productId,
+											skuId: sku.id,
+											stockQuantity: Number(stockInput),
+										})
+									}>
 									{updateStock.isPending ? "Đang lưu..." : "Cập nhật tồn kho"}
 								</Button>
 							</div>
@@ -111,7 +138,11 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 				<div className='mt-4 border-t border-border pt-4'>
 					<p className='mb-2 text-sm font-medium text-ink'>Hình ảnh</p>
 					{canWriteCatalog ? (
-						<SkuImageManager productId={productId} skuId={sku.id} images={sku.images} />
+						<SkuImageManager
+							productId={productId}
+							skuId={sku.id}
+							images={sku.images}
+						/>
 					) : sku.images.length === 0 ? (
 						<p className='text-sm text-muted'>Chưa có ảnh.</p>
 					) : (
@@ -130,7 +161,11 @@ const SkuCard = ({ productId, sku, canWriteCatalog, canUpdateInventory, onEdit, 
 			</div>
 
 			{isReceivingStock && (
-				<ReceiveStockModal productId={productId} sku={sku} onClose={() => setIsReceivingStock(false)} />
+				<ReceiveStockModal
+					productId={productId}
+					sku={sku}
+					onClose={() => setIsReceivingStock(false)}
+				/>
 			)}
 		</>
 	);

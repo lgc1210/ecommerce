@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import FormSelect from "./form-select";
 import { ChevronRightIcon } from "./icons";
-import Button from "./button";
+import { Button } from "./button";
 
 interface PaginationProps {
 	/** Tổng số bản ghi (không phải số trang) — component tự tính totalPages từ total/limit. */
@@ -14,11 +14,16 @@ interface PaginationProps {
 	isLoading?: boolean;
 }
 
-const getPageList = (current: number, total: number): (number | "ellipsis")[] => {
+const getPageList = (
+	current: number,
+	total: number,
+): (number | "ellipsis")[] => {
 	if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
 	const pages = new Set<number>([1, total, current, current - 1, current + 1]);
-	const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+	const sorted = [...pages]
+		.filter((p) => p >= 1 && p <= total)
+		.sort((a, b) => a - b);
 
 	const result: (number | "ellipsis")[] = [];
 	sorted.forEach((page, i) => {
@@ -40,7 +45,12 @@ const getPageList = (current: number, total: number): (number | "ellipsis")[] =>
  * không, đổi dropdown "Hiển thị x/trang" ở đây sẽ không khớp với data thực tế
  * được fetch.
  */
-const Pagination = ({ total, pageSizeOptions = [10, 20, 50], defaultLimit = 10, isLoading = false }: PaginationProps) => {
+const Pagination = ({
+	total,
+	pageSizeOptions = [10, 20, 50],
+	defaultLimit = 10,
+	isLoading = false,
+}: PaginationProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const page = Number(searchParams.get("page")) || 1;
@@ -88,7 +98,10 @@ const Pagination = ({ total, pageSizeOptions = [10, 20, 50], defaultLimit = 10, 
 								value={limit}
 								disabled={isLoading}
 								onChange={(e) => changeLimit(Number(e.target.value))}
-								options={pageSizeOptions.map((size) => ({ value: size, label: String(size) }))}
+								options={pageSizeOptions.map((size) => ({
+									value: size,
+									label: String(size),
+								}))}
 							/>
 							<span>/ trang</span>
 						</label>
@@ -98,7 +111,8 @@ const Pagination = ({ total, pageSizeOptions = [10, 20, 50], defaultLimit = 10, 
 				)}
 
 				<small className='text-xs text-muted'>
-					{rangeStart}–{rangeEnd} trong tổng số <span className='font-semibold text-ink'>{total}</span>
+					{rangeStart}–{rangeEnd} trong tổng số{" "}
+					<span className='font-semibold text-ink'>{total}</span>
 				</small>
 			</div>
 
@@ -119,7 +133,13 @@ const Pagination = ({ total, pageSizeOptions = [10, 20, 50], defaultLimit = 10, 
 							…
 						</span>
 					) : (
-						<Button key={p} type='button' variant={p === page ? "primary" : "ghost"} disabled={isLoading} onClick={() => goToPage(p)} className='px-4.5!'>
+						<Button
+							key={p}
+							type='button'
+							variant={p === page ? "primary" : "ghost"}
+							disabled={isLoading}
+							onClick={() => goToPage(p)}
+							className='px-4.5!'>
 							{p}
 						</Button>
 					),

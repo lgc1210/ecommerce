@@ -1,7 +1,7 @@
 import { useState, type SubmitEvent } from "react";
 import ModalShell from "../../../../components/modal-shell";
 import FormControl from "../../../../components/form-control";
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { useReceiveStock } from "../hooks";
 import type { ProductSku } from "../types";
 
@@ -16,7 +16,11 @@ interface ReceiveStockModalProps {
  * khớp đúng cách backend nhận `serialNumbers: string[]` (receiveSerializedStock, tạo N dòng
  * ProductUnit + cộng dồn stockQuantity trong 1 transaction).
  */
-const ReceiveStockModal = ({ productId, sku, onClose }: ReceiveStockModalProps) => {
+const ReceiveStockModal = ({
+	productId,
+	sku,
+	onClose,
+}: ReceiveStockModalProps) => {
 	const [rawInput, setRawInput] = useState("");
 	const [error, setError] = useState<string | undefined>();
 	const receiveStock = useReceiveStock();
@@ -43,17 +47,25 @@ const ReceiveStockModal = ({ productId, sku, onClose }: ReceiveStockModalProps) 
 		}
 		setError(undefined);
 
-		receiveStock.mutate({ productId, skuId: sku.id, serialNumbers }, { onSuccess: onClose });
+		receiveStock.mutate(
+			{ productId, skuId: sku.id, serialNumbers },
+			{ onSuccess: onClose },
+		);
 	};
 
 	const previewCount = parseSerials().length;
 
 	return (
-		<ModalShell title={`Nhập kho theo serial — ${sku.sku}`} onClose={onClose} maxWidthClassName='max-w-lg'>
+		<ModalShell
+			title={`Nhập kho theo serial — ${sku.sku}`}
+			onClose={onClose}
+			maxWidthClassName='max-w-lg'>
 			<form onSubmit={handleSubmit} className='space-y-4'>
 				<p className='text-sm text-muted'>
-					Đang có <span className='font-semibold text-ink'>{sku.stockQuantity}</span> đơn vị trong kho. Nhập mỗi serial
-					1 dòng — hệ thống sẽ tự kiểm tra trùng và báo lỗi nếu serial nào đã tồn tại.
+					Đang có{" "}
+					<span className='font-semibold text-ink'>{sku.stockQuantity}</span>{" "}
+					đơn vị trong kho. Nhập mỗi serial 1 dòng — hệ thống sẽ tự kiểm tra
+					trùng và báo lỗi nếu serial nào đã tồn tại.
 				</p>
 
 				<FormControl

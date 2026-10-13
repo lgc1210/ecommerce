@@ -1,4 +1,4 @@
-import Button from "../../../../components/button";
+import { Button } from "../../../../components/button";
 import { MenuIcon } from "../../../../components/icons";
 import UserMenu from "../../../../components/user-menu";
 import AdminNotificationBell from "../../notification/components/notification-bell";

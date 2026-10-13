@@ -1,10 +1,15 @@
 import { useState } from "react";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import Can from "../../../components/can";
 import FormControl from "../../../components/form-control";
 import FormSelect from "../../../components/form-select";
 import Popup from "../../../components/popup";
-import { CloseIcon, PlusIcon, SearchIcon, ShieldIcon } from "../../../components/icons";
+import {
+	CloseIcon,
+	PlusIcon,
+	SearchIcon,
+	ShieldIcon,
+} from "../../../components/icons";
 import Pagination from "../../../components/pagination";
 import permissions from "../../../configs/constants/permissions";
 import {
@@ -16,7 +21,10 @@ import {
 import type { AdminUser } from "../../../features/admin/user/types";
 import { getAvatarInitials } from "../../../utils/avatar-generator";
 import useListQueryParams from "../../../hooks/useListQueryParams";
-import { parseBooleanParam, parseNumberParam } from "../../../utils/searchParams";
+import {
+	parseBooleanParam,
+	parseNumberParam,
+} from "../../../utils/searchParams";
 import { useRolesQuery } from "../../../features/admin/rbac/hooks/useRbac";
 import AdminTitle from "../../../components/admin-title";
 import ExportButton from "../../../components/export-button";
@@ -44,21 +52,38 @@ const PAGE_SIZE = 10;
  * (vd. manager) sẽ chỉ xem được danh sách, không sửa được.
  */
 const AdminUserPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const roleId = parseNumberParam(searchParams, "roleId");
 	const isActive = parseBooleanParam(searchParams, "isActive");
 
 	const { data: roles = [] } = useRolesQuery();
-	const { data, isLoading, isFetching } = useUsersQuery({ page, limit, search, roleId, isActive });
+	const { data, isLoading, isFetching } = useUsersQuery({
+		page,
+		limit,
+		search,
+		roleId,
+		isActive,
+	});
 	const updateUserRole = useUpdateUserRole();
 	const updateUserStatus = useUpdateUserStatus();
 	const createUser = useCreateUser();
 
-	const [pendingStatusUser, setPendingStatusUser] = useState<AdminUser | null>(null);
+	const [pendingStatusUser, setPendingStatusUser] = useState<AdminUser | null>(
+		null,
+	);
 	const [createUserOpen, setCreateUserOpen] = useState(false);
 
 	const users = data?.data ?? [];
@@ -75,14 +100,23 @@ const AdminUserPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
-				<AdminTitle title='Người dùng' description='Quản lý tài khoản, gán role và bật/tắt trạng thái hoạt động.' />
+				<AdminTitle
+					title='Người dùng'
+					description='Quản lý tài khoản, gán role và bật/tắt trạng thái hoạt động.'
+				/>
 				<div className='flex flex-col gap-2'>
 					<Can permission={permissions.user.write}>
-						<Button size='sm' icon={<PlusIcon className='h-4 w-4' />} onClick={() => setCreateUserOpen(true)}>
+						<Button
+							size='sm'
+							icon={<PlusIcon className='h-4 w-4' />}
+							onClick={() => setCreateUserOpen(true)}>
 							Tạo tài khoản
 						</Button>
 					</Can>
-					<ExportButton resource='users' params={{ search, roleId: roleId ?? undefined, isActive }} />
+					<ExportButton
+						resource='users'
+						params={{ search, roleId: roleId ?? undefined, isActive }}
+					/>
 				</div>
 			</div>
 
@@ -147,14 +181,18 @@ const AdminUserPage = () => {
 							</tr>
 						) : (
 							users.map((user) => (
-								<tr key={user.id} className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
+								<tr
+									key={user.id}
+									className='border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<div className='flex items-center gap-3'>
 											<span className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-bold text-primary-dark'>
 												{getAvatarInitials(user.name)}
 											</span>
 											<div className='min-w-0'>
-												<p className='truncate font-semibold text-ink'>{user.name}</p>
+												<p className='truncate font-semibold text-ink'>
+													{user.name}
+												</p>
 												<a
 													href={`mailto:${user.email}`}
 													className='truncate text-xs text-muted hover:underline'
@@ -166,7 +204,10 @@ const AdminUserPage = () => {
 									</td>
 									<td className='px-5 py-3.5 text-ink/80'>
 										{user.phone ? (
-											<a href={`tel:${user.phone}`} className='hover:underline' title='Nhấn đề gọi'>
+											<a
+												href={`tel:${user.phone}`}
+												className='hover:underline'
+												title='Nhấn đề gọi'>
 												{user.phone}
 											</a>
 										) : (
@@ -185,21 +226,35 @@ const AdminUserPage = () => {
 											<FormSelect
 												value={user.roleId}
 												disabled={updateUserRole.isPending}
-												onChange={(e) => updateUserRole.mutate({ id: user.id, roleId: Number(e.target.value) })}
-												options={roles.map((role) => ({ value: role.id, label: role.name }))}
+												onChange={(e) =>
+													updateUserRole.mutate({
+														id: user.id,
+														roleId: Number(e.target.value),
+													})
+												}
+												options={roles.map((role) => ({
+													value: role.id,
+													label: role.name,
+												}))}
 												size='sm'
 												className='font-semibold capitalize'
 											/>
 										</Can>
 									</td>
 									<td className='px-5 py-3.5'>
-										<Can permission={permissions.user.write} fallback={<StatusBadge isActive={user.isActive} />}>
+										<Can
+											permission={permissions.user.write}
+											fallback={<StatusBadge isActive={user.isActive} />}>
 											<button
 												type='button'
 												disabled={updateUserStatus.isPending}
 												onClick={() => setPendingStatusUser(user)}
 												className='inline-flex cursor-pointer items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-60'
-												title={user.isActive ? "Nhấn để vô hiệu hóa" : "Nhấn để kích hoạt"}>
+												title={
+													user.isActive
+														? "Nhấn để vô hiệu hóa"
+														: "Nhấn để kích hoạt"
+												}>
 												<StatusBadge isActive={user.isActive} />
 											</button>
 										</Can>
@@ -211,20 +266,32 @@ const AdminUserPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
 			{pendingStatusUser && (
 				<Popup
-					title={pendingStatusUser.isActive ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản"}
+					title={
+						pendingStatusUser.isActive
+							? "Vô hiệu hóa tài khoản"
+							: "Kích hoạt tài khoản"
+					}
 					description={
 						pendingStatusUser.isActive
 							? `Tài khoản "${pendingStatusUser.name}" sẽ không thể đăng nhập cho tới khi được kích hoạt lại. Bạn có chắc chắn?`
 							: `Kích hoạt lại tài khoản "${pendingStatusUser.name}"?`
 					}
 					variant={pendingStatusUser.isActive ? "danger" : "default"}
-					confirmLabel={pendingStatusUser.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
+					confirmLabel={
+						pendingStatusUser.isActive ? "Vô hiệu hóa" : "Kích hoạt"
+					}
 					isConfirming={updateUserStatus.isPending}
 					onConfirm={handleConfirmStatusChange}
 					onClose={() => setPendingStatusUser(null)}
@@ -235,7 +302,11 @@ const AdminUserPage = () => {
 				<CreateUserModal
 					roles={roles}
 					onClose={() => setCreateUserOpen(false)}
-					onSubmit={(payload) => createUser.mutate(payload, { onSuccess: () => setCreateUserOpen(false) })}
+					onSubmit={(payload) =>
+						createUser.mutate(payload, {
+							onSuccess: () => setCreateUserOpen(false),
+						})
+					}
 					isSubmitting={createUser.isPending}
 				/>
 			)}

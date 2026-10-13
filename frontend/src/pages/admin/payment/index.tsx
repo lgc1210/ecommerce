@@ -6,7 +6,7 @@ import Pagination from "../../../components/pagination";
 import AdminTitle from "../../../components/admin-title";
 import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseEnumParam } from "../../../utils/searchParams";
 import { formatCurrency } from "../../../utils/currency";
@@ -14,11 +14,17 @@ import { formatDate } from "../../../utils";
 import { usePaymentsAdminQuery } from "../../../features/admin/payment/hooks";
 import type { AdminPayment } from "../../../features/admin/payment/types";
 import { PAYMENT_METHOD_FILTER_OPTIONS } from "../../../features/admin/payment/constants";
-import { PAYMENT_METHOD_LABEL, PAYMENT_STATUS_LABEL } from "../../../features/admin/payment/utils";
+import {
+	PAYMENT_METHOD_LABEL,
+	PAYMENT_STATUS_LABEL,
+} from "../../../features/admin/payment/utils";
 import PaymentStatusBadge from "../../../features/admin/payment/components/payment-status-badge";
 import PaymentDetailModal from "../../../features/admin/payment/components/payment-detail-modal";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
-import type { PaymentMethod, PaymentStatus } from "../../../shared/constants/payment";
+import type {
+	PaymentMethod,
+	PaymentStatus,
+} from "../../../shared/constants/payment";
 
 // Phải khớp với `defaultLimit` truyền cho <Pagination> bên dưới (xem docstring useListQueryParams/Pagination) —
 // nếu không, số trang hiển thị trên UI sẽ không khớp với limit thực tế gửi lên backend.
@@ -35,10 +41,19 @@ const PAGE_SIZE = 10;
  * pattern với trang Order/Contact: reload/back-forward vẫn giữ đúng view, copy link chia sẻ được.
  */
 const AdminPaymentPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const status = parseEnumParam<PaymentStatus>(searchParams, "status");
 	const method = parseEnumParam<PaymentMethod>(searchParams, "method");
@@ -57,7 +72,9 @@ const AdminPaymentPage = () => {
 		dateTo: dateTo ? new Date(dateTo).toISOString() : undefined,
 	});
 
-	const [selectedPayment, setSelectedPayment] = useState<AdminPayment | null>(null);
+	const [selectedPayment, setSelectedPayment] = useState<AdminPayment | null>(
+		null,
+	);
 
 	const payments = data?.data ?? [];
 	const pagination = data?.pagination;
@@ -70,11 +87,16 @@ const AdminPaymentPage = () => {
 	const navigate = useNavigate();
 
 	// Kiểm tra xem khi người dùng tới trang này có kèm theo {state: fromNotification} hay không?
-	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+	const fromNotification = Boolean(
+		(location.state as { fromNotification?: boolean } | null)?.fromNotification,
+	);
 
-	const notificationPayment = fromNotification && data?.data.length === 1 ? payments[0] : null;
+	const notificationPayment =
+		fromNotification && data?.data.length === 1 ? payments[0] : null;
 
-	const newestPayment = payments.find((payment) => payment.id === selectedPayment?.id);
+	const newestPayment = payments.find(
+		(payment) => payment.id === selectedPayment?.id,
+	);
 
 	const activePayment = newestPayment ?? notificationPayment;
 
@@ -91,7 +113,10 @@ const AdminPaymentPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex items-center justify-between gap-2'>
-				<AdminTitle title='Thanh toán' description='Theo dõi và xử lý các giao dịch thanh toán của đơn hàng.' />
+				<AdminTitle
+					title='Thanh toán'
+					description='Theo dõi và xử lý các giao dịch thanh toán của đơn hàng.'
+				/>
 				<ExportButton
 					resource='payments'
 					params={{
@@ -117,13 +142,18 @@ const AdminPaymentPage = () => {
 					value={status ?? ""}
 					onChange={(e) => setFilter("status", e.target.value || undefined)}
 					placeholder='Tất cả trạng thái'
-					options={Object.entries(PAYMENT_STATUS_LABEL).map(([value, label]) => ({ value, label }))}
+					options={Object.entries(PAYMENT_STATUS_LABEL).map(
+						([value, label]) => ({ value, label }),
+					)}
 				/>
 				<FormSelect
 					value={method ?? ""}
 					onChange={(e) => setFilter("method", e.target.value || undefined)}
 					placeholder='Tất cả phương thức'
-					options={PAYMENT_METHOD_FILTER_OPTIONS.map((value) => ({ value, label: PAYMENT_METHOD_LABEL[value] }))}
+					options={PAYMENT_METHOD_FILTER_OPTIONS.map((value) => ({
+						value,
+						label: PAYMENT_METHOD_LABEL[value],
+					}))}
 				/>
 				<FormControl
 					type='date'
@@ -179,17 +209,29 @@ const AdminPaymentPage = () => {
 									key={payment.id}
 									onClick={() => setSelectedPayment(payment)}
 									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
-									<td className='px-5 py-3.5 font-semibold text-ink'>{payment.order.orderNumber}</td>
-									<td className='px-5 py-3.5'>
-										<p className='font-medium text-ink'>{payment.order.user?.name ?? "Khách vãng lai"}</p>
-										<p className='truncate text-xs text-muted'>{payment.order.user?.email}</p>
+									<td className='px-5 py-3.5 font-semibold text-ink'>
+										{payment.order.orderNumber}
 									</td>
-									<td className='px-5 py-3.5 text-ink/80'>{PAYMENT_METHOD_LABEL[payment.paymentMethod]}</td>
-									<td className='px-5 py-3.5 font-medium text-ink'>{formatCurrency(Number(payment.amount))}</td>
+									<td className='px-5 py-3.5'>
+										<p className='font-medium text-ink'>
+											{payment.order.user?.name ?? "Khách vãng lai"}
+										</p>
+										<p className='truncate text-xs text-muted'>
+											{payment.order.user?.email}
+										</p>
+									</td>
+									<td className='px-5 py-3.5 text-ink/80'>
+										{PAYMENT_METHOD_LABEL[payment.paymentMethod]}
+									</td>
+									<td className='px-5 py-3.5 font-medium text-ink'>
+										{formatCurrency(Number(payment.amount))}
+									</td>
 									<td className='px-5 py-3.5'>
 										<PaymentStatusBadge status={payment.paymentStatus} />
 									</td>
-									<td className='px-5 py-3.5 text-ink/70'>{payment.createdAt ? formatDate(payment.createdAt) : "—"}</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{payment.createdAt ? formatDate(payment.createdAt) : "—"}
+									</td>
 								</tr>
 							))
 						)}
@@ -197,11 +239,22 @@ const AdminPaymentPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
-			{activePayment && <PaymentDetailModal payment={activePayment} onClose={handleClosePaymentModal} />}
+			{activePayment && (
+				<PaymentDetailModal
+					payment={activePayment}
+					onClose={handleClosePaymentModal}
+				/>
+			)}
 		</div>
 	);
 };

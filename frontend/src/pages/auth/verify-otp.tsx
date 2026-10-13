@@ -1,7 +1,7 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import FormOtp from "../../components/form-otp";
 import AuthLayout from "../../layouts/auth";
 import paths from "../../configs/constants/paths";
@@ -87,7 +87,12 @@ const VerifyOtpPage = () => {
 			footerText='Nhập sai email?'
 			footerLinkText='Đăng ký lại'
 			footerLinkTo={paths.auth.register}>
-			<FormOtp length={OTP_LENGTH} value={otp} onChange={setOtp} disabled={submitting} />
+			<FormOtp
+				length={OTP_LENGTH}
+				value={otp}
+				onChange={setOtp}
+				disabled={submitting}
+			/>
 
 			<div className='text-center text-sm'>
 				{countdown > 0 ? (

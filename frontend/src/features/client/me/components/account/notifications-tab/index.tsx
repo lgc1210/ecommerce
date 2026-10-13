@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { BellIcon, CheckIcon, TrashIcon } from "../../../../../../components/icons";
+import {
+	BellIcon,
+	CheckIcon,
+	TrashIcon,
+} from "../../../../../../components/icons";
 import Pagination from "../../../../../../components/pagination";
-import Button from "../../../../../../components/button";
+import { Button } from "../../../../../../components/button";
 import Popup from "../../../../../../components/popup";
 import { formatDate } from "../../../../../../utils";
 import {
@@ -14,7 +18,10 @@ import {
 } from "../../../../notification/hooks";
 import { resolveNotificationLink } from "../../../../notification/utils";
 import NotificationsTabSkeleton from "./skeleton";
-import { NOTIFICATION_TYPE_ICON, NOTIFICATION_TYPE_LABEL } from "../../../../../../shared/constants/notification";
+import {
+	NOTIFICATION_TYPE_ICON,
+	NOTIFICATION_TYPE_LABEL,
+} from "../../../../../../shared/constants/notification";
 
 const PAGE_SIZE = 10;
 
@@ -102,27 +109,39 @@ const NotificationsTab = () => {
 							<div className='min-w-0 flex-1'>
 								<div className='flex flex-wrap items-start justify-between gap-2'>
 									<div>
-										<p className='font-semibold text-ink'>{notification.title}</p>
+										<p className='font-semibold text-ink'>
+											{notification.title}
+										</p>
 										<p className='mt-0.5 text-xs text-muted'>
-											{NOTIFICATION_TYPE_LABEL[notification.type]} · {formatDate(notification.createdAt)}
+											{NOTIFICATION_TYPE_LABEL[notification.type]} ·{" "}
+											{formatDate(notification.createdAt)}
 										</p>
 									</div>
 									{!notification.isRead && (
-										<span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white'>Mới</span>
+										<span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white'>
+											Mới
+										</span>
 									)}
 								</div>
 
-								<p className='mt-2 text-sm text-ink/80'>{notification.message}</p>
+								<p className='mt-2 text-sm text-ink/80'>
+									{notification.message}
+								</p>
 
 								<div className='mt-3 flex items-center gap-4'>
 									{notification.actionUrl &&
 										(() => {
-											const { to, state } = resolveNotificationLink(notification.actionUrl);
+											const { to, state } = resolveNotificationLink(
+												notification.actionUrl,
+											);
 											return (
 												<Link
 													to={to}
 													state={state}
-													onClick={() => !notification.isRead && markAsReadMutation.mutate(notification.id)}
+													onClick={() =>
+														!notification.isRead &&
+														markAsReadMutation.mutate(notification.id)
+													}
 													className='text-xs font-semibold text-primary-dark hover:underline'>
 													Xem chi tiết
 												</Link>
@@ -154,7 +173,12 @@ const NotificationsTab = () => {
 			</div>
 
 			{data && (
-				<Pagination total={data.pagination.total} defaultLimit={PAGE_SIZE} pageSizeOptions={[]} isLoading={isLoading} />
+				<Pagination
+					total={data.pagination.total}
+					defaultLimit={PAGE_SIZE}
+					pageSizeOptions={[]}
+					isLoading={isLoading}
+				/>
 			)}
 
 			{confirmingDeleteAllRead && (
@@ -165,7 +189,9 @@ const NotificationsTab = () => {
 					confirmLabel='Xóa tất cả'
 					isConfirming={deleteAllReadMutation.isPending}
 					onConfirm={() =>
-						deleteAllReadMutation.mutate(undefined, { onSuccess: () => setConfirmingDeleteAllRead(false) })
+						deleteAllReadMutation.mutate(undefined, {
+							onSuccess: () => setConfirmingDeleteAllRead(false),
+						})
 					}
 					onClose={() => setConfirmingDeleteAllRead(false)}
 				/>

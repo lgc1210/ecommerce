@@ -1,4 +1,9 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
+import {
+	forwardRef,
+	useId,
+	type InputHTMLAttributes,
+	type ReactNode,
+} from "react";
 
 type FormRadioVariant = "plain" | "card";
 
@@ -31,7 +36,17 @@ interface FormRadioProps extends InputHTMLAttributes<HTMLInputElement> {
 
 const FormRadio = forwardRef<HTMLInputElement, FormRadioProps>(
 	(
-		{ label, description, error, wrapperClassName = "", variant = "plain", id, className = "", checked, ...rest },
+		{
+			label,
+			description,
+			error,
+			wrapperClassName = "",
+			variant = "plain",
+			id,
+			className = "",
+			checked,
+			...rest
+		},
 		ref,
 	) => {
 		const generatedId = useId();
@@ -44,27 +59,51 @@ const FormRadio = forwardRef<HTMLInputElement, FormRadioProps>(
 				<div className={wrapperClassName}>
 					<label
 						htmlFor={fieldId}
-						className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${
-							checked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+						className={`flex items-start gap-3 rounded-2xl border p-4 transition-colors ${
+							checked
+								? "border-primary bg-primary/5"
+								: "border-border hover:border-primary/50"
 						}`}>
-						<input id={fieldId} ref={ref} type='radio' checked={checked} className={inputClassName} {...rest} />
+						<input
+							id={fieldId}
+							ref={ref}
+							type='radio'
+							checked={checked}
+							className={inputClassName}
+							{...rest}
+						/>
 						<div>
 							<p className='font-medium text-ink'>{label}</p>
-							{description && <p className='mt-1 text-sm text-muted'>{description}</p>}
+							{description && (
+								<p className='mt-1 text-sm text-muted'>{description}</p>
+							)}
 						</div>
 					</label>
-					{error && <p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>}
+					{error && (
+						<p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>
+					)}
 				</div>
 			);
 		}
 
 		return (
 			<div className={wrapperClassName}>
-				<label htmlFor={fieldId} className='flex items-start gap-2 text-sm text-ink/80 cursor-pointer'>
-					<input id={fieldId} ref={ref} type='radio' checked={checked} className={inputClassName} {...rest} />
+				<label
+					htmlFor={fieldId}
+					className='flex items-start gap-2 text-sm text-ink/80'>
+					<input
+						id={fieldId}
+						ref={ref}
+						type='radio'
+						checked={checked}
+						className={inputClassName}
+						{...rest}
+					/>
 					{label}
 				</label>
-				{error && <p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>}
+				{error && (
+					<p className='mt-1.5 text-xs font-medium text-red-500'>{error}</p>
+				)}
 			</div>
 		);
 	},

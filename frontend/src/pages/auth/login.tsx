@@ -1,10 +1,14 @@
 import { useState, type SubmitEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import Button from "../../components/button";
+import { Button } from "../../components/button";
 import FormControl from "../../components/form-control";
 import AuthLayout from "../../layouts/auth";
 import paths from "../../configs/constants/paths";
-import { useLogin, useGoogleAuthLogin, useFacebookAuthLogin } from "../../features/auth/hooks/useAuth";
+import {
+	useLogin,
+	useGoogleAuthLogin,
+	useFacebookAuthLogin,
+} from "../../features/auth/hooks/useAuth";
 import type { AuthUser } from "../../features/auth/types";
 import { getDefaultPathForRole } from "../../utils/path";
 
@@ -107,7 +111,10 @@ const LoginPage = () => {
 				disabled={loginMutation.isPending}
 			/>
 			<div className='flex items-center justify-end text-sm'>
-				<Link to={paths.auth.forgotPassword} className='font-semibold text-primary-dark hover:underline' viewTransition>
+				<Link
+					to={paths.auth.forgotPassword}
+					className='font-semibold text-primary-dark hover:underline'
+					viewTransition>
 					Quên mật khẩu?
 				</Link>
 			</div>

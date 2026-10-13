@@ -1,7 +1,13 @@
-import Button from "../../../../../../components/button";
-import { ChevronRightIcon, MapPinIcon } from "../../../../../../components/icons";
+import { Button } from "../../../../../../components/button";
+import {
+	ChevronRightIcon,
+	MapPinIcon,
+} from "../../../../../../components/icons";
 import { formatCurrency } from "../../../../../../utils/currency";
-import { useCancelMyOrder, useMyOrderDetailQuery } from "../../../../order/hooks";
+import {
+	useCancelMyOrder,
+	useMyOrderDetailQuery,
+} from "../../../../order/hooks";
 import { ORDER_STATUS_LABEL } from "../../../../../admin/order/utils";
 import OrderStatusBadge from "../../../../../admin/order/components/order-status-badge";
 import PaymentStatusBadge from "../../../../../admin/order/components/payment-status-badge";
@@ -17,12 +23,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import ChangePaymentMethodModal from "../../../../payment/components/change-payment-method-modal";
-import { ONLINE_GATEWAY_METHODS, PAYMENT_METHOD, PAYMENT_STATUS, type PaymentMethod } from "../../../../../../shared/constants/payment";
-import { ORDER_STATUS, type OrderStatus } from "../../../../../../shared/constants/order";
+import {
+	ONLINE_GATEWAY_METHODS,
+	PAYMENT_METHOD,
+	PAYMENT_STATUS,
+	type PaymentMethod,
+} from "../../../../../../shared/constants/payment";
+import {
+	ORDER_STATUS,
+	type OrderStatus,
+} from "../../../../../../shared/constants/order";
 import { PAYMENT_METHOD_LABEL } from "../../../../../admin/payment/utils";
 
 /** "Đen / M" — trả về null nếu sản phẩm không có snapshot biến thể. */
-const formatVariationSnapshot = (snapshot: Record<string, string> | null): string | null => {
+const formatVariationSnapshot = (
+	snapshot: Record<string, string> | null,
+): string | null => {
 	if (!snapshot || Object.keys(snapshot).length === 0) return null;
 	return Object.values(snapshot).join(" / ");
 };
@@ -74,7 +90,10 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 				continue;
 			}
 			try {
-				await cartService.addItem({ productSkuId: item.productSkuId, quantity: item.quantity });
+				await cartService.addItem({
+					productSkuId: item.productSkuId,
+					quantity: item.quantity,
+				});
 				addedCount++;
 			} catch {
 				skippedCount++;
@@ -85,10 +104,16 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 		setIsReordering(false);
 
 		if (addedCount === 0) {
-			toast.error("Không thể đặt lại đơn hàng này — các sản phẩm không còn khả dụng.");
+			toast.error(
+				"Không thể đặt lại đơn hàng này — các sản phẩm không còn khả dụng.",
+			);
 			return;
 		}
-		toast.success(skippedCount > 0 ? `Đã thêm ${addedCount} sản phẩm vào giỏ hàng (${skippedCount} sản phẩm không còn khả dụng).` : `Đã thêm ${addedCount} sản phẩm vào giỏ hàng.`);
+		toast.success(
+			skippedCount > 0
+				? `Đã thêm ${addedCount} sản phẩm vào giỏ hàng (${skippedCount} sản phẩm không còn khả dụng).`
+				: `Đã thêm ${addedCount} sản phẩm vào giỏ hàng.`,
+		);
 		navigate(paths.client.cart);
 	};
 
@@ -98,11 +123,19 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 	 * online nhưng chưa thanh toán "completed")). FE chỉ dùng để ẨN nút cho gọn UX, BE vẫn là nơi
 	 * validate thật sự.
 	 */
-	const canChangePaymentMethod = !!order && order.orderStatus === "pending" && !!order.payment && (order.payment.paymentMethod === PAYMENT_METHOD.cod || order.payment.paymentStatus !== "completed");
+	const canChangePaymentMethod =
+		!!order &&
+		order.orderStatus === "pending" &&
+		!!order.payment &&
+		(order.payment.paymentMethod === PAYMENT_METHOD.cod ||
+			order.payment.paymentStatus !== "completed");
 
 	return (
 		<div>
-			<button type='button' onClick={onBack} className='mb-4 flex items-center gap-1 text-sm font-semibold text-primary-dark hover:underline'>
+			<button
+				type='button'
+				onClick={onBack}
+				className='mb-4 flex items-center gap-1 text-sm font-semibold text-primary-dark hover:underline'>
 				<ChevronRightIcon className='h-4 w-4 rotate-180' />
 				Quay lại danh sách đơn hàng
 			</button>
@@ -115,40 +148,60 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 					<div className='flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-border bg-surface p-5'>
 						<div>
 							<p className='font-bold text-ink'>{order.orderNumber}</p>
-							<p className='mt-1 text-xs text-muted'>Đặt lúc {formatDate(order.createdAt)}</p>
+							<p className='mt-1 text-xs text-muted'>
+								Đặt lúc {formatDate(order.createdAt)}
+							</p>
 						</div>
 						<OrderStatusBadge status={order.orderStatus} />
 					</div>
 
 					{/* Tracking */}
 					<div className='rounded-2xl border border-border bg-surface p-5'>
-						<p className='mb-5 text-sm font-semibold text-ink'>Theo dõi đơn hàng</p>
+						<p className='mb-5 text-sm font-semibold text-ink'>
+							Theo dõi đơn hàng
+						</p>
 						<OrderTracking status={order.orderStatus} />
 					</div>
 
 					{/* Địa chỉ giao hàng */}
 					{order.shippingAddress && (
 						<div className='space-y-2 rounded-2xl border border-border bg-surface p-5 text-sm'>
-							<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>Địa chỉ giao hàng</p>
+							<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>
+								Địa chỉ giao hàng
+							</p>
 							<div className='flex items-center gap-2 text-ink'>
 								<MapPinIcon className='h-4 w-4 shrink-0 text-muted' />
-								<span className='font-medium'>{order.shippingAddress.recipientName}</span>
-								<span className='text-ink/70'>· {order.shippingAddress.phoneNumber}</span>
+								<span className='font-medium'>
+									{order.shippingAddress.recipientName}
+								</span>
+								<span className='text-ink/70'>
+									· {order.shippingAddress.phoneNumber}
+								</span>
 							</div>
 							<p className='pl-6 text-ink/80'>
-								{order.shippingAddress.addressLine}, {order.shippingAddress.wardName}, {order.shippingAddress.districtName}, {order.shippingAddress.provinceName}
+								{order.shippingAddress.addressLine},{" "}
+								{order.shippingAddress.wardName},{" "}
+								{order.shippingAddress.districtName},{" "}
+								{order.shippingAddress.provinceName}
 							</p>
 						</div>
 					)}
 
 					{/* Sản phẩm */}
 					<div className='rounded-2xl border border-border bg-surface p-5'>
-						<p className='mb-3 text-sm font-semibold text-ink'>Sản phẩm ({order.items.length})</p>
+						<p className='mb-3 text-sm font-semibold text-ink'>
+							Sản phẩm ({order.items.length})
+						</p>
 						<div className='divide-y divide-border'>
 							{order.items.map((item) => {
-								const variation = formatVariationSnapshot(item.variationSnapshot);
+								const variation = formatVariationSnapshot(
+									item.variationSnapshot,
+								);
 								return (
-									<Link to={`${paths.client.productDetail(`${item.productSku?.product?.slug}`)}`} key={item.id} className='flex items-center justify-between py-3 text-sm'>
+									<Link
+										to={`${paths.client.productDetail(`${item.productSku?.product?.slug}`)}`}
+										key={item.id}
+										className='flex items-center justify-between py-3 text-sm'>
 										<div className='w-full flex flex-wrap items-center justify-between gap-2 sm:gap-4'>
 											<div className='flex items-center justify-start gap-2'>
 												<img
@@ -159,14 +212,21 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 													className='shrink-0 rounded border border-border'
 												/>
 												<div className='min-w-0'>
-													<p className='line-clamp-1 font-medium text-ink'>{item.productSku?.product?.name ?? "Sản phẩm đã bị xóa"}</p>
+													<p className='line-clamp-1 font-medium text-ink'>
+														{item.productSku?.product?.name ??
+															"Sản phẩm đã bị xóa"}
+													</p>
 													<p className='text-xs text-muted'>
 														SL: {item.quantity}
 														{variation ? ` · ${variation}` : ""}
 													</p>
 												</div>
 											</div>
-											<p className='shrink-0 font-semibold text-ink ml-auto'>{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}</p>
+											<p className='shrink-0 font-semibold text-ink ml-auto'>
+												{formatCurrency(
+													Number(item.priceAtPurchase) * item.quantity,
+												)}
+											</p>
 										</div>
 									</Link>
 								);
@@ -178,30 +238,46 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 					<div className='space-y-1.5 rounded-2xl border border-border bg-surface p-5 text-sm'>
 						<div className='flex justify-between text-muted'>
 							<span>Tạm tính</span>
-							<span className='text-ink'>{formatCurrency(Number(order.subtotalAmount))}</span>
+							<span className='text-ink'>
+								{formatCurrency(Number(order.subtotalAmount))}
+							</span>
 						</div>
 						{Number(order.discountAmount) > 0 && (
 							<div className='flex justify-between text-primary-dark'>
-								<span>Giảm giá{order.coupon ? ` (mã ${order.coupon.code})` : ""}</span>
+								<span>
+									Giảm giá{order.coupon ? ` (mã ${order.coupon.code})` : ""}
+								</span>
 								<span>-{formatCurrency(Number(order.discountAmount))}</span>
 							</div>
 						)}
 						<div className='flex justify-between text-muted'>
 							<span>Phí vận chuyển</span>
-							<span className='text-ink'>{formatCurrency(Number(order.shippingFee))}</span>
+							<span className='text-ink'>
+								{formatCurrency(Number(order.shippingFee))}
+							</span>
 						</div>
 						<div className='flex justify-between border-t border-border pt-2 text-base font-bold text-ink'>
 							<span>Tổng cộng</span>
-							<span className='text-primary-dark'>{formatCurrency(Number(order.totalAmount))}</span>
+							<span className='text-primary-dark'>
+								{formatCurrency(Number(order.totalAmount))}
+							</span>
 						</div>
 					</div>
 
 					{/* Thanh toán */}
 					{order.payment && (
 						<div className='space-y-3 rounded-2xl border border-border bg-surface p-5 text-sm'>
-							<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>Thanh toán</p>
+							<p className='mb-1 text-xs font-semibold uppercase tracking-wider text-muted'>
+								Thanh toán
+							</p>
 							<div className='flex items-center justify-between'>
-								<span className='text-ink/80'>{PAYMENT_METHOD_LABEL[order.payment.paymentMethod as PaymentMethod]}</span>
+								<span className='text-ink/80'>
+									{
+										PAYMENT_METHOD_LABEL[
+											order.payment.paymentMethod as PaymentMethod
+										]
+									}
+								</span>
 								<PaymentStatusBadge status={order.payment.paymentStatus} />
 							</div>
 
@@ -210,15 +286,27 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 		    					BE giờ đã chặn hẳn ở payment.service.ts -> getGatewayPaymentContext). */}
 							{order.orderStatus !== ORDER_STATUS.cancelled &&
 								ONLINE_GATEWAY_METHODS.includes(order.payment.paymentMethod) &&
-								(order.payment.paymentStatus === PAYMENT_STATUS.pending || order.payment.paymentStatus === PAYMENT_STATUS.failed) && (
-									<Button variant='outline' size='sm' className='w-full cursor-pointer!' disabled={createPaymentUrl.isPending} onClick={handlePayNow}>
-										{createPaymentUrl.isPending ? "Đang chuyển hướng..." : "Thanh toán ngay"}
+								(order.payment.paymentStatus === PAYMENT_STATUS.pending ||
+									order.payment.paymentStatus === PAYMENT_STATUS.failed) && (
+									<Button
+										variant='outline'
+										size='sm'
+										className='w-full cursor-pointer!'
+										disabled={createPaymentUrl.isPending}
+										onClick={handlePayNow}>
+										{createPaymentUrl.isPending
+											? "Đang chuyển hướng..."
+											: "Thanh toán ngay"}
 									</Button>
 								)}
 
 							{/* MỚI — Đổi phương thức thanh toán */}
 							{canChangePaymentMethod && (
-								<Button variant='outline' size='sm' className='w-full cursor-pointer!' onClick={() => setShowChangeMethodModal(true)}>
+								<Button
+									variant='outline'
+									size='sm'
+									className='w-full'
+									onClick={() => setShowChangeMethodModal(true)}>
 									Đổi phương thức thanh toán
 								</Button>
 							)}
@@ -227,8 +315,14 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 
 					{order.orderStatus === ORDER_STATUS.pending && (
 						<div className='flex justify-end'>
-							<Button variant='outline' size='sm' disabled={cancelOrder.isPending} onClick={() => cancelOrder.mutate(order.id)}>
-								{cancelOrder.isPending ? "Đang hủy..." : `Hủy đơn (${ORDER_STATUS_LABEL[order.orderStatus as OrderStatus]})`}
+							<Button
+								variant='outline'
+								size='sm'
+								disabled={cancelOrder.isPending}
+								onClick={() => cancelOrder.mutate(order.id)}>
+								{cancelOrder.isPending
+									? "Đang hủy..."
+									: `Hủy đơn (${ORDER_STATUS_LABEL[order.orderStatus as OrderStatus]})`}
 							</Button>
 						</div>
 					)}
@@ -238,7 +332,11 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
    						mua lại cùng sản phẩm là tạo đơn MỚI, xem handleReorder(). */}
 					{order.orderStatus === ORDER_STATUS.cancelled && (
 						<div className='flex justify-end'>
-							<Button variant='outline' size='sm' disabled={isReordering} onClick={handleReorder}>
+							<Button
+								variant='outline'
+								size='sm'
+								disabled={isReordering}
+								onClick={handleReorder}>
 								{isReordering ? "Đang thêm vào giỏ hàng..." : "Đặt lại"}
 							</Button>
 						</div>
@@ -246,7 +344,13 @@ const OrderDetail = ({ orderId, onBack }: OrderDetailProps) => {
 				</div>
 			)}
 
-			{showChangeMethodModal && order?.payment && <ChangePaymentMethodModal orderId={order.id} currentMethod={order.payment.paymentMethod} onClose={() => setShowChangeMethodModal(false)} />}
+			{showChangeMethodModal && order?.payment && (
+				<ChangePaymentMethodModal
+					orderId={order.id}
+					currentMethod={order.payment.paymentMethod}
+					onClose={() => setShowChangeMethodModal(false)}
+				/>
+			)}
 		</div>
 	);
 };

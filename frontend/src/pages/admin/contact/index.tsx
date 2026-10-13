@@ -9,12 +9,19 @@ import ExportButton from "../../../components/export-button";
 import { CloseIcon, SearchIcon } from "../../../components/icons";
 import useListQueryParams from "../../../hooks/useListQueryParams";
 import { parseEnumParam } from "../../../utils/searchParams";
-import { useContactsQuery, useDeleteContact, useUpdateContactStatus } from "../../../features/admin/contact/hooks";
-import type { AdminContact, ContactStatus } from "../../../features/admin/contact/types";
+import {
+	useContactsQuery,
+	useDeleteContact,
+	useUpdateContactStatus,
+} from "../../../features/admin/contact/hooks";
+import type {
+	AdminContact,
+	ContactStatus,
+} from "../../../features/admin/contact/types";
 import { CONTACT_STATUS_LABEL } from "../../../features/admin/contact/utils";
 import StatusBadge from "../../../features/admin/contact/components/status-badge";
 import ContactDetailModal from "../../../features/admin/contact/components/contact-detail-modal";
-import Button from "../../../components/button";
+import { Button } from "../../../components/button";
 import { formatDate } from "../../../utils";
 import { SkeletonTableRows } from "../../../shared/components/skeleton";
 
@@ -34,19 +41,37 @@ const PAGE_SIZE = 10;
  * chia sẻ được.
  */
 const AdminContactPage = () => {
-	const { searchParams, page, limit, search, searchInput, setSearchInput, setFilter, clearFilters, hasActiveFilters } =
-		useListQueryParams({
-			defaultLimit: PAGE_SIZE,
-		});
+	const {
+		searchParams,
+		page,
+		limit,
+		search,
+		searchInput,
+		setSearchInput,
+		setFilter,
+		clearFilters,
+		hasActiveFilters,
+	} = useListQueryParams({
+		defaultLimit: PAGE_SIZE,
+	});
 
 	const status = parseEnumParam<ContactStatus>(searchParams, "status");
 
-	const { data, isLoading, isFetching } = useContactsQuery({ page, limit, search, status });
+	const { data, isLoading, isFetching } = useContactsQuery({
+		page,
+		limit,
+		search,
+		status,
+	});
 	const updateContactStatus = useUpdateContactStatus();
 	const deleteContact = useDeleteContact();
 
-	const [selectedContact, setSelectedContact] = useState<AdminContact | null>(null);
-	const [deletingContact, setDeletingContact] = useState<AdminContact | null>(null);
+	const [selectedContact, setSelectedContact] = useState<AdminContact | null>(
+		null,
+	);
+	const [deletingContact, setDeletingContact] = useState<AdminContact | null>(
+		null,
+	);
 
 	const contacts = data?.data ?? [];
 	const pagination = data?.pagination;
@@ -58,7 +83,9 @@ const AdminContactPage = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	const fromNotification = Boolean((location.state as { fromNotification?: boolean } | null)?.fromNotification);
+	const fromNotification = Boolean(
+		(location.state as { fromNotification?: boolean } | null)?.fromNotification,
+	);
 
 	// Derived value:
 	// Nếu notification dẫn admin tới trang này và search chỉ trả về đúng 1 contact,
@@ -66,7 +93,8 @@ const AdminContactPage = () => {
 	//
 	// Không cần useEffect + setSelectedContact() vì đây chỉ là derived state từ
 	// location.state + data đã có từ React Query.
-	const notificationContact = fromNotification && data?.data.length === 1 ? contacts[0] : null;
+	const notificationContact =
+		fromNotification && data?.data.length === 1 ? contacts[0] : null;
 
 	// selectedContact được ưu tiên vì đây là contact admin chủ động chọn.
 	// Nếu admin chưa chọn contact nào thì mới dùng contact từ notification.
@@ -100,7 +128,10 @@ const AdminContactPage = () => {
 	return (
 		<div className='space-y-6'>
 			<div className='flex items-center justify-between gap-2'>
-				<AdminTitle title='Liên hệ' description='Xem và xử lý các liên hệ khách hàng gửi từ trang web.' />
+				<AdminTitle
+					title='Liên hệ'
+					description='Xem và xử lý các liên hệ khách hàng gửi từ trang web.'
+				/>
 				<ExportButton resource='contacts' params={{ search, status }} />
 			</div>
 
@@ -118,7 +149,9 @@ const AdminContactPage = () => {
 					value={status ?? ""}
 					onChange={(e) => setFilter("status", e.target.value || undefined)}
 					placeholder='Tất cả trạng thái'
-					options={Object.entries(CONTACT_STATUS_LABEL).map(([value, label]) => ({ value, label }))}
+					options={Object.entries(CONTACT_STATUS_LABEL).map(
+						([value, label]) => ({ value, label }),
+					)}
 				/>
 
 				{hasActiveFilters(["status"]) && (
@@ -165,7 +198,9 @@ const AdminContactPage = () => {
 									className='cursor-pointer border-b border-border last:border-0 hover:bg-cream-soft/60'>
 									<td className='px-5 py-3.5'>
 										<p className='font-semibold text-ink'>{contact.name}</p>
-										<p className='truncate text-xs text-muted'>{contact.email}</p>
+										<p className='truncate text-xs text-muted'>
+											{contact.email}
+										</p>
 									</td>
 
 									<td className='px-5 py-3.5'>
@@ -180,13 +215,17 @@ const AdminContactPage = () => {
 										)}
 									</td>
 
-									<td className='max-w-70 truncate px-5 py-3.5 text-ink/80'>{contact.subject || "—"}</td>
+									<td className='max-w-70 truncate px-5 py-3.5 text-ink/80'>
+										{contact.subject || "—"}
+									</td>
 
 									<td className='px-5 py-3.5'>
 										<StatusBadge status={contact.status} />
 									</td>
 
-									<td className='px-5 py-3.5 text-ink/70'>{formatDate(contact.createdAt)}</td>
+									<td className='px-5 py-3.5 text-ink/70'>
+										{formatDate(contact.createdAt)}
+									</td>
 								</tr>
 							))
 						)}
@@ -194,9 +233,15 @@ const AdminContactPage = () => {
 				</table>
 			</div>
 
-			{isFetching && !isLoading && <p className='text-right text-xs text-muted'>Đang cập nhật...</p>}
+			{isFetching && !isLoading && (
+				<p className='text-right text-xs text-muted'>Đang cập nhật...</p>
+			)}
 
-			<Pagination total={pagination?.total ?? 0} defaultLimit={PAGE_SIZE} isLoading={isFetching} />
+			<Pagination
+				total={pagination?.total ?? 0}
+				defaultLimit={PAGE_SIZE}
+				isLoading={isFetching}
+			/>
 
 			{activeContact && (
 				<ContactDetailModal
