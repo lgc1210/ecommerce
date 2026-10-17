@@ -1,9 +1,8 @@
 /** Chuẩn hóa lỗi từ GHN/axios thành "BadRequest: ..." để handleServiceError trả 400 kèm message dễ hiểu. */
 export function toGhnError(error: any, fallback: string): Error {
 	const regex = /^(BadRequest|NotFound|Config):/;
-	if (error instanceof Error && regex.test(error.message)) {
-		return error;
-	}
+	if (error instanceof Error && regex.test(error.message)) return error;
+
 	const ghnMessage = error?.response?.data?.message;
 	return new Error(
 		`BadRequest: ${fallback}${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,

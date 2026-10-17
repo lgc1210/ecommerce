@@ -281,9 +281,9 @@ export async function createShippingOrder({
 
 			// Lỗi đã được chuẩn hóa ở nhánh "orderCode không hợp lệ" phía trên -> lỗi nghiệp vụ rõ ràng,
 			// không phải lỗi tạm thời -> không retry.
+			const regex = /^(BadRequest|NotFound|Config):/;
 			const isNormalizedBusinessError =
-				error instanceof Error &&
-				/^(BadRequest|NotFound|Config):/.test(error.message);
+				error instanceof Error && regex.test(error.message);
 
 			if (
 				!isNormalizedBusinessError &&
@@ -301,12 +301,10 @@ export async function createShippingOrder({
 		}
 	}
 
-	if (
-		lastError instanceof Error &&
-		/^(BadRequest|NotFound|Config):/.test(lastError.message)
-	) {
+	const regex = /^(BadRequest|NotFound|Config):/;
+	if (lastError instanceof Error && regex.test(lastError.message))
 		throw lastError;
-	}
+
 	const ghnMessage = lastError?.response?.data?.message;
 	throw new Error(
 		`BadRequest: Không thể tạo đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,
@@ -333,12 +331,9 @@ export async function cancelShippingOrder(ghnOrderCode: string): Promise<void> {
 			);
 		}
 	} catch (error: any) {
-		if (
-			error instanceof Error &&
-			/^(BadRequest|NotFound|Config):/.test(error.message)
-		) {
-			throw error;
-		}
+		const regex = /^(BadRequest|NotFound|Config):/;
+		if (error instanceof Error && regex.test(error.message)) throw error;
+
 		const ghnMessage = error?.response?.data?.message;
 		throw new Error(
 			`BadRequest: Không thể hủy đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,
@@ -420,11 +415,11 @@ export async function createPrintUrl(
 			{ order_codes: [ghnOrderCode] },
 		);
 		const token = response.data?.data?.token;
-		if (typeof token !== "string" || !token) {
+		if (typeof token !== "string" || !token)
 			throw new Error(
 				"BadRequest: Không nhận được token in vận đơn hợp lệ từ Giao Hàng Nhanh.",
 			);
-		}
+
 		return `${new URL(env.GHN_API_URL).origin}/a5/public-api/${GHN_PRINT_PATH[size]}?token=${encodeURIComponent(token)}`;
 	} catch (error: any) {
 		throw toGhnError(error, "Không thể tạo link in vận đơn");
@@ -445,11 +440,10 @@ async function switchShippingOrderStatus(
 			{ order_codes: [ghnOrderCode] },
 		);
 		const result = response.data?.data?.[0];
-		if (!result?.result) {
+		if (!result?.result)
 			throw new Error(
 				`BadRequest: ${failMessage}${result?.message ? ` (${result.message})` : ""}.`,
 			);
-		}
 	} catch (error: any) {
 		throw toGhnError(error, failMessage);
 	}
