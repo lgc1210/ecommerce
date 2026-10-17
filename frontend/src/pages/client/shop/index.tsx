@@ -104,6 +104,8 @@ const ShopPage = () => {
 		setFilter("categoryId", categoryId === id ? undefined : String(id));
 	};
 
+	// console.log("products:", products);
+
 	const FilterPanel = (
 		<div className='space-y-8'>
 			<div>

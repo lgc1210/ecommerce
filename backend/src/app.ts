@@ -25,6 +25,7 @@ import messageRouter from "./features/messages/message.routes.js";
 import uploadRouter from "./features/uploads/upload.routes.js";
 import warrantyRouter from "./features/warranty/warranty.routes.js";
 import warrantyClaimRouter from "./features/warranty/warranty-claim.routes.js";
+import transportRouter from "./features/transports/transport.routes.js";
 
 import ghnRouter from "./external/ghn/ghn.routes.js";
 
@@ -83,6 +84,7 @@ app.use("/api/messages", messageRouter);
 app.use("/api/uploads", uploadRouter);
 app.use("/api/warranty-policies", warrantyRouter);
 app.use("/api/warranty-claims", warrantyClaimRouter);
+app.use("/api/transport", transportRouter);
 
 app.use("/api/external/ghn", ghnRouter);
 

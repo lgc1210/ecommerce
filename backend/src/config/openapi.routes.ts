@@ -70,7 +70,11 @@ import {
 	AdminListWarrantyClaimsQuerySchema,
 	UpdateWarrantyClaimStatusSchema,
 } from "../features/warranty/warranty-claim.validation.js";
-import { AddCartItemSchema, UpdateCartItemSchema, CartItemParamSchema } from "../features/carts/cart.validation.js";
+import {
+	AddCartItemSchema,
+	UpdateCartItemSchema,
+	CartItemParamSchema,
+} from "../features/carts/cart.validation.js";
 import {
 	RequestWelcomeCouponSchema,
 	ValidateCouponSchema,
@@ -135,7 +139,15 @@ import {
 	MarkStaffConversationReadSchema,
 	UpdateConversationStatusSchema,
 } from "../features/conversations/conversation.validation.js";
-import { ListMessagesSchema, SendMessageSchema } from "../features/messages/message.validation.js";
+import {
+	ListMessagesSchema,
+	SendMessageSchema,
+} from "../features/messages/message.validation.js";
+import {
+	ListShipmentsQuerySchema,
+	PrintShipmentSchema,
+	ShipmentIdParamSchema,
+} from "../features/transports/transport.validation.js";
 
 export interface RouteMeta {
 	method: "get" | "post" | "patch" | "delete";
@@ -161,9 +173,27 @@ export const routeManifest: RouteMeta[] = [
 		summary: "Đăng ký tài khoản mới (gửi OTP xác thực qua email)",
 		schema: RegisterSchema,
 	},
-	{ method: "post", path: "/auth/verify-otp", tag: "Auth", summary: "Xác thực OTP đăng ký", schema: VerifyOtpSchema },
-	{ method: "post", path: "/auth/resend-otp", tag: "Auth", summary: "Gửi lại mã OTP", schema: ResendOtpSchema },
-	{ method: "post", path: "/auth/login", tag: "Auth", summary: "Đăng nhập bằng email/mật khẩu", schema: LoginSchema },
+	{
+		method: "post",
+		path: "/auth/verify-otp",
+		tag: "Auth",
+		summary: "Xác thực OTP đăng ký",
+		schema: VerifyOtpSchema,
+	},
+	{
+		method: "post",
+		path: "/auth/resend-otp",
+		tag: "Auth",
+		summary: "Gửi lại mã OTP",
+		schema: ResendOtpSchema,
+	},
+	{
+		method: "post",
+		path: "/auth/login",
+		tag: "Auth",
+		summary: "Đăng nhập bằng email/mật khẩu",
+		schema: LoginSchema,
+	},
 	{
 		method: "post",
 		path: "/auth/google",
@@ -184,7 +214,12 @@ export const routeManifest: RouteMeta[] = [
 		tag: "Auth",
 		summary: "Làm mới access token từ refresh token (cookie)",
 	},
-	{ method: "post", path: "/auth/logout", tag: "Auth", summary: "Đăng xuất, xoá cookie phiên đăng nhập" },
+	{
+		method: "post",
+		path: "/auth/logout",
+		tag: "Auth",
+		summary: "Đăng xuất, xoá cookie phiên đăng nhập",
+	},
 	{
 		method: "post",
 		path: "/auth/forgot-password",
@@ -199,7 +234,13 @@ export const routeManifest: RouteMeta[] = [
 		summary: "Đặt lại mật khẩu bằng OTP",
 		schema: ResetPasswordSchema,
 	},
-	{ method: "get", path: "/auth/me", tag: "Auth", summary: "Lấy thông tin phiên đăng nhập hiện tại", auth: true },
+	{
+		method: "get",
+		path: "/auth/me",
+		tag: "Auth",
+		summary: "Lấy thông tin phiên đăng nhập hiện tại",
+		auth: true,
+	},
 
 	// ── RBAC ──────────────────────────────────────────────────────────────
 	{
@@ -211,7 +252,14 @@ export const routeManifest: RouteMeta[] = [
 		permission: "rbac:manage",
 		schema: CreateRoleSchema,
 	},
-	{ method: "get", path: "/rbac/roles", tag: "RBAC", summary: "Danh sách role", auth: true, permission: "rbac:manage" },
+	{
+		method: "get",
+		path: "/rbac/roles",
+		tag: "RBAC",
+		summary: "Danh sách role",
+		auth: true,
+		permission: "rbac:manage",
+	},
 	{
 		method: "get",
 		path: "/rbac/roles/:roleId",
@@ -266,7 +314,13 @@ export const routeManifest: RouteMeta[] = [
 		auth: true,
 		schema: UpdateOwnProfileSchema,
 	},
-	{ method: "get", path: "/users/me/addresses", tag: "Users", summary: "Danh sách địa chỉ của chính mình", auth: true },
+	{
+		method: "get",
+		path: "/users/me/addresses",
+		tag: "Users",
+		summary: "Danh sách địa chỉ của chính mình",
+		auth: true,
+	},
 	{
 		method: "post",
 		path: "/users/me/addresses",
@@ -627,7 +681,14 @@ export const routeManifest: RouteMeta[] = [
 		permission: "cart:manage",
 		schema: CartItemParamSchema,
 	},
-	{ method: "delete", path: "/cart", tag: "Cart", summary: "Xoá sạch giỏ hàng", auth: true, permission: "cart:manage" },
+	{
+		method: "delete",
+		path: "/cart",
+		tag: "Cart",
+		summary: "Xoá sạch giỏ hàng",
+		auth: true,
+		permission: "cart:manage",
+	},
 
 	// ── Coupons ──────────────────────────────────────────────────────────
 	{
@@ -696,14 +757,16 @@ export const routeManifest: RouteMeta[] = [
 		method: "get",
 		path: "/reviews/product/:productId",
 		tag: "Reviews",
-		summary: "Danh sách đánh giá của 1 sản phẩm (public, chỉ review đang hiển thị)",
+		summary:
+			"Danh sách đánh giá của 1 sản phẩm (public, chỉ review đang hiển thị)",
 		schema: ListReviewsByProductQuerySchema,
 	},
 	{
 		method: "get",
 		path: "/reviews/reviewable-items",
 		tag: "Reviews",
-		summary: "Sản phẩm đã mua (đơn đã giao, còn trong hạn 30 ngày) nhưng chưa đánh giá",
+		summary:
+			"Sản phẩm đã mua (đơn đã giao, còn trong hạn 30 ngày) nhưng chưa đánh giá",
 		auth: true,
 		permission: "review:create",
 	},
@@ -720,7 +783,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "post",
 		path: "/reviews",
 		tag: "Reviews",
-		summary: "Gửi đánh giá sản phẩm đã mua (trong vòng 30 ngày kể từ khi nhận hàng)",
+		summary:
+			"Gửi đánh giá sản phẩm đã mua (trong vòng 30 ngày kể từ khi nhận hàng)",
 		auth: true,
 		permission: "review:create",
 		schema: CreateReviewSchema,
@@ -747,7 +811,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "get",
 		path: "/reviews/admin",
 		tag: "Reviews",
-		summary: "[Admin] Danh sách toàn bộ đánh giá (kèm bộ lọc, log kiểm duyệt gần nhất)",
+		summary:
+			"[Admin] Danh sách toàn bộ đánh giá (kèm bộ lọc, log kiểm duyệt gần nhất)",
 		auth: true,
 		permission: "review:update",
 		schema: ListReviewsAdminQuerySchema,
@@ -1143,7 +1208,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "get",
 		path: "/conversations/me",
 		tag: "Conversations",
-		summary: "Đọc hội thoại hỗ trợ đang mở của mình (không tự tạo, trả null nếu chưa có)",
+		summary:
+			"Đọc hội thoại hỗ trợ đang mở của mình (không tự tạo, trả null nếu chưa có)",
 		auth: true,
 		permission: "conversation:create",
 	},
@@ -1240,7 +1306,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "post",
 		path: "/uploads/warranty-claim-image",
 		tag: "Uploads",
-		summary: '[Customer] Upload ảnh/video minh chứng lỗi khi gửi yêu cầu bảo hành (multipart/form-data, field "image")',
+		summary:
+			'[Customer] Upload ảnh/video minh chứng lỗi khi gửi yêu cầu bảo hành (multipart/form-data, field "image")',
 		auth: true,
 		permission: "warranty_claim:create",
 	},
@@ -1286,7 +1353,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "delete",
 		path: "/warranty-policies/id/:id",
 		tag: "WarrantyPolicy",
-		summary: "[Admin] Xoá chính sách bảo hành (chặn nếu còn sản phẩm/claim tham chiếu)",
+		summary:
+			"[Admin] Xoá chính sách bảo hành (chặn nếu còn sản phẩm/claim tham chiếu)",
 		auth: true,
 		permission: "warranty_policy:manage",
 		schema: WarrantyPolicyIdParamSchema,
@@ -1297,7 +1365,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "get",
 		path: "/warranty-claims/warrantable-items",
 		tag: "WarrantyClaim",
-		summary: "Danh sách sản phẩm đã mua, đã giao, còn trong hạn bảo hành của chính khách",
+		summary:
+			"Danh sách sản phẩm đã mua, đã giao, còn trong hạn bảo hành của chính khách",
 		auth: true,
 		permission: "warranty_claim:create",
 	},
@@ -1341,7 +1410,8 @@ export const routeManifest: RouteMeta[] = [
 		method: "get",
 		path: "/warranty-claims/admin",
 		tag: "WarrantyClaim",
-		summary: "[Admin] Danh sách yêu cầu bảo hành, lọc theo trạng thái/tìm theo mã claim hoặc tên-email khách",
+		summary:
+			"[Admin] Danh sách yêu cầu bảo hành, lọc theo trạng thái/tìm theo mã claim hoặc tên-email khách",
 		auth: true,
 		permission: "warranty_claim:manage",
 		schema: AdminListWarrantyClaimsQuerySchema,
@@ -1388,5 +1458,60 @@ export const routeManifest: RouteMeta[] = [
 		summary: "Danh sách phường/xã theo quận/huyện",
 		auth: true,
 		schema: WardSchema,
+	},
+	// ── Transport (quản lý vận đơn GHN) ───────────────────────────────────
+	{
+		method: "get",
+		path: "/transport",
+		tag: "Transport",
+		summary: "[Admin] Danh sách đơn đã có vận đơn GHN",
+		auth: true,
+		permission: "transport:manage",
+		schema: ListShipmentsQuerySchema,
+	},
+	{
+		method: "get",
+		path: "/transport/:id",
+		tag: "Transport",
+		summary: "[Admin] Chi tiết vận đơn đọc trực tiếp từ GHN (id = id đơn hàng)",
+		auth: true,
+		permission: "transport:manage",
+		schema: ShipmentIdParamSchema,
+	},
+	{
+		method: "post",
+		path: "/transport/:id/sync",
+		tag: "Transport",
+		summary: "[Admin] Đồng bộ thủ công trạng thái vận chuyển từ GHN",
+		auth: true,
+		permission: "transport:manage",
+		schema: ShipmentIdParamSchema,
+	},
+	{
+		method: "get",
+		path: "/transport/:id/print",
+		tag: "Transport",
+		summary: "[Admin] Lấy link in phiếu vận đơn GHN (size: a5 | 80x80 | 50x72)",
+		auth: true,
+		permission: "transport:manage",
+		schema: PrintShipmentSchema,
+	},
+	{
+		method: "post",
+		path: "/transport/:id/redeliver",
+		tag: "Transport",
+		summary: "[Admin] Yêu cầu GHN giao lại đơn (đơn đang chờ giao lại)",
+		auth: true,
+		permission: "transport:manage",
+		schema: ShipmentIdParamSchema,
+	},
+	{
+		method: "post",
+		path: "/transport/:id/return",
+		tag: "Transport",
+		summary: "[Admin] Yêu cầu GHN hoàn đơn về shop",
+		auth: true,
+		permission: "transport:manage",
+		schema: ShipmentIdParamSchema,
 	},
 ];

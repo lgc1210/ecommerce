@@ -2,11 +2,42 @@ import { ghnClient } from "../../config/axios.js";
 import { env } from "../../config/dotenv.js";
 import { sleep } from "../../utils/index.js";
 import { GHN_MAX_INSURANCE_VALUE } from "./ghn.constant.js";
+import {
+	GHN_PRINT_PATH,
+	normalizeGhnDate,
+	toGhnError,
+	type GhnPrintSize,
+} from "./ghn.utils.js";
 
 interface GHNServiceOption {
 	service_id: number;
 	short_name: string;
 	service_type_id: number;
+}
+
+export interface GhnShipmentLog {
+	status: string;
+	updatedDate: string;
+}
+
+/** Phần thông tin vận đơn mà trang admin cần hiển thị (rút gọn từ response v2/shipping-order/detail của GHN). */
+export interface GhnShipmentDetail {
+	status: string;
+	orderDate: string | null;
+	pickupTime: string | null;
+	/** Thời gian giao dự kiến */
+	leadtime: string | null;
+	finishDate: string | null;
+	codAmount: number;
+	isCodCollected: boolean;
+	codCollectDate: string | null;
+	codTransferDate: string | null;
+	weight: number;
+	convertedWeight: number;
+	requiredNote: string | null;
+	note: string | null;
+	/** Lịch sử trạng thái, cũ -> mới */
+	log: GhnShipmentLog[];
 }
 
 // Cache service_id theo từng cặp quận "from-to": danh sách dịch vụ khả dụng giữa 2 quận gần như
@@ -20,21 +51,29 @@ async function getServiceId(toDistrictId: number): Promise<number> {
 		return serviceIdCache[cacheKey];
 	}
 
-	const response = await ghnClient.post(`${env.GHN_API_URL}/v2/shipping-order/available-services`, {
-		shop_id: Number(env.GHN_SHOP_ID),
-		from_district: Number(env.GHN_FROM_DISTRICT_ID),
-		to_district: toDistrictId,
-	});
+	const response = await ghnClient.post(
+		`${env.GHN_API_URL}/v2/shipping-order/available-services`,
+		{
+			shop_id: Number(env.GHN_SHOP_ID),
+			from_district: Number(env.GHN_FROM_DISTRICT_ID),
+			to_district: toDistrictId,
+		},
+	);
 
 	const services: GHNServiceOption[] = response.data?.data ?? [];
 	if (services.length === 0) {
-		throw new Error("BadRequest: Địa chỉ giao hàng nằm ngoài khu vực phục vụ của Giao Hàng Nhanh.");
+		throw new Error(
+			"BadRequest: Địa chỉ giao hàng nằm ngoài khu vực phục vụ của Giao Hàng Nhanh.",
+		);
 	}
 
 	// Ưu tiên gói dịch vụ cấu hình ở GHN_SERVICE_TYPE_ID (mặc định 2 - "Chuẩn", tính cước theo khối
 	// lượng thực) cho hàng nhẹ thông thường; nếu tuyến này không có gói đó thì lấy gói đầu tiên GHN trả về.
 	const preferredServiceTypeId = Number(env.GHN_SERVICE_TYPE_ID);
-	const preferred = services.find((service) => service.service_type_id === preferredServiceTypeId) ?? services[0]!;
+	const preferred =
+		services.find(
+			(service) => service.service_type_id === preferredServiceTypeId,
+		) ?? services[0]!;
 	serviceIdCache[cacheKey] = preferred.service_id;
 	return preferred.service_id;
 }
@@ -53,39 +92,60 @@ interface CalculateShippingFeeInput {
 }
 
 /** Gọi API GHN để tính phí vận chuyển thực tế theo địa chỉ giao hàng + khối lượng/kích thước đơn hàng. */
-export async function calculateShippingFee({ toDistrictId, toWardCode, weightGram, lengthCm, widthCm, heightCm, insuranceValue }: CalculateShippingFeeInput): Promise<number> {
+export async function calculateShippingFee({
+	toDistrictId,
+	toWardCode,
+	weightGram,
+	lengthCm,
+	widthCm,
+	heightCm,
+	insuranceValue,
+}: CalculateShippingFeeInput): Promise<number> {
 	try {
 		const serviceId = await getServiceId(toDistrictId);
 
-		const response = await ghnClient.post(`${env.GHN_API_URL}/v2/shipping-order/fee`, {
-			service_id: serviceId,
-			insurance_value: Math.min(Math.max(insuranceValue, 0), GHN_MAX_INSURANCE_VALUE),
-			coupon: null,
-			from_district_id: Number(env.GHN_FROM_DISTRICT_ID),
-			from_ward_code: String(env.GHN_FROM_WARD_CODE),
-			to_district_id: toDistrictId,
-			to_ward_code: toWardCode,
-			height: heightCm,
-			length: lengthCm,
-			width: widthCm,
-			weight: weightGram,
-		});
+		const response = await ghnClient.post(
+			`${env.GHN_API_URL}/v2/shipping-order/fee`,
+			{
+				service_id: serviceId,
+				insurance_value: Math.min(
+					Math.max(insuranceValue, 0),
+					GHN_MAX_INSURANCE_VALUE,
+				),
+				coupon: null,
+				from_district_id: Number(env.GHN_FROM_DISTRICT_ID),
+				from_ward_code: String(env.GHN_FROM_WARD_CODE),
+				to_district_id: toDistrictId,
+				to_ward_code: toWardCode,
+				height: heightCm,
+				length: lengthCm,
+				width: widthCm,
+				weight: weightGram,
+			},
+		);
 
 		const total = response.data?.data?.total;
 		if (typeof total !== "number") {
-			throw new Error("BadRequest: Không nhận được phí vận chuyển hợp lệ từ Giao Hàng Nhanh.");
+			throw new Error(
+				"BadRequest: Không nhận được phí vận chuyển hợp lệ từ Giao Hàng Nhanh.",
+			);
 		}
 
 		return total;
 	} catch (error: any) {
 		// Lỗi đã được chuẩn hóa (vd. "BadRequest: ..." ném ra ở trên) thì cho đi tiếp nguyên vẹn
-		if (error instanceof Error && /^(BadRequest|NotFound|Config):/.test(error.message)) {
+		if (
+			error instanceof Error &&
+			/^(BadRequest|NotFound|Config):/.test(error.message)
+		) {
 			throw error;
 		}
 
 		// Lỗi từ phía GHN (vd. địa chỉ không hợp lệ, quá tải tuyến...) hoặc lỗi mạng
 		const ghnMessage = error?.response?.data?.message;
-		throw new Error(`BadRequest: Không thể tính phí vận chuyển cho địa chỉ này${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
+		throw new Error(
+			`BadRequest: Không thể tính phí vận chuyển cho địa chỉ này${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,
+		);
 	}
 }
 
@@ -139,7 +199,9 @@ function isTransientGhnError(error: any): boolean {
 	if (!error?.response) return true;
 	if (error.response.status >= 500) return true;
 	const ghnMessage: string = error.response.data?.message ?? "";
-	return /context deadline exceeded|deadline exceeded|timeout|time out|quá tải|thử lại sau/i.test(ghnMessage);
+	return /context deadline exceeded|deadline exceeded|timeout|time out|quá tải|thử lại sau/i.test(
+		ghnMessage,
+	);
 }
 
 /**
@@ -173,40 +235,61 @@ export async function createShippingOrder({
 		try {
 			const serviceId = await getServiceId(toDistrictId);
 
-			const response = await ghnClient.post(`${env.GHN_API_URL}/v2/shipping-order/create`, {
-				client_order_code: clientOrderCode,
-				payment_type_id: 1,
-				required_note: "CHOXEMHANGKHONGTHU",
-				service_id: serviceId,
-				to_name: toName,
-				to_phone: toPhone,
-				to_address: toAddress,
-				to_ward_code: toWardCode,
-				to_district_id: toDistrictId,
-				cod_amount: Math.round(codAmount),
-				insurance_value: Math.min(Math.max(insuranceValue, 0), GHN_MAX_INSURANCE_VALUE),
-				content: `Đơn hàng ${clientOrderCode}`,
-				weight: weightGram,
-				length: lengthCm,
-				width: widthCm,
-				height: heightCm,
-				items: items.map((item) => ({ name: item.name, quantity: item.quantity })),
-			});
+			const response = await ghnClient.post(
+				`${env.GHN_API_URL}/v2/shipping-order/create`,
+				{
+					client_order_code: clientOrderCode,
+					payment_type_id: 1,
+					required_note: "CHOXEMHANGKHONGTHU",
+					service_id: serviceId,
+					to_name: toName,
+					to_phone: toPhone,
+					to_address: toAddress,
+					to_ward_code: toWardCode,
+					to_district_id: toDistrictId,
+					cod_amount: Math.round(codAmount),
+					insurance_value: Math.min(
+						Math.max(insuranceValue, 0),
+						GHN_MAX_INSURANCE_VALUE,
+					),
+					content: `Đơn hàng ${clientOrderCode}`,
+					weight: weightGram,
+					length: lengthCm,
+					width: widthCm,
+					height: heightCm,
+					items: items.map((item) => ({
+						name: item.name,
+						quantity: item.quantity,
+					})),
+				},
+			);
 
 			const orderCode = response.data?.data?.order_code;
 			if (typeof orderCode !== "string" || !orderCode) {
-				throw new Error("BadRequest: Không nhận được mã vận đơn hợp lệ từ Giao Hàng Nhanh.");
+				throw new Error(
+					"BadRequest: Không nhận được mã vận đơn hợp lệ từ Giao Hàng Nhanh.",
+				);
 			}
 
-			return { orderCode, expectedDeliveryTime: response.data?.data?.expected_delivery_time ?? null };
+			return {
+				orderCode,
+				expectedDeliveryTime:
+					response.data?.data?.expected_delivery_time ?? null,
+			};
 		} catch (error: any) {
 			lastError = error;
 
 			// Lỗi đã được chuẩn hóa ở nhánh "orderCode không hợp lệ" phía trên -> lỗi nghiệp vụ rõ ràng,
 			// không phải lỗi tạm thời -> không retry.
-			const isNormalizedBusinessError = error instanceof Error && /^(BadRequest|NotFound|Config):/.test(error.message);
+			const isNormalizedBusinessError =
+				error instanceof Error &&
+				/^(BadRequest|NotFound|Config):/.test(error.message);
 
-			if (!isNormalizedBusinessError && isTransientGhnError(error) && attempt < GHN_CREATE_ORDER_MAX_ATTEMPTS) {
+			if (
+				!isNormalizedBusinessError &&
+				isTransientGhnError(error) &&
+				attempt < GHN_CREATE_ORDER_MAX_ATTEMPTS
+			) {
 				console.warn(
 					`[ghn] Tạo vận đơn thất bại tạm thời (lần ${attempt}/${GHN_CREATE_ORDER_MAX_ATTEMPTS}) cho đơn ${clientOrderCode}, thử lại sau ${GHN_CREATE_ORDER_RETRY_DELAY_MS}ms:`,
 					error?.response?.data?.message ?? error?.message ?? error,
@@ -218,11 +301,16 @@ export async function createShippingOrder({
 		}
 	}
 
-	if (lastError instanceof Error && /^(BadRequest|NotFound|Config):/.test(lastError.message)) {
+	if (
+		lastError instanceof Error &&
+		/^(BadRequest|NotFound|Config):/.test(lastError.message)
+	) {
 		throw lastError;
 	}
 	const ghnMessage = lastError?.response?.data?.message;
-	throw new Error(`BadRequest: Không thể tạo đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
+	throw new Error(
+		`BadRequest: Không thể tạo đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,
+	);
 }
 
 /**
@@ -232,18 +320,155 @@ export async function createShippingOrder({
  */
 export async function cancelShippingOrder(ghnOrderCode: string): Promise<void> {
 	try {
-		const response = await ghnClient.post(`${env.GHN_API_URL}/v2/switch-status/cancel`, {
-			order_codes: [ghnOrderCode],
-		});
+		const response = await ghnClient.post(
+			`${env.GHN_API_URL}/v2/switch-status/cancel`,
+			{
+				order_codes: [ghnOrderCode],
+			},
+		);
 		const result = response.data?.data?.[0];
 		if (!result?.result) {
-			throw new Error(`BadRequest: GHN từ chối hủy đơn vận chuyển${result?.message ? ` (${result.message})` : ""} — đơn có thể đã được lấy hàng/đang giao.`);
+			throw new Error(
+				`BadRequest: GHN từ chối hủy đơn vận chuyển${result?.message ? ` (${result.message})` : ""} — đơn có thể đã được lấy hàng/đang giao.`,
+			);
 		}
 	} catch (error: any) {
-		if (error instanceof Error && /^(BadRequest|NotFound|Config):/.test(error.message)) {
+		if (
+			error instanceof Error &&
+			/^(BadRequest|NotFound|Config):/.test(error.message)
+		) {
 			throw error;
 		}
 		const ghnMessage = error?.response?.data?.message;
-		throw new Error(`BadRequest: Không thể hủy đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`);
+		throw new Error(
+			`BadRequest: Không thể hủy đơn vận chuyển GHN${ghnMessage ? ` (GHN: ${ghnMessage})` : ""}.`,
+		);
 	}
+}
+
+/** Lấy chi tiết vận đơn hiện tại trực tiếp từ GHN (v2/shipping-order/detail) — gồm cả lịch sử trạng thái. */
+export async function getShippingOrderDetail(
+	ghnOrderCode: string,
+): Promise<GhnShipmentDetail> {
+	try {
+		const response = await ghnClient.post(
+			`${env.GHN_API_URL}/v2/shipping-order/detail`,
+			{ order_code: ghnOrderCode },
+		);
+
+		// Tài liệu GHN mô tả `data` là object, nhưng ví dụ lại để dạng mảng — chấp nhận cả hai cho chắc.
+		const raw = response.data?.data;
+		const detail = Array.isArray(raw) ? raw[0] : raw;
+		if (!detail || typeof detail.status !== "string") {
+			throw new Error(
+				"NotFound: Không tìm thấy vận đơn này trên Giao Hàng Nhanh.",
+			);
+		}
+
+		const log: GhnShipmentLog[] = (Array.isArray(detail.log) ? detail.log : [])
+			.filter(
+				(entry: any) =>
+					typeof entry?.status === "string" &&
+					normalizeGhnDate(entry?.updated_date),
+			)
+			.map((entry: any) => ({
+				status: entry.status as string,
+				updatedDate: entry.updated_date as string,
+			}))
+			.sort(
+				(a: GhnShipmentLog, b: GhnShipmentLog) =>
+					Date.parse(a.updatedDate) - Date.parse(b.updatedDate),
+			);
+
+		return {
+			status: detail.status,
+			orderDate: normalizeGhnDate(detail.order_date),
+			pickupTime: normalizeGhnDate(detail.pickup_time),
+			leadtime: normalizeGhnDate(detail.leadtime),
+			finishDate: normalizeGhnDate(detail.finish_date),
+			codAmount: Number(detail.cod_amount) || 0,
+			isCodCollected: String(detail.is_cod_collected) === "true",
+			codCollectDate: normalizeGhnDate(detail.cod_collect_date),
+			codTransferDate: normalizeGhnDate(detail.cod_transfer_date),
+			weight: Number(detail.weight) || 0,
+			convertedWeight: Number(detail.converted_weight) || 0,
+			requiredNote: detail.required_note || null,
+			note: detail.note || null,
+			log,
+		};
+	} catch (error: any) {
+		throw toGhnError(
+			error,
+			"Không thể lấy thông tin vận đơn từ Giao Hàng Nhanh",
+		);
+	}
+}
+
+/**
+ * Tạo link in phiếu vận đơn: gọi v2/a5/gen-token để lấy token in (dùng 1 lần cho đúng đơn này), rồi
+ * ghép vào link trang in của GHN. Trang in nằm CÙNG HOST với API nhưng khác path gốc
+ * (/a5/public-api thay vì /shiip/public-api) nên lấy host từ GHN_API_URL — nhờ vậy tự đúng cả
+ * môi trường dev (dev-online-gateway) lẫn production (online-gateway).
+ */
+export async function createPrintUrl(
+	ghnOrderCode: string,
+	size: GhnPrintSize,
+): Promise<string> {
+	try {
+		const response = await ghnClient.post(
+			`${env.GHN_API_URL}/v2/a5/gen-token`,
+			{ order_codes: [ghnOrderCode] },
+		);
+		const token = response.data?.data?.token;
+		if (typeof token !== "string" || !token) {
+			throw new Error(
+				"BadRequest: Không nhận được token in vận đơn hợp lệ từ Giao Hàng Nhanh.",
+			);
+		}
+		return `${new URL(env.GHN_API_URL).origin}/a5/public-api/${GHN_PRINT_PATH[size]}?token=${encodeURIComponent(token)}`;
+	} catch (error: any) {
+		throw toGhnError(error, "Không thể tạo link in vận đơn");
+	}
+}
+/**
+ * Đổi trạng thái vận đơn qua nhóm API v2/switch-status/*. GHN trả HTTP 200 kèm `result: false` +
+ * message khi từ chối (vd. đơn không ở trạng thái cho phép), nên phải đọc `result` trong body.
+ */
+async function switchShippingOrderStatus(
+	action: "storing" | "return",
+	ghnOrderCode: string,
+	failMessage: string,
+): Promise<void> {
+	try {
+		const response = await ghnClient.post(
+			`${env.GHN_API_URL}/v2/switch-status/${action}`,
+			{ order_codes: [ghnOrderCode] },
+		);
+		const result = response.data?.data?.[0];
+		if (!result?.result) {
+			throw new Error(
+				`BadRequest: ${failMessage}${result?.message ? ` (${result.message})` : ""}.`,
+			);
+		}
+	} catch (error: any) {
+		throw toGhnError(error, failMessage);
+	}
+}
+
+/** Yêu cầu GHN giao lại đơn (v2/switch-status/storing) — chỉ áp dụng khi đơn đang "waiting_to_return" (giao thất bại, chờ giao lại). */
+export function redeliverShippingOrder(ghnOrderCode: string): Promise<void> {
+	return switchShippingOrderStatus(
+		"storing",
+		ghnOrderCode,
+		"GHN từ chối giao lại đơn này",
+	);
+}
+
+/** Yêu cầu GHN hoàn đơn về shop (v2/switch-status/return) — chỉ áp dụng khi đơn đang lưu kho hoặc chờ giao lại. */
+export function returnShippingOrder(ghnOrderCode: string): Promise<void> {
+	return switchShippingOrderStatus(
+		"return",
+		ghnOrderCode,
+		"GHN từ chối hoàn đơn này",
+	);
 }
